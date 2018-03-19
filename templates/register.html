@@ -1,29 +1,18 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-  	<title>{{t}}</title>
-		<!-- href="/static/assets/style.css"-->
-		<link rel="stylesheet" type="text/css"  href="{{ url_for('static',filename='assets/style.css')}}" >
-		<link rel="stylesheet" type="text/css"  href="{{ url_for('static',filename='assets/emoji.css')}}" >
-		<script src="{{ url_for('static',filename='assets/twemoji.min.js')}}"></script>
-		<script src="{{ url_for('static',filename='assets/emoji.js')}}"></script>
-	</head>
-<body>
-	<h1>{{ h }}</h1>
-	<div span="right">
-  <form action="/register" method="post">
-    <div class="placeholder"></div>
-        <div class="input-group input-group-lg space-top space-bottom">
-          <input type="text" autocomplete="off" spellcheck="false" class="form-control" placeholder="Username" name="username">
-        </div>
-        <div class="input-group space-top space-bottom input-group-lg">
-          <input type="password" placeholder="Password" name="passwd">
-        </div>
-        <div class="input-group space-top space-bottom input-group-lg">
-          <input type="password" placeholder="Re-Enter Password" name="passwd2">
-        </div>
-        <button type="submit" class="space-top btn-lg btn-block login-btn space-bottom-lg btn btn-primary">Submit</button>
+{% extends "layout.html" %}
+{% block body %}
+  <h2>Register</h2>
+  {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
+  <form action="{{ url_for('register') }}" method=post>
+    <dl>
+      <dt>Username:
+      <dd><input type=text name=username>
+      <dt>Password:
+      <dd><input type=password name=password>
+      <dt>Re-Enter Your Password:</dt>
+      <dd><input type=password name=password2>
+      <div>
+        <button type="submit">Submit</button>
+      </div>
+    </dl>
   </form>
-	</div>
-</body>
-</html>
+{% endblock %}
