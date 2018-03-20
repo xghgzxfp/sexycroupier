@@ -70,7 +70,8 @@ def index():
         flash('please login')
         return redirect("/login")
     print( session['logged_user'])
-    return render_template('index.html', username = session['logged_user'])
+
+    return render_template('index.html', username = session['logged_user'], userteams = db.auction.find({"owner" : session['logged_user']}))
 
 if __name__ == "__main__":
     app.run(debug=True)

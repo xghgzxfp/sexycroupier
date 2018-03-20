@@ -1,9 +1,31 @@
 <html>
 	<head>
+         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+         <meta http-equiv="pragma" content="no-cache" />
 		<title>{{t}}</title>
 	</head>
 <div id="profile" class="tabcontent">
   <h3>Hello, {{ username }}!</h3>
+
+    {% if userteams[0] %}
+  	<b><big>Teams you own:</big></b>
+	<table>
+	    <tr id="row">
+	    	<th>Team Name</th>
+	    	<th>Cost</th>
+	    </tr>
+	{% for userteam in userteams %}
+		<tr>
+			<td class="Team">{{ userteam["team"] }}</td>
+			<td class="Cost">{{ userteam["price"] }}</td>
+        </tr>
+	{% endfor %}
+	</table>
+	{% else %}
+		<h4>You don't have any team yet!!</h4>
+	{% endif %}
+
+
 </div>
 
 <div id="game" class="tabcontent">
@@ -11,7 +33,7 @@
 </div>
 
 <div id="rules" class="tabcontent">
-  <h3>hahaha</h3>
+  <h3>Rules should be here</h3>
 </div>
 
 
