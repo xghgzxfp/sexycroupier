@@ -20,24 +20,27 @@ def login():
 	#Display the login screen
     error = None
     if request.method == 'GET':
-	    return render_template('login.html', t=title, error=error)
+        if session.get('logged_in') != None:
+            return redirect(url_for('index'))
+        return render_template('login.html', t=title, error=error)
     else:
         name = request.values.get("username")
         pw = request.values.get("password")
         if users.find({"username": name}).limit(1).count() == 0:
             error = "user doesn't exist"
         elif users.find( { "username": name }, { "password": 1 } )[0]["password"] != pw:
-            print ("expected pw: ", users.find( { "username": name }, { "password": 1 } )[0]["password"] )
             error = "incorrect password"
         else:
             session["logged_in"] = True
+            session["logged_user"] = name
             flash("You were sucessfully logged in!")
-            return redirect(url_for('login'))
+            return redirect(url_for('index'))
         return render_template('login.html', t=title, error=error)
 
 @app.route('/logout')
 def logout():
     session.pop('logged_in', None)
+    session.pop('logged_user', None)
     flash('You were logged out')
     return redirect(url_for('login'))
 
@@ -60,6 +63,14 @@ def register():
             flash("Your account has been set up sucessfully")
             return redirect("/login")
         return render_template('register.html', t=title, error=error)
+
+@app.route('/index')
+def index():
+    if session.get('logged_in') == None:
+        flash('please login')
+        return redirect("/login")
+    print( session['logged_user'])
+    return render_template('index.html', username = session['logged_user'])
 
 if __name__ == "__main__":
     app.run(debug=True)
