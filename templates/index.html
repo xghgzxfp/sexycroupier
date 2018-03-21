@@ -1,14 +1,24 @@
 <html>
 	<head>
-         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-         <meta http-equiv="pragma" content="no-cache" />
+         <meta content="charset=utf-8" />
 		<title>{{t}}</title>
 	</head>
-<div id="profile" class="tabcontent">
-  <h3>Hello, {{ username }}!</h3>
+
+
+    <div align="right">
+        {% if not session.logged_in %}
+        <p>{{session['logged_user']}}</p>
+        {% else %}
+        <a href="{{ url_for('logout') }}">log out</a>
+        {% endif %}
+    </div>
+
+    <div id="profile" class="tabcontent">
+    <h3>Hello, {{ username }}!</h3>
 
     {% if userteams[0] %}
   	<b><big>Teams you own:</big></b>
+
 	<table>
 	    <tr id="row">
 	    	<th>Team Name</th>
@@ -24,12 +34,10 @@
 	{% else %}
 		<h4>You don't have any team yet!!</h4>
 	{% endif %}
-
-
-</div>
+    </div>
 
 <div id="game" class="tabcontent">
-  <h3>Below is today and tomorrow's game</h3>
+    <h3>Below is today and tomorrow's game</h3><br />
 </div>
 
 <div id="rules" class="tabcontent">
@@ -40,6 +48,7 @@
 <button class="tablink" onclick="openPage('profile', this)" id="defaultOpen">My Profile</button>
 <button class="tablink" onclick="openPage('game', this)">Recent Games</button>
 <button class="tablink" onclick="openPage('rules', this)">Rules</button>
+
 <script>
 function openPage(pageName,elmnt) {
     var i, tabcontent, tablinks;

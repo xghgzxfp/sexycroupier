@@ -1,5 +1,8 @@
-{% extends "layout.html" %}
-{% block body %}
+<!doctype html>
+<title>{{t}}</title>
+<meta content="charset=utf-8" />
+<link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+  <div>
   <h2>Register</h2>
   {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
   <form action="{{ url_for('register') }}" method=post>
@@ -15,4 +18,4 @@
       </div>
     </dl>
   </form>
-{% endblock %}
+</div>

@@ -3,7 +3,7 @@
 
 from flask import Flask, session, flash, render_template,request,redirect,url_for # For flask implementation
 from pymongo import MongoClient # Database connector
-
+from datetime import datetime, timedelta
 
 client = MongoClient('localhost', 27017)    #Configure the connection to the database
 db = client.worldcup    #Select the database
@@ -69,12 +69,18 @@ def index():
     if session.get('logged_in') == None:
         flash('please login')
         return redirect("/login")
-    print( session['logged_user'])
+    #print( session['logged_user'])
 
-    return render_template('index.html', username = session['logged_user'], userteams = db.auction.find({"owner" : session['logged_user']}))
+
+    userteams = db.auction.find({"owner" : session['logged_user']})
+
+    today = datetime(2016, 6, 11, 0, 0)
+    games = db.schedule.find({"date" : {'$gte': today}});
+
+    return render_template('index.html', username = session['logged_user'], userteams = userteams, bets = games)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(port=8010)
 # Careful with the debug mode..
 
 
