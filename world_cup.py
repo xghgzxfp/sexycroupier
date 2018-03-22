@@ -4,6 +4,7 @@
 from flask import Flask, session, flash, render_template,request,redirect,url_for # For flask implementation
 from pymongo import MongoClient # Database connector
 from datetime import datetime, timedelta
+from bson.objectid import ObjectId
 
 client = MongoClient('localhost', 27017)    #Configure the connection to the database
 db = client.worldcup    #Select the database
@@ -13,6 +14,11 @@ app = Flask(__name__)
 app.config['SESSION_TYPE'] = 'memcached'
 app.config['SECRET_KEY'] = 'super secret key'
 title = "2018 World Cup"
+
+def redirect_url():
+    return request.args.get('next') or \
+           request.referrer or \
+           url_for('index')
 
 @app.route("/")
 @app.route("/login", methods = ['GET' , 'POST'])
@@ -73,15 +79,55 @@ def index():
 
 
     userteams = db.auction.find({"owner" : session['logged_user']})
-
     today = datetime(2016, 6, 11, 0, 0)
-    games = db.schedule.find({"date" : {'$gte': today}});
+    dayaftertomorrow = today + timedelta(days=2)
 
-    return render_template('index.html', username = session['logged_user'], userteams = userteams, bets = games)
+    games=db.schedule.aggregate([
+        {"$match": {"$and" : [ {"date": {"$gte": today}}, {"date": {"$lt" : dayaftertomorrow}}] }},
+        {"$sort": {"date": 1}},
+        {"$lookup": {
+            "localField": "id",
+            "from": "betinfo",
+            "foreignField": "match_id",
+            "as": "binfo"
+        }},
+        {"$unwind": "$binfo"},
+        {"$match": {"binfo.player_id": session["logged_user"]}},
+        {"$sort": {"binfo.ctime": -1}},
+        {"$limit": 1},
+        {"$project": {
+            "id" : 1,
+            "date": 1,
+            "a.team": 1,
+            "a.handicap": 1,
+            "b.team": 1,
+            "b.handicap": 1,
+            "binfo.team": 1,
+            "_id": 0
+        }}
+    ])
+
+    return render_template('index.html', username = session['logged_user'], userteams = userteams, games = list(games))
+
+@app.route('/betupdate', methods = ['GET', 'POST'])
+def betupdate():
+
+    match_id = request.values.get("matchid")
+    new_choice = request.values.get("choice")
+    print(request.values)
+
+    db.betinfo.insert({
+        "match_id": match_id,
+        "player_id": session["logged_user"],
+        "team": db.schedule.find_one({"id" : match_id})[new_choice]["team"],
+        "ctime": datetime.now()
+    })
+
+    redir = redirect_url()
+
+    return redirect(redir)
 
 if __name__ == "__main__":
     app.run(port=8010)
 # Careful with the debug mode..
-
-
 

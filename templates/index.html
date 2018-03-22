@@ -38,6 +38,45 @@
 
 <div id="game" class="tabcontent">
     <h3>Below is today and tomorrow's game</h3><br />
+
+    {% if games[0] %}
+    <b><big>Games coming:</big></b><br />
+	<table>
+	    <tr id="bet_entry">
+	    	<th>Match Date</th>
+	    	<th>Team A</th>
+	    	<th>Team B</th>
+	    	<th>Handicap A</th>
+            <th>Handicap B</th>
+            <th>Your Choice</th>
+		    <th>Modify</th>
+	    </tr>
+	{% for game in games %}
+		<tr>
+            <td>{{ game["date"] }}</td>
+			<td>{{ game["a"]["team"] }}</td>
+			<td>{{ game["b"]["team"] }}</td>
+			<td width="10">{{ game["a"]["handicap"] }}</td>
+            <td width="10">{{ game["b"]["handicap"] }}</td>
+            <td>
+                {{ game["binfo"]["team"] }}
+            </td>
+            <td>
+                <form action="/betupdate">
+				<input type="hidden" name="matchid" value={{game["id"]}}>
+                <select name="choice" required>
+			        <option value="a">{{game["a"]["team"]}}</option>
+			        <option value="b">{{game["b"]["team"]}}</option>
+		        </select>
+                <input type="submit" value="Submit">
+                </form>
+            </td>
+		</tr>
+	{% endfor %}
+	</table>
+	{% else %}
+		<h4>No bet today!</h4>
+	{% endif %}
 </div>
 
 <div id="rules" class="tabcontent">
