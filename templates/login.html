@@ -1,9 +1,11 @@
 <!doctype html>
 <title>{{t}}</title>
 <meta content="charset=utf-8" />
-<link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
 
-  <div>
+ <div class="container">
+ <div class="row">
+ <div class="col">
     <h2>Login</h2>
     {% if error %}<p class=error><strong>Error:</strong> {{ error }}{% endif %}
     <form action="{{ url_for('login') }}" method=post>
@@ -12,9 +14,11 @@
       <dd><input type=text name=username>
       <dt>Password:
       <dd><input type=password name=password>
-      <dd><input type=submit value=Login>
-      <button type="button" onclick="window.location.href='/register'">Register</button>
+      <dd><input class="btn btn-primary" type=submit value=Login>
+      <button type="button" class="btn btn-primary" onclick="window.location.href='/register'">Register</button>
     </dl>
     </form>
+ </div>
+ </div>
   </div>
 
