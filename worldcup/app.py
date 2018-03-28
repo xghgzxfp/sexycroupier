@@ -4,14 +4,13 @@ from datetime import datetime, timedelta
 from flask import Flask, session, flash, render_template, request, redirect, url_for
 from pymongo import MongoClient
 
+from . import config
 
-client = MongoClient('localhost', 27017)
-db = client.worldcup
-users = db.user
 
 app = Flask(__name__)
-app.config['SESSION_TYPE'] = 'memcached'
-app.config['SECRET_KEY'] = 'super secret key'
+app.config.from_object(config)
+db = app.db = MongoClient(app.config['MONGO_URI'])[app.config['MONGO_DBNAME']]
+
 title = "2018 World Cup"
 
 
@@ -33,9 +32,9 @@ def login():
     else:
         name = request.values.get("username")
         pw = request.values.get("password")
-        if users.find({"username": name}).limit(1).count() == 0:
+        if db.users.find({"username": name}).limit(1).count() == 0:
             error = "user doesn't exist"
-        elif users.find({"username": name}, {"password": 1})[0]["password"] != pw:
+        elif db.users.find({"username": name}, {"password": 1})[0]["password"] != pw:
             error = "incorrect password"
         else:
             session["logged_in"] = True
@@ -63,12 +62,12 @@ def register():
         pw = request.values.get("password")
         pw1 = request.values.get("password2")
 
-        if users.find({"username": name}).limit(1).count() == 1:
+        if db.users.find({"username": name}).limit(1).count() == 1:
             error = "your username is already registered"
         elif pw != pw1:
             error = "password input not same"
         else:
-            users.insert({"username": name, "password": pw})
+            db.users.insert({"username": name, "password": pw})
             flash("Your account has been set up sucessfully")
             return redirect("/login")
         return render_template('register.html', t=title, error=error)
