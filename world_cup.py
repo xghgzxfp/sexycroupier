@@ -1,32 +1,33 @@
-#!/usr/local/bin/python3
-# coding=utf-8
+# coding: utf-8
 
-from flask import Flask, session, flash, render_template,request,redirect,url_for # For flask implementation
-from pymongo import MongoClient # Database connector
 from datetime import datetime, timedelta
-from bson.objectid import ObjectId
+from flask import Flask, session, flash, render_template, request, redirect, url_for
+from pymongo import MongoClient
 
-client = MongoClient('localhost', 27017)    #Configure the connection to the database
-db = client.worldcup    #Select the database
-users = db.user #Select the collection of user login
+
+client = MongoClient('localhost', 27017)
+db = client.worldcup
+users = db.user
 
 app = Flask(__name__)
 app.config['SESSION_TYPE'] = 'memcached'
 app.config['SECRET_KEY'] = 'super secret key'
 title = "2018 World Cup"
 
+
 def redirect_url():
     return request.args.get('next') or \
-           request.referrer or \
-           url_for('index')
+        request.referrer or \
+        url_for('index')
+
 
 @app.route("/")
-@app.route("/login", methods = ['GET' , 'POST'])
+@app.route("/login", methods=['GET', 'POST'])
 def login():
-	#Display the login screen
+        # Display the login screen
     error = None
     if request.method == 'GET':
-        if session.get('logged_in') != None:
+        if session.get('logged_in'):
             return redirect(url_for('index'))
         return render_template('login.html', t=title, error=error)
     else:
@@ -34,7 +35,7 @@ def login():
         pw = request.values.get("password")
         if users.find({"username": name}).limit(1).count() == 0:
             error = "user doesn't exist"
-        elif users.find( { "username": name }, { "password": 1 } )[0]["password"] != pw:
+        elif users.find({"username": name}, {"password": 1})[0]["password"] != pw:
             error = "incorrect password"
         else:
             session["logged_in"] = True
@@ -43,6 +44,7 @@ def login():
             return redirect(url_for('index'))
         return render_template('login.html', t=title, error=error)
 
+
 @app.route('/logout')
 def logout():
     session.pop('logged_in', None)
@@ -50,7 +52,8 @@ def logout():
     flash('You were logged out')
     return redirect(url_for('login'))
 
-@app.route('/register' , methods = ['GET' , 'POST'])
+
+@app.route('/register', methods=['GET', 'POST'])
 def register():
     error = None
     if request.method == 'GET':
@@ -70,20 +73,21 @@ def register():
             return redirect("/login")
         return render_template('register.html', t=title, error=error)
 
+
 @app.route('/index')
 def index():
-    if session.get('logged_in') == None:
+    if not session.get('logged_in'):
         flash('please login')
         return redirect("/login")
-    #print( session['logged_user'])
+    # print( session['logged_user'])
 
-
-    userteams = db.auction.find({"owner" : session['logged_user']})
+    userteams = db.auction.find({"owner": session['logged_user']})
     today = datetime(2016, 6, 11, 0, 0)
     dayaftertomorrow = today + timedelta(days=2)
 
-    games=db.schedule.aggregate([
-        {"$match": {"$and" : [ {"date": {"$gte": today}}, {"date": {"$lt" : dayaftertomorrow}}] }},
+    games = db.schedule.aggregate([
+        {"$match": {"$and": [{"date": {"$gte": today}},
+                             {"date": {"$lt": dayaftertomorrow}}]}},
         {"$sort": {"date": 1}},
         {"$lookup": {
             "localField": "id",
@@ -96,7 +100,7 @@ def index():
         {"$sort": {"binfo.ctime": -1}},
         {"$limit": 1},
         {"$project": {
-            "id" : 1,
+            "id": 1,
             "date": 1,
             "a.team": 1,
             "a.handicap": 1,
@@ -107,9 +111,10 @@ def index():
         }}
     ])
 
-    return render_template('index.html', username = session['logged_user'], userteams = userteams, games = list(games))
+    return render_template('index.html', username=session['logged_user'], userteams=userteams, games=list(games))
 
-@app.route('/betupdate', methods = ['GET', 'POST'])
+
+@app.route('/betupdate', methods=['GET', 'POST'])
 def betupdate():
 
     match_id = request.values.get("matchid")
@@ -119,7 +124,7 @@ def betupdate():
     db.betinfo.insert({
         "match_id": match_id,
         "player_id": session["logged_user"],
-        "team": db.schedule.find_one({"id" : match_id})[new_choice]["team"],
+        "team": db.schedule.find_one({"id": match_id})[new_choice]["team"],
         "ctime": datetime.now()
     })
 
@@ -127,7 +132,6 @@ def betupdate():
 
     return redirect(redir)
 
+
 if __name__ == "__main__":
     app.run(port=8010)
-# Careful with the debug mode..
-
