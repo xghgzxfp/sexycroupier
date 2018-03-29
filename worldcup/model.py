@@ -1,5 +1,6 @@
 # coding: utf-8
 
+from worldcup.app import db
 
 class Gambler:
     id = "gambler's name"
@@ -42,7 +43,24 @@ class Match:
 
 def insert_match(cup, a, b): return
 def update_match_handicap(match, a, b): return
-def update_match_gamblers(match, team, gambler): return
+
+def update_match_gamblers(match, team, gambler):
+    """Update betting decision in database
+    
+    """
+
+    list_out = ("a" if team == "b" else "b") + ".player"
+    list_in = team + '.player'
+    db.match.update(
+        {"id" : match},
+        {
+             "$pull"      : { list_out : gambler},
+             "$addToSet"  : { list_in : gambler}
+        }
+    )
+    return
+
+
 def update_match_score(match, a, b): return
 def update_match_weight(match, weight): return
 def find_matches(cup): return

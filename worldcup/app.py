@@ -3,13 +3,14 @@
 from datetime import datetime, timedelta
 from flask import Flask, session, flash, render_template, request, redirect, url_for
 from pymongo import MongoClient
-
 from . import config
 
 
 app = Flask(__name__)
 app.config.from_object(config)
 db = app.db = MongoClient(app.config['MONGO_URI'])[app.config['MONGO_DBNAME']]
+
+from . import model
 
 title = "2018 World Cup"
 
@@ -84,51 +85,24 @@ def index():
     today = datetime(2016, 6, 11, 0, 0)
     dayaftertomorrow = today + timedelta(days=2)
 
-    games = db.schedule.aggregate([
-        {"$match": {"$and": [{"date": {"$gte": today}},
-                             {"date": {"$lt": dayaftertomorrow}}]}},
-        {"$sort": {"date": 1}},
-        {"$lookup": {
-            "localField": "id",
-            "from": "betinfo",
-            "foreignField": "match_id",
-            "as": "binfo"
-        }},
-        {"$unwind": "$binfo"},
-        {"$match": {"binfo.player_id": session["logged_user"]}},
-        {"$sort": {"binfo.ctime": -1}},
-        {"$limit": 1},
-        {"$project": {
-            "id": 1,
-            "date": 1,
-            "a.team": 1,
-            "a.handicap": 1,
-            "b.team": 1,
-            "b.handicap": 1,
-            "binfo.team": 1,
-            "_id": 0
-        }}
-    ])
+    games = db.match.find({"$and": [{"date": {"$gte": today}},
+                             {"date": {"$lt": dayaftertomorrow}}]});
 
     return render_template('index.html', username=session['logged_user'], userteams=userteams, games=list(games))
 
 
-@app.route('/betupdate', methods=['GET', 'POST'])
-def betupdate():
+@app.route('/bet', methods=['POST'])
+def bet():
 
-    match_id = request.values.get("matchid")
-    new_choice = request.values.get("choice")
+    match_id = request.values.get("match_id")
+    new_choice = request.values.get("betchoice")
     print(request.values)
 
-    db.betinfo.insert({
-        "match_id": match_id,
-        "player_id": session["logged_user"],
-        "team": db.schedule.find_one({"id": match_id})[new_choice]["team"],
-        "ctime": datetime.now()
-    })
+    ## function place holder:
+    ## check if current time is an effective time point to modify the bet choice
 
+    model.update_match_gamblers(match_id, new_choice, session["logged_user"])
     redir = redirect_url()
-
     return redirect(redir)
 
 

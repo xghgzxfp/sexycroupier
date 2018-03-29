@@ -2,7 +2,10 @@
 	<head>
          <meta content="charset=utf-8" />
 		<title>{{t}}</title>
-        <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+		<style>
+    		.container{text-align: center}
+  		</style>
 	</head>
 
 
@@ -37,48 +40,89 @@
 	{% endif %}
     </div>
 
+
 <div id="game" class="tabcontent">
     <h3>Below is today and tomorrow's game</h3><br />
 
     {% if games[0] %}
-    <b><big>Games coming:</big></b><br />
-	<table>
-	    <tr id="bet_entry">
-	    	<th>Match Date</th>
-	    	<th>Team A</th>
-	    	<th>Team B</th>
-	    	<th>Handicap A</th>
-            <th>Handicap B</th>
-            <th>Your Choice</th>
-		    <th>Modify</th>
-	    </tr>
+
 	{% for game in games %}
-		<tr>
-            <td>{{ game["date"] }}</td>
-			<td>{{ game["a"]["team"] }}</td>
-			<td>{{ game["b"]["team"] }}</td>
-			<td width="10">{{ game["a"]["handicap"] }}</td>
-            <td width="10">{{ game["b"]["handicap"] }}</td>
-            <td>
-                {{ game["binfo"]["team"] }}
-            </td>
-            <td>
-                <form action="/betupdate">
-				<input type="hidden" name="matchid" value={{game["id"]}}>
-                <select name="choice" required>
-			        <option value="a">{{game["a"]["team"]}}</option>
-			        <option value="b">{{game["b"]["team"]}}</option>
-		        </select>
-                <input type="submit" value="Submit">
-                </form>
-            </td>
-		</tr>
+	<!-- match -->
+	<div class="container text-center">
+    	<!-- match detail -->
+    	<div class="row align-items-center">
+        	<div class="col">
+            	<div class="team">{{game["a"]["team"]}}</div>
+            	<div class="score">
+					{% if game["a"]["score"] is defined %}
+						{{game["a"]["score"]}}
+					{% else %}
+						-
+					{% endif %}
+				</div>
+        	</div>
+        	<div class="col">
+            	<div>{{game["date"]}}</div>
+				<div>Handicap</div>
+            	<div class="score">
+					{% if game["a"]["handicap"] is defined %}
+						{{game["a"]["handicap"]}}
+					{% else %}
+						-
+					{% endif %}
+					:
+					{% if game["b"]["handicap"] is defined %}
+						{{game["b"]["handicap"]}}
+					{% else %}
+						-
+					{% endif %}
+				</div>
+        	</div>
+        	<div class="col">
+            	<div class="team">{{game["b"]["team"]}}</div>
+            	<div class="score">
+					{% if game["b"]["score"] is defined %}
+						{{game["b"]["score"]}}
+					{% else %}
+						-
+					{% endif %}
+				</div>
+        	</div>
+    	</div>
+    	<!-- bet detail -->
+    	<div class="row align-items-center">
+        	<div class="col">
+				{% for playerA in game["a"]["player"] %}
+            	<div>{{playerA}}</div>
+				{% endfor %}
+        	</div>
+        	<div class="col">
+				{% for playerB in game["b"]["player"] %}
+            	<div>{{playerB}}</div>
+				{% endfor %}
+        	</div>
+    	</div>
+  		<!-- action -->
+  		<form action="/bet" method="post">
+    		<div class="row align-items-center">
+				<input type="hidden" name="match_id" value={{game["id"]}}>
+      			<div class="col">
+        			<button class="btn btn-primary" type="submit" name="betchoice" value="a">Bet</button>
+      			</div>
+      			<div class="col">
+        			<button class="btn btn-primary" type="submit" name="betchoice" value="b">Bet</button>
+      			</div>
+    		</div>
+  		</form>
+	</div>
 	{% endfor %}
-	</table>
+
 	{% else %}
 		<h4>No bet today!</h4>
 	{% endif %}
 </div>
+
+
 
 <div id="rules" class="tabcontent">
   <h3>Rules should be here</h3>
