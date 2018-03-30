@@ -1,149 +1,127 @@
 <html>
-	<head>
-         <meta content="charset=utf-8" />
-		<title>{{t}}</title>
-    	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
-		<style>
-    		.container{text-align: center}
-  		</style>
-	</head>
 
+<head>
+    <meta content="charset=utf-8" />
+    <title>{{t}}</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <style>
+        .container {
+            text-align: center
+        }
+    </style>
+</head>
 
-    <div align="right">
-        {% if not session.logged_in %}
-        <p>{{session['logged_user']}}</p>
-        {% else %}
-        <a href="{{ url_for('logout') }}">log out</a>
-        {% endif %}
-    </div>
+<div align="right">
+    {% if not session.logged_in %}
+    <p>{{session['logged_user']}}</p>
+    {% else %}
+    <a href="{{ url_for('logout') }}">log out</a> {% endif %}
+</div>
 
-    <div id="profile" class="tabcontent">
-    <h3>Hello, {{ username }}!</h3>
+<div id="profile" class="tabcontent">
+    <h3>Hello, {{ username }}!</h3> {% if userteams[0] %}
+    <b><big>Teams you own:</big></b>
 
-    {% if userteams[0] %}
-  	<b><big>Teams you own:</big></b>
-
-	<table>
-	    <tr id="row">
-	    	<th>Team Name</th>
-	    	<th>Cost</th>
-	    </tr>
-	{% for userteam in userteams %}
-		<tr>
-			<td class="Team">{{ userteam["team"] }}</td>
-			<td class="Cost">{{ userteam["price"] }}</td>
+    <table>
+        <tr id="row">
+            <th>Team Name</th>
+            <th>Cost</th>
         </tr>
-	{% endfor %}
-	</table>
-	{% else %}
-		<h4>You don't have any team yet!!</h4>
-	{% endif %}
-    </div>
-
+        {% for userteam in userteams %}
+        <tr>
+            <td class="Team">{{ userteam["team"] }}</td>
+            <td class="Cost">{{ userteam["price"] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <h4>You don't have any team yet!!</h4> {% endif %}
+</div>
 
 <div id="game" class="tabcontent">
-    <h3>Below is today and tomorrow's game</h3><br />
-
-    {% if games[0] %}
-
-	{% for game in games %}
-	<!-- match -->
-	<div class="container text-center">
-    	<!-- match detail -->
-    	<div class="row align-items-center">
-        	<div class="col">
-            	<div class="team">{{game["a"]["team"]}}</div>
-            	<div class="score">
-					{% if game["a"]["score"] is defined %}
-						{{game["a"]["score"]}}
-					{% else %}
-						-
-					{% endif %}
-				</div>
-        	</div>
-        	<div class="col">
-            	<div>{{game["date"]}}</div>
-				<div>Handicap</div>
-            	<div class="score">
-					{% if game["a"]["handicap"] is defined %}
-						{{game["a"]["handicap"]}}
-					{% else %}
-						-
-					{% endif %}
-					:
-					{% if game["b"]["handicap"] is defined %}
-						{{game["b"]["handicap"]}}
-					{% else %}
-						-
-					{% endif %}
-				</div>
-        	</div>
-        	<div class="col">
-            	<div class="team">{{game["b"]["team"]}}</div>
-            	<div class="score">
-					{% if game["b"]["score"] is defined %}
-						{{game["b"]["score"]}}
-					{% else %}
-						-
-					{% endif %}
-				</div>
-        	</div>
-    	</div>
-    	<!-- bet detail -->
-    	<div class="row align-items-center">
-        	<div class="col">
-				{% for playerA in game["a"]["player"] %}
-            	<div>{{playerA}}</div>
-				{% endfor %}
-        	</div>
-        	<div class="col">
-				{% for playerB in game["b"]["player"] %}
-            	<div>{{playerB}}</div>
-				{% endfor %}
-        	</div>
-    	</div>
-  		<!-- action -->
-  		<form action="/bet" method="post">
-    		<div class="row align-items-center">
-				<input type="hidden" name="match_id" value={{game["id"]}}>
-      			<div class="col">
-        			<button class="btn btn-primary" type="submit" name="betchoice" value="a">Bet</button>
-      			</div>
-      			<div class="col">
-        			<button class="btn btn-primary" type="submit" name="betchoice" value="b">Bet</button>
-      			</div>
-    		</div>
-  		</form>
-	</div>
-	{% endfor %}
-
-	{% else %}
-		<h4>No bet today!</h4>
-	{% endif %}
+    <h3>Below is today and tomorrow's game</h3>
+    <br /> {% if games[0] %} {% for game in games %}
+    <hr>
+    <!-- match -->
+    <div class="card text-center" style="margin: 1rem">
+        <div class="card-body">
+            <div class="container">
+                <!-- match detail -->
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="team">{{game["a"]["team"]}}</div>
+                        <div class="score">
+                            {% if game["a"]["score"] %} {{game["a"]["score"]}} {% else %} - {% endif %}
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div>{{game["match_time"]}}</div>
+                        <div>盘口</div>
+                        <div class="score">
+                            {% if game["handicap_display"] is defined %} {{game["handicap_display"]}} {% endif %}
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="team">{{game["b"]["team"]}}</div>
+                        <div class="score">
+                            {% if game["b"]["score"] %} {{game["b"]["score"]}} {% else %} - {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <hr>
+                <!-- bet detail -->
+                <div class="row align-items-center">
+                    <div class="col">
+                        {% for playerA in game["a"]["player"] %}
+                        <div>{{playerA}}</div>
+                        {% endfor %}
+                    </div>
+                    <div class="col">
+                        {% for playerB in game["b"]["player"] %}
+                        <div>{{playerB}}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <hr>
+                <!-- action -->
+                <form action="/bet" method="post">
+                    <div class="row align-items-center">
+                        <input type="hidden" name="match_id" value={{game[ "id"]}}>
+                        <div class="col">
+                            <button class="btn btn-primary" type="submit" name="betchoice" value="a">投注</button>
+                        </div>
+                        <div class="col">
+                            <button class="btn btn-primary" type="submit" name="betchoice" value="b">投注</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endfor %} {% else %}
+    <h4>No bet today!</h4> {% endif %}
 </div>
-
-
 
 <div id="rules" class="tabcontent">
-  <h3>Rules should be here</h3>
+    <h3>Rules should be here</h3>
 </div>
-
 
 <button class="tablink" onclick="openPage('profile', this)" id="defaultOpen">My Profile</button>
 <button class="tablink" onclick="openPage('game', this)">Recent Games</button>
 <button class="tablink" onclick="openPage('rules', this)">Rules</button>
 
 <script>
-function openPage(pageName,elmnt) {
-    var i, tabcontent, tablinks;
-    tabcontent = document.getElementsByClassName("tabcontent");
-    for (i = 0; i < tabcontent.length; i++) {
-        tabcontent[i].style.display = "none";
+    function openPage(pageName, elmnt) {
+        var i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tabcontent");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+        }
+        tablinks = document.getElementsByClassName("tablink");
+        document.getElementById(pageName).style.display = "block";
     }
-    tablinks = document.getElementsByClassName("tablink");
-    document.getElementById(pageName).style.display = "block";
-}
-// Get the element with id="defaultOpen" and click on it
-document.getElementById("defaultOpen").click();
+    // Get the element with id="defaultOpen" and click on it
+    document.getElementById("defaultOpen").click();
 </script>
+
 </html>
