@@ -39,9 +39,9 @@ def generate_handicap_pair(handicap_display):
 
     handicaps = handicap_display.split('/')
     if len(handicaps) == 1:
-        return [sign * handicap_dic[handicaps[0]], sign * handicap_dic[handicaps[0]]]
+        return (sign * handicap_dic[handicaps[0]], sign * handicap_dic[handicaps[0]])
     else:
-        return [sign * handicap_dic[handicaps[0]], sign * handicap_dic[handicaps[1]]]
+        return (sign * handicap_dic[handicaps[0]], sign * handicap_dic[handicaps[1]])
 
 
 class Match:
@@ -52,18 +52,17 @@ class Match:
     handicap_display = None
     a = dict(
         team=None,
-        handicap=None,
         premium=None,
         score=None,
         gamblers=[],
     )
     b = dict(
         team=None,
-        handicap=None,
         premium=None,
         score=None,
         gamblers=[],
     )
+    handicap=(None, None)
     weight = None
     '''
     def __init__(self, league_name, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b, weight=2):
@@ -72,16 +71,14 @@ class Match:
         self.match_time = match_time
         self.handicap_display = handicap_display
 
-        handicaps = generate_handicap_pair(handicap_display)
+        self.handicap = generate_handicap_pair(handicap_display)
         self.a = dict(
             team=team_a,
-            handicap=float(handicaps[0]),
             premium=float(premium_a),
             score=float(score_a) if score_a != '' else None
         )
         self.b = dict(
             team=team_b,
-            handicap=float(handicaps[1]),
             premium=float(premium_b),
             score=float(score_b) if score_b != '' else None
         )
