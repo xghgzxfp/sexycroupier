@@ -8,6 +8,9 @@ name = "pypi"
 [packages]
 flask = "*"
 pymongo = "*"
+requests = "*"
+"bs4" = "*"
+"html5lib" = "*"
 
 [requires]
 python_version = "3.6"

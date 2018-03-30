@@ -3,6 +3,7 @@
 import requests
 from datetime import datetime
 from bs4 import BeautifulSoup
+from worldcup.model import Match
 
 
 def get_match_page(league, year, month, day, url='http://odds.sports.sina.com.cn/odds/index.php'):
@@ -42,7 +43,7 @@ def parse_scores(score_str):
         return [scores[0], scores[1]]
 
 
-def parse_match_data(league, year, month, day):
+def get_match_data(league, year, month, day):
     result = list()
 
     page = get_match_page(league, year, month, day)
@@ -61,14 +62,13 @@ def parse_match_data(league, year, month, day):
             team_a = teams[0]
             team_b = teams[1]
             premium_a = cells[3].find(text=True).replace(u'\xa0', u'')
-            handicap = cells[4].find(text=True).replace(u'\xa0', u'')
+            handicap_display = cells[4].find(text=True).replace(u'\xa0', u'')
             premium_b = cells[5].find(text=True).replace(u'\xa0', u'')
             match_time = datetime.strptime(year + month + day + " " + match_time_hhmm, "%Y%m%d %H:%M")
-
             scores = parse_scores(cells[15])
             score_a = scores[0]
             score_b = scores[1]
-            match_entry = [league_name, match_time, team_a, team_b, handicap, premium_a, premium_b, score_a, score_b]
+            match_entry = Match(league_name, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b)
             result.append(match_entry)
     return result
 
@@ -78,5 +78,6 @@ if __name__ == "__main__":
     print match data that
     Match Date, Team A, Team B, Premium A, Handicap, Premium B, ...
     """
-    for match in parse_match_data('', '2018', '03', '31'):
+    matches = get_match_data('意甲', '2018', '03', '31')
+    for match in matches:
         print(match)
