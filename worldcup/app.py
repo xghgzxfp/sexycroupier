@@ -82,11 +82,11 @@ def index():
     # print( session['logged_user'])
 
     userteams = db.auction.find({"owner": session['logged_user']})
-    today = datetime(2016, 6, 11, 0, 0)
+    today = datetime.now()
     dayaftertomorrow = today + timedelta(days=2)
 
-    games = db.match.find({"$and": [{"date": {"$gte": today}},
-                             {"date": {"$lt": dayaftertomorrow}}]});
+    games = db.match.find({"$and": [{"match_time": {"$gte": today}},
+                             {"match_time": {"$lt": dayaftertomorrow}}]})
 
     return render_template('index.html', username=session['logged_user'], userteams=userteams, games=list(games))
 
