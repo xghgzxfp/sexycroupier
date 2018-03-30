@@ -3,7 +3,7 @@
 import requests
 from datetime import datetime
 from bs4 import BeautifulSoup
-from worldcup.model import Match
+from worldcup.model import insert_match
 
 
 def get_match_page(league, year, month, day, url='http://odds.sports.sina.com.cn/odds/index.php'):
@@ -49,6 +49,7 @@ def get_match_data(league, year, month, day):
     page = get_match_page(league, year, month, day)
     soup = BeautifulSoup(page, "html5lib")
     table = soup.find("table", {"class": "TableStyle"})
+    # ignore hidden rows
     tbodies = table.findAll("tbody", {"id": None})
 
     for tbody in tbodies:
@@ -68,9 +69,15 @@ def get_match_data(league, year, month, day):
             scores = parse_scores(cells[15])
             score_a = scores[0]
             score_b = scores[1]
-            match_entry = Match(league_name, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b)
+            match_entry = [league_name, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b]
             result.append(match_entry)
     return result
+
+
+def populate_match(league, year, month, day):
+    for match in get_match_data(league, year, month, day):
+        insert_match(*match)
+    return
 
 
 if __name__ == "__main__":
@@ -78,6 +85,4 @@ if __name__ == "__main__":
     print match data that
     Match Date, Team A, Team B, Premium A, Handicap, Premium B, ...
     """
-    matches = get_match_data('意甲', '2018', '03', '31')
-    for match in matches:
-        print(match)
+    populate_match('意甲', '2018', '03', '31')

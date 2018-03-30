@@ -25,25 +25,6 @@ def insert_auction(cup, team, gambler, price): return
 def find_auction(cup, team): return
 
 
-def generate_match_id(match_time, team_a, team_b):
-    res = match_time.strftime('%Y%m%d%H%M') + '-' + team_a + '-' + team_b
-    return res
-
-
-def generate_handicap_pair(handicap_display):
-    if handicap_display[0] == '受':
-        sign = -1
-        handicap_display = handicap_display[1:]
-    else:
-        sign = 1
-
-    handicaps = handicap_display.split('/')
-    if len(handicaps) == 1:
-        return (sign * handicap_dic[handicaps[0]], sign * handicap_dic[handicaps[0]])
-    else:
-        return (sign * handicap_dic[handicaps[0]], sign * handicap_dic[handicaps[1]])
-
-
 class Match:
     '''
     id = None   # <%Y%m%d%H%M>-<team-a>-<team-b>
@@ -75,12 +56,14 @@ class Match:
         self.a = dict(
             team=team_a,
             premium=float(premium_a),
-            score=float(score_a) if score_a != '' else None
+            score=float(score_a) if score_a != '' else None,
+            player=[]
         )
         self.b = dict(
             team=team_b,
             premium=float(premium_b),
-            score=float(score_b) if score_b != '' else None
+            score=float(score_b) if score_b != '' else None,
+            player=[]
         )
         self.weight = weight
 
@@ -95,12 +78,28 @@ class Match:
         return ""
 
 
+def generate_match_id(match_time, team_a, team_b):
+    res = match_time.strftime('%Y%m%d%H%M') + '-' + team_a + '-' + team_b
+    return res
 
-def insert_match(match):
-    if db.match.find({"id" : match.id}).limit(1).count() > 0:
-        return
+
+def generate_handicap_pair(handicap_display):
+    if handicap_display[0] == '受':
+        sign = -1
+        handicap_display = handicap_display[1:]
+    else:
+        sign = 1
+
+    handicaps = handicap_display.split('/')
+    if len(handicaps) == 1:
+        return (sign * handicap_dic[handicaps[0]], sign * handicap_dic[handicaps[0]])
+    else:
+        return (sign * handicap_dic[handicaps[0]], sign * handicap_dic[handicaps[1]])
 
 
+def insert_match(league_name, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b):
+    new_match = Match(league_name, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b)
+    db.match.insert(new_match.__dict__)
     return
 
 
@@ -136,12 +135,4 @@ def generate_series(cup): return
 
 
 if __name__ == "__main__":
-    temp1 = Match('意甲', datetime(2018, 3, 31, 18, 30), '受半球/一球', '博洛尼亚', '罗马', '1.98', '1.88', '', '')
-    temp2 = Match('意甲', datetime(2018, 3, 31, 21, 0), '一球/球半', '亚特兰大', '乌迪内斯', '2', '1.86', '', '')
-    #temp3 = Match('意甲', datetime(2018, 3, 31, 21, 0), '受平手/半球', '卡利亚里', '都灵', '1.78', '2.08', '', '')
-    #temp4 = Match('意甲', datetime(2018, 3, 31, 21, 0), '一球', '佛罗伦萨', '克罗托内', '1.8', '2.06', '', '')
-
-    print(temp1)
-    print(temp2)
-    #print(temp3)
-    #print(temp4)
+    insert_match('意甲', datetime(2018, 3, 31, 18, 30), '受半球/一球', '博洛尼亚', '罗马', '1.98', '1.88', '', '')
