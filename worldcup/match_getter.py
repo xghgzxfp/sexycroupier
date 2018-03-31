@@ -77,29 +77,22 @@ def get_match_data(league, date):
 def populate_match(league, date):
     for match in get_match_data(league, date):
         insert_match(*match)
+        if match[-2] != '' and match[-1] != '':
+            update_match_score(match[1], match[3], match[4], match[-2], match[-1])
     return
 
-def update_match_scores(league, date):
-    for match in get_match_data(league, date):
-        update_match_score(match[1], match[3], match[4], match[7], match[8])
-    return
 
-def populate_and_update(league, current_date=datetime.now()):
-    populate_match(league, current_date)
-    populate_match(league, current_date + timedelta(days=1))
-    populate_match(league, current_date + timedelta(days=2))
-    populate_match(league, current_date + timedelta(days=3))
-    populate_match(league, current_date + timedelta(days=4))
-    populate_match(league, current_date + timedelta(days=5))
-    populate_match(league, current_date + timedelta(days=6))
-    populate_match(league, current_date + timedelta(days=7))
-    update_match_scores(league, current_date)
+def populate_and_update(league, k, current_date=datetime.now()):
+    """
+    :param league: league filter
+    :param current_date: the date from which getter starts
+    :param k: get match data within k days
+    :return:
+    """
+    for day_diff in range(0, k + 1):
+        populate_match(league, current_date + timedelta(days=day_diff))
     return
 
 
 if __name__ == "__main__":
-    """
-    print match data that
-    Match Date, Team A, Team B, Premium A, Handicap, Premium B, ...
-    """
-    populate_and_update('意甲')
+    populate_and_update('英超', 3, datetime(2018, 3, 31))
