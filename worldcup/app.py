@@ -85,15 +85,14 @@ def index():
     today = datetime.now()
     dayaftertomorrow = today + timedelta(days=2)
 
-    games = db.match.find({"$and": [{"match_time": {"$gte": today}},
-                             {"match_time": {"$lt": dayaftertomorrow}}]})
-
+    #games = db.match.find({"$and": [{"match_time": {"$gte": today}},
+    #                         {"match_time": {"$lt": dayaftertomorrow}}]}).sort({"match_time": -1})
+    games = db.match.find().sort([("match_time", -1)])
     return render_template('index.html', username=session['logged_user'], userteams=userteams, games=list(games))
 
 
 @app.route('/bet', methods=['POST'])
 def bet():
-
     match_id = request.values.get("match_id")
     new_choice = request.values.get("betchoice")
     print(request.values)
