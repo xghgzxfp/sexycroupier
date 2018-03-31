@@ -1,6 +1,6 @@
 # coding: utf-8
 
-handicap_dic = {
+HANDICAP_DICT = {
     '平手':0,
     '半球':0.5,
     '一球':1,
