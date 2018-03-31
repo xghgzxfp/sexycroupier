@@ -1,7 +1,7 @@
 # coding: utf-8
 
 from worldcup.app import db
-from worldcup.constant import handicap_dic
+from worldcup.constant import HANDICAP_DICT
 from datetime import datetime
 
 class Gambler:
@@ -85,9 +85,9 @@ def generate_handicap_pair(handicap_display):
 
     handicaps = handicap_display.split('/')
     if len(handicaps) == 1:
-        return (sign * handicap_dic[handicaps[0]], sign * handicap_dic[handicaps[0]])
+        return sign * HANDICAP_DICT[handicaps[0]], sign * HANDICAP_DICT[handicaps[0]]
     else:
-        return (sign * handicap_dic[handicaps[0]], sign * handicap_dic[handicaps[1]])
+        return sign * HANDICAP_DICT[handicaps[0]], sign * HANDICAP_DICT[handicaps[1]]
 
 
 def insert_match(league_name, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b):
@@ -101,11 +101,14 @@ def insert_match(league_name, match_time, handicap_display, team_a, team_b, prem
 
 def update_match_score(match_time, team_a, team_b, score_a, score_b):
     match_id = generate_match_id(match_time, team_a, team_b)
+    if score_a == '' or score_b == '':
+        return
     db.match.update(
         {"id": match_id},
         {"$set": {"a.score": int(score_a), "b.score": int(score_b)}}
     )
     return
+
 
 def update_match_handicap(match_time, team_a, team_b, handicap_display):
     match_id = generate_match_id(match_time, team_a, team_b)
@@ -114,6 +117,7 @@ def update_match_handicap(match_time, team_a, team_b, handicap_display):
         {"$set": {"handicap": generate_handicap_pair(handicap_display)}}
     )
     return
+
 
 def update_match_gamblers(matchid, team, gambler):
     """Update betting decision in database
@@ -131,6 +135,7 @@ def update_match_weight(match_time, team_a, team_b, weight):
         {"$set": {"weight": float(weight)}}
     )
     return
+
 
 def find_matches(cup): return
 
