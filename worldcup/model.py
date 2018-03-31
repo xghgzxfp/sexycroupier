@@ -46,7 +46,16 @@ class Match:
     handicap=(None, None)
     weight = None
     '''
-    def __init__(self, league_name, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b, weight=2):
+    def __init__(self, *args, **kwargs):
+        if 'id' in kwargs:
+            self.__dict__ = kwargs
+            return
+        league_name, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b = args
+        assert all(map(lambda x: x is not None, args))
+        if 'weight' in kwargs:
+            self.weight = kwargs['weight']
+        else:
+            self.weight = 2
         self.id = generate_match_id(match_time, team_a, team_b)
         self.league = league_name
         self.match_time = match_time
@@ -65,10 +74,9 @@ class Match:
             score=float(score_b) if score_b != '' else None,
             player=[]
         )
-        self.weight = weight
 
     def __str__(self):
-        return self.__dict__
+        return str(self.__dict__)
 
 
 def generate_match_id(match_time, team_a, team_b):
@@ -137,7 +145,8 @@ def update_match_weight(match_time, team_a, team_b, weight):
     return
 
 
-def find_matches(cup): return
+def find_matches(cup):
+    return list(map(lambda x: Match(**x), db.match.find({'league': cup}).sort('id')))
 
 
 class Series:
