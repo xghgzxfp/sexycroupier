@@ -5,7 +5,7 @@ from worldcup.constant import HANDICAP_DICT
 from datetime import datetime
 
 class Gambler:
-    id = "gambler's name"
+    name = "gambler's name"
     openid = 'wechat openid'
 
 
@@ -44,7 +44,7 @@ class Match:
         score=None,
         gamblers=[],
     )
-    handicap=(None, None)
+    handicap = (None, None)
     weight = None
     '''
     def __init__(self, *args, **kwargs):
