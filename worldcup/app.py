@@ -95,8 +95,6 @@ def index():
 def bet():
     match_id = request.values.get("match_id")
     new_choice = request.values.get("betchoice")
-    print(request.values)
-
     ## function place holder:
     ## check if current time is an effective time point to modify the bet choice
 
