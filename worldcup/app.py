@@ -75,7 +75,8 @@ def auth_complete():
         except (IOError, ValueError, KeyError) as e:
             retry -= 1
             if not retry:
-                raise e     # 获取 openid 失败，需重试
+                # 获取 openid 失败
+                return abort(401)
         else:
             break
 
@@ -96,8 +97,9 @@ def auth_signup():
     name = request.form.get('gambler')
     openid = session.get('openid')
 
+    # 正常流程下 name 和 openid 均不可能为空
     if not name or not openid:
-        return abort(404)
+        return abort(401)
 
     model.insert_gambler(name, openid)
 
