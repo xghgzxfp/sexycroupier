@@ -41,6 +41,23 @@ Options:
 ...
 ```
 
+可以将常用环境变量写入 `.env` 文件以方便使用，`pipenv run` 会自动读取 `.env`
+
+```
+$ cat .env
+FLASK_APP=worldcup/app.py
+FLASK_DEBUG=1
+MONGO_URI=mongodb://1.2.3.4:1234
+$ pipenv run flask run
+Loading .env environment variables…
+ * Serving Flask app "worldcup.app"
+ * Forcing debug mode on
+ * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 123-456-789
+```
+
 
 #### 增加新依赖
 
@@ -48,6 +65,11 @@ Options:
 
     $ pipenv install xxx
     $ pipenv install xxx==1.2.3
+
+如果需要增加只在开发时使用的依赖，如测试或调试相关的依赖，请安装至 `[dev-packages]`
+
+    $ pipenv install --dev xxx
+
 
 #### 进行单元测试
 
