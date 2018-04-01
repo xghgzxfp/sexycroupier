@@ -39,7 +39,7 @@ def parse_scores(score_str):
     if '-' not in scores:
         return ['', '']
     else:
-        scores = score_str.split('-')
+        scores = scores.split('-')
         return [scores[0], scores[1]]
 
 
