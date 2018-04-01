@@ -53,10 +53,10 @@
       <div class="row align-items-center">
         <input type="hidden" name="match_id" value="{{ match['id'] }}">
         <div class="col">
-          <button class="btn btn-primary" type="submit" name="betchoice" value="a">投注</button>
+          <button class="btn btn-primary" type="submit" name="betchoice" value="a"{% if g.me.name in match["a"]["gamblers"] %} disabled="true"{% endif %}>投注</button>
         </div>
         <div class="col">
-          <button class="btn btn-primary" type="submit" name="betchoice" value="b">投注</button>
+          <button class="btn btn-primary" type="submit" name="betchoice" value="b"{% if g.me.name in match["b"]["gamblers"] %} disabled="true"{% endif %}>投注</button>
         </div>
       </div>
     </form>
