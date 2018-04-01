@@ -87,13 +87,13 @@ class Match:
             team=team_a,
             premium=float(premium_a),
             score=float(score_a) if score_a != '' else None,
-            player=[]
+            gamblers=[]
         )
         self.b = dict(
             team=team_b,
             premium=float(premium_b),
             score=float(score_b) if score_b != '' else None,
-            player=[]
+            gamblers=[]
         )
         self.result = None
 
@@ -101,7 +101,7 @@ class Match:
         if self.a['score'] is None or self.b['score'] is None:
             return
         asc, bsc = self.a['score'], self.b['score']
-        self.result = dict([(player, 0) for player in self.a['player'] + self.b['player']])
+        self.result = dict([(gambler, 0) for gambler in self.a['gamblers'] + self.b['gamblers']])
         for handicap in self.handicap:
             if asc > bsc + handicap:
                 winner, loser = self.a, self.b
@@ -110,15 +110,15 @@ class Match:
             else:
                 continue
             stack = self.weight / len(self.handicap)
-            reward_sum = stack * len(loser['player'])
-            if len(winner['player']) > 0:
-                winner_reward = reward_sum / len(winner['player'])
+            reward_sum = stack * len(loser['gamblers'])
+            if len(winner['gamblers']) > 0:
+                winner_reward = reward_sum / len(winner['gamblers'])
             else:
                 winner_reward = 0
-            for player in loser['player']:
-                self.result[player] -= stack
-            for player in winner['player']:
-                self.result[player] += winner_reward
+            for gambler in loser['gamblers']:
+                self.result[gambler] -= stack
+            for gambler in winner['gamblers']:
+                self.result[gambler] += winner_reward
 
     def get_profit_and_loss_result(self):
         assert self.result is not None
@@ -180,8 +180,8 @@ def update_match_gamblers(matchid, team, gambler):
     """Update betting decision in database
 
     """
-    list_out = ("a" if team == "b" else "b") + ".player"
-    list_in = team + '.player'
+    list_out = ("a" if team == "b" else "b") + ".gamblers"
+    list_in = team + '.gamblers'
     return db.match.update({"id": matchid}, {"$pull": {list_out: gambler}, "$addToSet": {list_in: gambler}})
 
 
