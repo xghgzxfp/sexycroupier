@@ -98,8 +98,8 @@ def test_gamblers_choose_teams():
     }
     for name, choice in zip(test_names, test_gamblers_choice):
         for a_id, team in zip(matche_ids, choice):
-            assert name in db.match.find_one({'id': a_id})[team]['player']
-            assert name not in db.match.find_one({'id': a_id})[op[team]]['player']
+            assert name in db.match.find_one({'id': a_id})[team]['gamblers']
+            assert name not in db.match.find_one({'id': a_id})[op[team]]['gamblers']
     del_test_matches()
 
 

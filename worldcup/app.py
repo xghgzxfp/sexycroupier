@@ -3,7 +3,6 @@
 import functools
 import requests
 
-from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
 from flask import Flask, session, render_template, request, redirect, url_for, g, abort
@@ -106,30 +105,17 @@ def auth_signup():
     return redirect(url_for('index'))
 
 
-@app.route('/')
+@app.route('/', methods=['GET', 'POST'])
 @authenticated
 def index():
-    userteams = []
-    today = datetime.now()
-    dayaftertomorrow = today + timedelta(days=2)
+    if request.method == 'POST':
+        match_id = request.values.get("match_id")
+        new_choice = request.values.get("betchoice")
 
-    #games = db.match.find({"$and": [{"match_time": {"$gte": today}},
-    #                         {"match_time": {"$lt": dayaftertomorrow}}]}).sort({"match_time": -1})
-    games = db.match.find().sort([("match_time", -1)])
-    return render_template('index.html', username=g.me.name, userteams=userteams, games=list(games))
+        # TODO:
+        # check if current time is an effective time point to modify the bet choice
 
+        model.update_match_gamblers(match_id, new_choice, g.me.name)
 
-@app.route('/bet', methods=['POST'])
-@authenticated
-def bet():
-    match_id = request.values.get("match_id")
-    new_choice = request.values.get("betchoice")
-    ## function place holder:
-    ## check if current time is an effective time point to modify the bet choice
-
-    model.update_match_gamblers(match_id, new_choice, g.me.name)
-    return redirect(next_url())
-
-
-if __name__ == "__main__":
-    app.run(port=8010)
+    matches = model.find_matches(cup='英超')
+    return render_template('index.html', matches=matches)
