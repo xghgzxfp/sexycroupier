@@ -1,0 +1,20 @@
+{% extends "_base.html" %}
+
+{% block body %}
+<div class="card text-align m-2">
+  <div class="card-body">
+    <form action="/auth/signup" method="POST" class="form-inline">
+      <div class="input-group">
+        {% if gambler %}
+        <input type="text" class="form-control" name="gambler" placeholder="中文昵称" value="{{ gambler}}" readonly="true">
+        {% else %}
+        <input type="text" class="form-control" name="gambler" placeholder="中文昵称" required="true">
+        {% endif %}
+        <div class="input-group-append">
+          <input type="submit" value="提交" class="btn btn-primary">
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
