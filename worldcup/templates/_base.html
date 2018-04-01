@@ -5,10 +5,31 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <title>{% block title %}2018 World Cup{% endblock %}</title>
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0/css/bootstrap.min.css">
+  {# <style>*{font-size:.9rem}</style> #}
   {% endblock %}
 </head>
 <body>
-  {% block body %}{% endblock %}
+  <nav class="navbar navbar-expand-sm navbar-dark bg-dark">
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="navbar-brand">2018 World Cup</div>
+    <div class="collapse navbar-collapse" id="navbar">
+      <div class="navbar-nav">
+        <a href="{{ url_for('index') }}" class="nav-item nav-link">Home</a>
+        <a href="#" class="nav-item nav-link disabled">Board</a>
+        <a href="#" class="nav-item nav-link disabled">Rule</a>
+      </div>
+    </div>
+    {% if g.me %}
+    <span class="navbar-text">Hi, {{ g.me.name }}</span>
+    {% endif %}
+  </nav>
+
+  {% block content %}{% endblock %}
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.slim.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0/js/bootstrap.min.js"></script>
 </body>
 </html>
