@@ -11,7 +11,8 @@ class Gambler:
 
 def insert_gambler(name, openid): return
 def find_gambler_by_openid(openid): return
-def find_gamblers(): return
+def find_gamblers():
+    return list(map(lambda x: x['username'], db.users.find()))
 
 
 class Auction:
@@ -74,6 +75,34 @@ class Match:
             score=float(score_b) if score_b != '' else None,
             player=[]
         )
+        self.result = None
+
+    def update_profit_and_loss_result(self):
+        if self.a['score'] is None or self.b['score'] is None:
+            return
+        asc, bsc = self.a['score'], self.b['score']
+        self.result = dict([(player, 0) for player in self.a['player'] + self.b['player']])
+        for handicap in self.handicap:
+            if asc > bsc + handicap:
+                winner, loser = self.a, self.b
+            elif asc < bsc + handicap:
+                winner, loser = self.b, self.a
+            else:
+                continue
+            stack = self.weight / len(self.handicap)
+            reward_sum = stack * len(loser['player'])
+            if len(winner['player']) > 0:
+                winner_reward = reward_sum / len(winner['player'])
+            else:
+                winner_reward = 0
+            for player in loser['player']:
+                self.result[player] -= stack
+            for player in winner['player']:
+                self.result[player] += winner_reward
+
+    def get_profit_and_loss_result(self):
+        assert self.result is not None
+        return self.result
 
     def __str__(self):
         return str(self.__dict__)
@@ -150,15 +179,36 @@ def find_matches(cup):
 
 
 class Series:
+    '''
     cup = '2018-world-cup'
     gambler = 'name1'
     points = dict([
         ('2018060101-france-spain', 17),
         ('2018060103-england-germany', 15),
     ])
+    '''
+    def __init__(self, cup, gambler):
+        self.cup = cup
+        self.gambler = gambler
+        self.latest_score = 0
+        self.points = dict()
+
+    def add_a_point(self, match):
+        result = match.get_profit_and_loss_result()
+        if self.gambler in result:
+            self.latest_score += result[self.gambler]
+        self.points[match.id] = self.latest_score
 
 
-def generate_series(cup): return
+def generate_series(cup):
+    matches = find_matches(cup)
+    gamblers = find_gamblers()
+    gamblers_series = dict([(gambler, Series(cup, gambler)) for gambler in gamblers])
+    for match in matches:
+        match.update_profit_and_loss_result()
+        for gambler_series in gamblers_series.values():
+            gambler_series.add_a_point(match)
+    return gamblers_series
 
 
 if __name__ == "__main__":

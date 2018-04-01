@@ -48,3 +48,9 @@ Options:
 
     $ pipenv install xxx
     $ pipenv install xxx==1.2.3
+
+#### 进行单元测试
+
+```
+$ py.test -v worldcup/test.py
+```
