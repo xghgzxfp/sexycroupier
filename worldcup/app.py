@@ -119,3 +119,12 @@ def index():
 
     matches = model.find_matches(cup='英超')
     return render_template('index.html', matches=matches)
+
+
+@app.route('/board', methods=['GET'])
+@authenticated
+def board():
+    # ret = model.generate_series(cup='英超')
+    # for gambler, series in ret.items():
+
+    return render_template('board.html')

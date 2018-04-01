@@ -2,6 +2,7 @@
 
 from collections import namedtuple
 from datetime import datetime
+from typing import List, Dict
 
 from .app import db
 from .constant import HANDICAP_DICT
@@ -30,7 +31,7 @@ def find_gambler_by_openid(openid: str) -> Gambler:
     return Gambler(name=d['name'], openid=d['openid'])
 
 
-def find_gamblers() -> list([Gambler]):
+def find_gamblers() -> List[Gambler]:
     """获取全部 gambler"""
     return [Gambler(name=d['name'], openid=d['openid']) for d in db.gambler.find().sort('name') if d]
 
@@ -203,8 +204,8 @@ class Series:
     cup = '2018-world-cup'
     gambler = 'name1'
     points = dict([
-        ('2018060101-france-spain', 17),
-        ('2018060103-england-germany', 15),
+        ('201806010100-法国-西班牙', 17),
+        ('201806010330-英格兰-德国', 15),
     ])
     '''
     def __init__(self, cup, gambler):
@@ -220,7 +221,7 @@ class Series:
         self.points[match.id] = self.latest_score
 
 
-def generate_series(cup):
+def generate_series(cup: str) -> Dict[str, List[Series]]:
     matches = find_matches(cup)
     gamblers = find_gamblers()
     gamblers_series = dict([(gambler, Series(cup, gambler)) for gambler in gamblers])

@@ -1,0 +1,54 @@
+{% extends "_base.html" %}
+
+{% block head %}
+{{ super() }}
+<style>body{height:100vh;display:grid;grid-template-rows:auto 1fr}</style>
+{% endblock %}
+
+{% block content %}
+<div class="postion-relative mh-100">
+  <canvas id="board"></canvas>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>
+<script>
+  // line color choices
+  var chartColors = [
+    "rgb(54, 162, 235)",  // blue
+    "rgb(191, 91, 23)",   // brown
+    "rgb(201, 203, 207)", // grey
+    "rgb(255, 159, 64)",  // orange
+    "rgb(153, 102, 255)", // purple
+    "rgb(75, 192, 192)",  // green
+    "rgb(255, 99, 132)",  // red
+    "rgb(65, 174, 118)",  // lightgreen
+    "rgb(255, 205, 86)",  // yellow
+  ];
+
+  // override default chart settings
+  Chart.defaults.global.elements.line.fill = false;
+
+  // draw line chart
+  var ctx = document.getElementById('board').getContext('2d');
+  var chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['比赛1', '比赛2', '比赛3', '比赛4'],
+      datasets: [
+        { label: '迷你钻', data: [2, 4, 6, 10], borderColor: chartColors[0], backgroundColor: chartColors[0] },
+        { label: '巨型钻', data: [4, 2, 4, 7], borderColor: chartColors[1], backgroundColor: chartColors[1] },
+        { label: '小型钻', data: [4, 0, 9, 7], borderColor: chartColors[2], backgroundColor: chartColors[2] },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      tooltips: {
+        mode: 'index',
+        intersect: false,
+      }
+    }
+  })
+</script>
+
+{% endblock %}
