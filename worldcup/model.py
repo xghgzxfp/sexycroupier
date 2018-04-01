@@ -17,6 +17,7 @@ Gambler = namedtuple('Gambler', ['name', 'openid'])
 def insert_gambler(name: str, openid: str) -> Gambler:
     """根据 openid 创建 gambler"""
     gambler = Gambler(name=name, openid=openid)
+    # 用 replace_one(upsert=True) 避免插入重复记录
     db.gambler.replace_one({'openid': openid}, gambler._asdict(), upsert=True)
     return gambler
 

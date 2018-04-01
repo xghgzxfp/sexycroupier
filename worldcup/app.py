@@ -28,7 +28,6 @@ def authenticated(f):
     @functools.wraps(f)
     def _(*args, **kwargs):
         if not g.me:
-            # TODO:
             # 非微信或未设置微信 credentials 则以“迷你钻”身份登录 仅供 DEBUG
             if ('MicroMessenger' not in request.user_agent.string
                     or not (app.config['WECHAT_APPID'] and app.config['WECHAT_APPSECRET'])):
