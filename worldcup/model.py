@@ -1,18 +1,37 @@
 # coding: utf-8
 
-from worldcup.app import db
-from worldcup.constant import HANDICAP_DICT
+from collections import namedtuple
 from datetime import datetime
 
-class Gambler:
-    name = "gambler's name"
-    openid = 'wechat openid'
+from .app import db
+from .constant import HANDICAP_DICT
 
 
-def insert_gambler(name, openid): return
-def find_gambler_by_openid(openid): return
-def find_gamblers():
-    return list(map(lambda x: x['username'], db.users.find()))
+# class Gambler:
+#     name = "gambler's name"
+#     openid = 'wechat openid'
+
+Gambler = namedtuple('Gambler', ['name', 'openid'])
+
+
+def insert_gambler(name: str, openid: str) -> Gambler:
+    """根据 openid 创建 gambler"""
+    gambler = Gambler(name=name, openid=openid)
+    db.gambler.replace_one({'openid': openid}, gambler._asdict(), upsert=True)
+    return gambler
+
+
+def find_gambler_by_openid(openid: str) -> Gambler:
+    """根据 openid 获取 gambler"""
+    d = db.gambler.find_one({'openid': openid})
+    if not d:
+        return
+    return Gambler(name=d['name'], openid=d['openid'])
+
+
+def find_gamblers() -> list([Gambler]):
+    """获取全部 gambler"""
+    return [Gambler(name=d['name'], openid=d['openid']) for d in db.gambler.find().sort('name') if d]
 
 
 class Auction:
@@ -133,7 +152,7 @@ def insert_match(league_name, match_time, handicap_display, team_a, team_b, prem
     if db.match.find({"id": new_match.id}).limit(1).count():
         return
     db.match.insert(new_match.__dict__)
-    return
+    return new_match
 
 
 def update_match_score(match_time, team_a, team_b, score_a, score_b):
