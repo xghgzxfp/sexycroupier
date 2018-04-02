@@ -208,9 +208,9 @@ class Series:
         ('201806010330-英格兰-德国', 15),
     ])
     '''
-    def __init__(self, cup, gambler):
+    def __init__(self, cup, gambler_name):
         self.cup = cup
-        self.gambler = gambler
+        self.gambler = gambler_name
         self.latest_score = 0
         self.points = dict()
 
@@ -223,8 +223,9 @@ class Series:
 
 def generate_series(cup: str) -> Dict[str, List[Series]]:
     matches = find_matches(cup)
-    gamblers = find_gamblers()
-    gamblers_series = dict([(gambler, Series(cup, gambler)) for gambler in gamblers])
+    Gamblers = find_gamblers()
+    gambler_names = [G.name for G in Gamblers]
+    gamblers_series = dict([(gambler_name, Series(cup, gambler_name)) for gambler_name in gambler_names])
     for match in matches:
         match.update_profit_and_loss_result()
         for gambler_series in gamblers_series.values():

@@ -4,6 +4,8 @@ from worldcup.app import db
 from worldcup import match_getter
 from worldcup import model
 import datetime
+import json
+import os
 
 test_names = ['bigzuan', 'midzuan', 'smallzuan', 'minizuan']
 test_gamblers_choice = [
@@ -29,15 +31,32 @@ test_result = {
     'minizuan': 1
 }
 
+
 def add_user():
     for name in test_names:
-        db.users.insert_one({'username': name, 'password': name})
+        db.gambler.insert_one({'name': name, 'openid': name})
 
 
 def del_user():
     for name in test_names:
-        if db.users.find({"username": name}).count() >= 1:
-            db.users.delete_many({'username': name})
+        if db.gambler.find({"name": name}).count() >= 1:
+            db.gambler.delete_many({'name': name})
+
+def load_data(cup, filename):
+    file_path = os.path.join(os.path.dirname(__file__), 'test_data', cup, filename)
+    return json.load(open(file_path, 'r'))
+
+
+def load_users(cup):
+    gamblers = load_data(cup, 'players.json')
+    for gambler in gamblers.keys():
+        model.insert_gambler(gambler, gambler + '_openid')
+    return len(gamblers)
+
+def del_loaded_users(cup):
+    gamblers = load_data(cup, 'players.json')
+    for gambler in gamblers.keys():
+        db.gambler.delete_many({'openid': gambler + '_openid'})
 
 
 def insert_test_matches():
@@ -61,18 +80,26 @@ def users_choose_teams():
 
 def test_add_user():
     del_user()
-    cnt = db.users.find().count()
+    cnt = db.gambler.find().count()
     add_user()
-    assert db.users.find().count() == cnt + len(test_names)
+    assert db.gambler.find().count() == cnt + len(test_names)
 
 
 def test_del_user():
     del_user()
     add_user()
-    cnt = db.users.find().count()
+    cnt = db.gambler.find().count()
     del_user()
-    assert db.users.find().count() == cnt - len(test_names)
+    assert db.gambler.find().count() == cnt - len(test_names)
 
+def test_load_users():
+    cup = 'E_Cup'
+    del_loaded_users(cup)
+    cnt = db.gambler.find().count()
+    n = load_users(cup)
+    assert db.gambler.find().count() == cnt + n
+    del_loaded_users(cup)
+    assert db.gambler.find().count() == cnt
 
 def test_insert_matches():
     del_test_matches()
@@ -101,6 +128,13 @@ def test_gamblers_choose_teams():
             assert name in db.match.find_one({'id': a_id})[team]['gamblers']
             assert name not in db.match.find_one({'id': a_id})[op[team]]['gamblers']
     del_test_matches()
+
+
+def test_find_matches():
+    del_test_matches()
+    insert_test_matches()
+    matches = model.find_matches(test_cup)
+    assert len(matches) == len(test_matches)
 
 
 def test_result_correctness():
