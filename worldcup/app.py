@@ -128,3 +128,11 @@ def board():
     # for gambler, series in ret.items():
 
     return render_template('board.html')
+
+@app.route('/rule', methods=['GET'])
+@authenticated
+def rule():
+    # ret = model.generate_series(cup='英超')
+    # for gambler, series in ret.items():
+
+    return render_template('rule.html')
