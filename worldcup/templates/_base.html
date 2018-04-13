@@ -19,7 +19,7 @@
       <div class="navbar-nav">
         <a href="{{ url_for('index') }}" class="nav-item nav-link">Home</a>
         <a href="{{ url_for('board') }}" class="nav-item nav-link">Board</a>
-        <a href="#" class="nav-item nav-link disabled">Rule</a>
+        <a href="{{ url_for('rule')  }}" class="nav-item nav-link">Rule</a>
       </div>
     </div>
     {% if g.me %}
@@ -31,5 +31,6 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.slim.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.0.0/js/bootstrap.min.js"></script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_CHTML' async></script>
 </body>
 </html>
