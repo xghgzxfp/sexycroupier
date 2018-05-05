@@ -1,9 +1,26 @@
 # -*- coding: utf-8 -*-
 
 import requests
+import pytz
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
-from worldcup.model import insert_match, update_match_score
+from worldcup.model import insert_match, update_match_score, update_match_handicap
+
+tz = pytz.timezone('Asia/Shanghai')
+
+def cutofftime_handicap(match_time):
+    # cutofftime_handicap is the time after which handicap will not change
+    res = datetime(match_time.year, match_time.month, match_time.day, 12, 0, 0)
+    if res > match_time:
+        res -= timedelta(1)
+    return res
+
+def cutofftime_bet(match_time):
+    # cutofftime is the time during which bet is allowed fot the match
+    handicap_time = cutofftime_handicap(match_time)
+    st = datetime(handicap_time.year, handicap_time.month, handicap_time.day, 8, 0, 0)
+    ed = datetime(handicap_time.year, handicap_time.month, handicap_time.day, 20, 0, 0)
+    return {st, ed}
 
 
 def get_match_page(league, date, url='http://odds.sports.sina.com.cn/odds/index.php'):
@@ -77,12 +94,16 @@ def get_match_data(league, date):
 def populate_match(league, date):
     for match in get_match_data(league, date):
         insert_match(*match)
-        if match[-2] != '' and match[-1] != '':
-            update_match_score(match[1], match[3], match[4], match[-2], match[-1])
+        cutofftime = cutofftime_handicap(match[1])
+        # if current time is 12 PM Beijing Time, then update handicap
+        if datetime.now(tz = tz).replace(tzinfo=None) < cutofftime:
+            update_match_handicap(match[1], match[3], match[4], match[2])
+        # if current score not equal to what we have in db, then update
+        update_match_score(match[1], match[3], match[4], match[-2], match[-1])
     return
 
 
-def populate_and_update(league, k, current_date=datetime.now()):
+def populate_and_update(league, k, current_date=datetime.now(tz=tz)):
     """
     :param league: league filter
     :param current_date: the date from which getter starts
@@ -95,4 +116,4 @@ def populate_and_update(league, k, current_date=datetime.now()):
 
 
 if __name__ == "__main__":
-    populate_and_update('英超', 3, datetime(2018, 3, 31))
+    populate_and_update('英超', 3)
