@@ -7,7 +7,7 @@ from functools import lru_cache
 
 from .app import db
 from .constant import HANDICAP_DICT
-
+import logging
 
 # class Gambler:
 #     name = "gambler's name"
@@ -178,6 +178,7 @@ def insert_match(league_name, match_time, handicap_display, team_a, team_b, prem
     if db.match.find({"id": new_match.id}).limit(1).count():
         return
     db.match.insert(new_match.__dict__)
+    logging.info(new_match.id + ' is inserted')
     return new_match
 
 
@@ -189,6 +190,7 @@ def update_match_score(match_time, team_a, team_b, score_a, score_b):
         {"id": match_id},
         {"$set": {"a.score": int(score_a), "b.score": int(score_b)}}
     )
+    logging.info(match_id + ' score updated as ' + score_a + ':' + score_b)
     return
 
 
@@ -198,6 +200,7 @@ def update_match_handicap(match_time, team_a, team_b, handicap_display):
         {"id": match_id},
         {"$set": {"handicap": generate_handicap_pair(handicap_display)}}
     )
+    logging.info(match_id + ' handicap updated as ' + handicap_display)
     return
 
 
