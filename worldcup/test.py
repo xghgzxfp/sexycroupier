@@ -31,6 +31,24 @@ test_result = {
     'minizuan': 1
 }
 
+test_result_with_auctions = {
+    'bigzuan': -2,
+    'midzuan': -5,
+    'smallzuan': 13,
+    'minizuan': 2
+}
+
+test_auctions = [
+    ('水宫', 'bigzuan', 12),
+    ('利浦', 'midzuan', 21),
+    ('白顿', 'smallzuan', 32),
+    ('莱特城', 'minizuan', 1),
+    ('曼特联', 'smallzuan', 3),
+    ('斯西', 'midzuan', 4),
+    ('纽尔联', 'bigzuan', 6),
+    ('哈尔德', 'minizuan', 123),
+]
+
 
 def add_user():
     for name in test_names:
@@ -77,6 +95,14 @@ def users_choose_teams():
         for a_id, team in zip(matche_ids, choice):
             model.update_match_gamblers(a_id, team, name)
 
+def insert_auctions(): 
+    for auc in test_auctions:
+        model.insert_auction(test_cup, *auc)
+
+def delete_auctions(): 
+    for auc in test_auctions:
+        db.auction.delete_many({'cup': test_cup, 'team': auc[0]})
+
 
 def test_add_user():
     del_user()
@@ -110,6 +136,13 @@ def test_insert_matches():
     assert db.match.find().count() == cnt + len(test_matches)
     del_test_matches()
     assert db.match.find().count() == cnt
+
+def test_insert_auctions():
+    delete_auctions()
+    cnt = db.auction.find().count()
+    insert_auctions()
+    assert db.auction.find().count() == cnt + len(test_auctions)
+    delete_auctions()
 
 
 def test_gamblers_choose_teams():
@@ -153,4 +186,23 @@ def test_result_correctness():
     assert cnt == len(test_result)
     del_user()
     del_test_matches()
+
+def test_result_correctness_with_auctions():
+    del_test_matches()
+    insert_test_matches()
+    del_user()
+    add_user()
+    users_choose_teams()
+    insert_auctions()
+    gamblers_series = model.generate_series(test_cup)
+    cnt = 0
+    for gambler, seris in gamblers_series.items():
+        if gambler not in test_result_with_auctions:
+            continue
+        cnt += 1
+        assert seris.latest_score == test_result_with_auctions[gambler], gambler
+    assert cnt == len(test_result_with_auctions)
+    del_user()
+    del_test_matches()
+    delete_auctions()
 

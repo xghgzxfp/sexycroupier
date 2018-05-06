@@ -3,6 +3,7 @@
 from collections import namedtuple
 from datetime import datetime
 from typing import List, Dict
+from functools import lru_cache
 
 from .app import db
 from .constant import HANDICAP_DICT
@@ -35,17 +36,33 @@ def find_gamblers() -> List[Gambler]:
     """获取全部 gambler"""
     return [Gambler(name=d['name'], openid=d['openid']) for d in db.gambler.find().sort('name') if d]
 
-
+'''
 class Auction:
     cup = '2018-world-cup'
     team = 'england'
     gambler = "gambler's name"
     price = 23
+'''    
+Auction = namedtuple('Auction', ['cup', 'team', 'gambler', 'price'])
 
 
-def insert_auction(cup, team, gambler, price): return
-def find_auction(cup, team): return
+def insert_auction(cup, team, gambler, price):
+    auction = Auction(cup=cup, team=team, gambler=gambler, price=price)
+    db.auction.replace_one({'cup': cup, 'team': team}, auction._asdict(), upsert=True)
+    return auction
 
+def find_auction(cup, team): 
+    a = db.auction.find_one({'cup': cup, 'team': team})
+    if not a:
+        return None
+    return Auction(cup=a['cup'], team=a['team'], gambler=a['gambler'], price=a['price'])
+
+# @lru_cache(maxsize=32)
+def get_team_gambler_in_auctions(cup, team):
+    a = find_auction(cup, team)
+    if a is None:
+        return None
+    return a.gambler
 
 class Match:
     '''
@@ -62,7 +79,7 @@ class Match:
     b = dict(
         team=None,
         premium=None,
-        score=None,
+        score=None, 
         gamblers=[],
     )
     handicap = (None, None)
@@ -120,6 +137,13 @@ class Match:
                 self.result[gambler] -= stack
             for gambler in winner['gamblers']:
                 self.result[gambler] += winner_reward
+            winner_team_gambler = get_team_gambler_in_auctions(self.league, winner['team'])
+            loser_team_gambler = get_team_gambler_in_auctions(self.league, loser['team'])
+            if winner_team_gambler in winner['gamblers']:
+                self.result[winner_team_gambler] += winner_reward
+            if loser_team_gambler in winner['gamblers']:
+                self.result[loser_team_gambler] += winner_reward
+
 
     def get_profit_and_loss_result(self):
         assert self.result is not None
