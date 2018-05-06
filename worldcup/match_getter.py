@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import requests
+import logging
 import pytz
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
@@ -11,15 +12,15 @@ tz = pytz.timezone('Asia/Shanghai')
 def cutofftime_handicap(match_time):
     # cutofftime_handicap is the time after which handicap will not change
     res = datetime(match_time.year, match_time.month, match_time.day, 12, 0, 0)
-    if res > match_time:
+    if res >= match_time:
         res -= timedelta(1)
     return res
 
+
 def cutofftime_bet(match_time):
     # cutofftime is the time during which bet is allowed fot the match
-    handicap_time = cutofftime_handicap(match_time)
-    st = datetime(handicap_time.year, handicap_time.month, handicap_time.day, 8, 0, 0)
-    ed = datetime(handicap_time.year, handicap_time.month, handicap_time.day, 20, 0, 0)
+    st = cutofftime_handicap(match_time)
+    ed = match_time
     return {st, ed}
 
 
@@ -32,7 +33,18 @@ def get_match_page(league, date, url='http://odds.sports.sina.com.cn/odds/index.
         'month': date.month,
         'day': date.day
     }
-    r = requests.get(url, form_data)
+
+    retry = 5
+    logging.info('Getting data from website')
+    connected = False
+    while retry and (not connected):
+        logging.debug('Retries left:' + str(retry))
+        try:
+            r = requests.get(url, form_data, timeout=1)
+            connected = True
+        except Exception:
+            retry -= 1
+    logging.info('Request finished')
     r.encoding = 'GBK'
     return r.text
 
@@ -92,11 +104,20 @@ def get_match_data(league, date):
 
 
 def populate_match(league, date):
-    for match in get_match_data(league, date):
+    current_time = datetime.now(tz=tz).replace(tzinfo=None)
+
+    log_file_name = current_time.strftime('/tmp/%y-%m-%d-MatchGetter.log')
+#    logging.basicConfig(filename=log_file_name, level=logging.INFO, format='%(asctime)s %(message)s')
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s %(message)s')
+
+    matches = get_match_data(league, date)
+    logging.info('Match Data Collected from website')
+
+    for match in matches:
         insert_match(*match)
         cutofftime = cutofftime_handicap(match[1])
         # if current time is 12 PM Beijing Time, then update handicap
-        if datetime.now(tz = tz).replace(tzinfo=None) < cutofftime:
+        if current_time < cutofftime:
             update_match_handicap(match[1], match[3], match[4], match[2])
         # if current score not equal to what we have in db, then update
         update_match_score(match[1], match[3], match[4], match[-2], match[-1])
@@ -116,4 +137,4 @@ def populate_and_update(league, k, current_date=datetime.now(tz=tz)):
 
 
 if __name__ == "__main__":
-    populate_and_update('英超', 3)
+    populate_and_update('英超', 0)
