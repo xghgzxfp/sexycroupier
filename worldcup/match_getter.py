@@ -3,6 +3,7 @@
 import requests
 import logging
 import pytz
+import time
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 from worldcup.model import insert_match, update_match_score, update_match_handicap
@@ -37,6 +38,8 @@ def get_match_page(league, date, url='http://odds.sports.sina.com.cn/odds/index.
     retry = 5
     logging.info('Getting data from website')
     connected = False
+    r = None
+
     while retry and (not connected):
         logging.debug('Retries left:' + str(retry))
         try:
@@ -44,6 +47,10 @@ def get_match_page(league, date, url='http://odds.sports.sina.com.cn/odds/index.
             connected = True
         except Exception:
             retry -= 1
+
+    if retry <= 0:
+        raise Exception("Request tried out")
+
     logging.info('Request finished')
     r.encoding = 'GBK'
     return r.text
@@ -136,4 +143,10 @@ def populate_and_update(league, k, current_date=datetime.now(tz=tz)):
 
 
 if __name__ == "__main__":
-    populate_and_update('英超', 0)
+    while(1):
+        try:
+            populate_and_update('阿甲', 0)
+        except Exception as error:
+            logging.info(error.args[0])
+            continue
+        time.sleep(20)
