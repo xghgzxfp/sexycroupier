@@ -11,7 +11,7 @@
       <div class="col">
         <div class="team">{{match["a"]["team"]}}</div>
         <div class="score">
-          {% if match["a"]["score"] %} {{match["a"]["score"]}} {% else %} - {% endif %}
+          {% if match["a"]["score"] is defined %} {{match["a"]["score"]}} {% else %} - {% endif %}
         </div>
       </div>
       <div class="col text-nowrap">
@@ -25,7 +25,7 @@
       <div class="col">
         <div class="team">{{match["b"]["team"]}}</div>
         <div class="score">
-          {% if match["b"]["score"] %} {{match["b"]["score"]}} {% else %} - {% endif %}
+          {% if match["b"]["score"] is defined %} {{match["b"]["score"]}} {% else %} - {% endif %}
         </div>
       </div>
     </div>
