@@ -113,7 +113,7 @@ def get_match_data(league, date):
 def populate_match(league, date):
     current_time = datetime.now(tz=tz).replace(tzinfo=None)
 
-    log_file_name = current_time.strftime('/tmp/%y-%m-%d-MatchGetter.log')
+    log_file_name = 'MatchGetter.log'
     logging.basicConfig(filename=log_file_name, level=logging.INFO, format='%(asctime)s %(message)s')
 
     matches = get_match_data(league, date)
@@ -143,10 +143,7 @@ def populate_and_update(league, k, current_date=datetime.now(tz=tz)):
 
 
 if __name__ == "__main__":
-    while(1):
-        try:
-            populate_and_update('阿甲', 0)
-        except Exception as error:
-            logging.info(error.args[0])
-            continue
-        time.sleep(20)
+    try:
+        populate_and_update('英超', 0)
+    except Exception as error:
+        logging.info(error.args[0])
