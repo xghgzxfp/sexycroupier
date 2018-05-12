@@ -7,7 +7,6 @@ from urllib.parse import urlencode
 
 from flask import Flask, session, render_template, request, redirect, url_for, g, abort
 from pymongo import MongoClient
-
 from . import config
 
 app = Flask(__name__)
@@ -16,7 +15,7 @@ db = app.db = MongoClient(app.config['MONGO_URI'])[app.config['MONGO_DBNAME']]
 
 from . import model
 
-title = "2018 World Cup"
+title = '2018 World Cup'
 
 
 def next_url():
@@ -33,7 +32,7 @@ def authenticated(f):
                 session['openid'] = 'wechat-openid-minizuan'
                 return render_template('signup.html', gambler='迷你钻')
             # 重定向至微信获取授权
-            wx_auth_base = 'https://open.weixin.qq.com/connect/oauth2/authorize?'
+            wx_auth_base = 'https:#open.weixin.qq.com/connect/oauth2/authorize?'
             wx_auth_params = dict(                          # 参数需按字典序 Python 3.6+ dict 确保有序
                 appid=app.config['WECHAT_APPID'],
                 redirect_uri=url_for('auth_complete', next=request.full_path, _external=True,),
@@ -59,7 +58,7 @@ def auth_complete():
 
     code = request.args.get('code')
 
-    wx_token_base = 'https://api.weixin.qq.com/sns/oauth2/access_token?'
+    wx_token_base = 'https:#api.weixin.qq.com/sns/oauth2/access_token?'
     wx_token_params = dict(
         appid=app.config['WECHAT_APPID'],
         secret=app.config['WECHAT_APPSECRET'],
@@ -109,30 +108,64 @@ def auth_signup():
 @authenticated
 def index():
     if request.method == 'POST':
-        match_id = request.values.get("match_id")
-        new_choice = request.values.get("betchoice")
+        match_id = request.values.get('match_id')
+        new_choice = request.values.get('betchoice')
 
         # TODO:
         # check if current time is an effective time point to modify the bet choice
 
         model.update_match_gamblers(match_id, new_choice, g.me.name)
 
-    matches = model.find_matches(cup='英超')
+    matches = model.find_matches(cup=app.config['LEAGUE_NAME'])
     return render_template('index.html', matches=matches)
 
 
 @app.route('/board', methods=['GET'])
 @authenticated
 def board():
-    # ret = model.generate_series(cup='英超')
-    # for gambler, series in ret.items():
+    '''
+    match_labels = ['比赛1', '比赛2', '比赛3', '比赛4']
 
-    return render_template('board.html')
+    datasets = [
+        {'label': '迷你钻', 'data': [2, 4, 6, 10], 'borderColor': chartColors[0], 'backgroundColor': chartColors[0]},
+        {'label': '巨型钻', 'data': [4, 2, 4, 7], 'borderColor': chartColors[1], 'backgroundColor': chartColors[1]},
+        {'label': '小型钻', 'data': [4, 0, 9, 7], 'borderColor': chartColors[2], 'backgroundColor': chartColors[2]},
+    ]
+    '''
+
+    chartColors = [
+        "rgb(54, 162, 235)",  # blue
+        "rgb(191, 91, 23)",  # brown
+        "rgb(201, 203, 207)",  # grey
+        "rgb(255, 159, 64)",  # orange
+        "rgb(153, 102, 255)",  # purple
+        "rgb(75, 192, 192)",  # green
+        "rgb(255, 99, 132)",  # red
+        "rgb(65, 174, 118)",  # lightgreen
+        "rgb(255, 205, 86)",  # yellow
+    ]
+
+    ret = model.generate_series(cup=app.config['LEAGUE_NAME'])
+
+    match_labels = None
+    for label, series in ret.items():
+        if match_labels == None:
+            match_labels = list(series.points.keys())
+        else:
+            break
+
+    match_labels = [model.matchid_to_diplay(match_label) for match_label in match_labels]
+
+    datasets =[{'label' : label,
+                'data' : list(series.points.values()),
+                'borderColor' : chartColors[i],
+                'backgroundColor': chartColors[i]}
+                for i, (label, series) in enumerate(ret.items())]
+
+    return render_template('board.html', match_labels=match_labels, datasets=datasets)
+
 
 @app.route('/rule', methods=['GET'])
 @authenticated
 def rule():
-    # ret = model.generate_series(cup='英超')
-    # for gambler, series in ret.items():
-
     return render_template('rule.html')
