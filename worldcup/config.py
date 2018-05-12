@@ -10,3 +10,5 @@ MONGO_DBNAME = 'worldcup'
 
 WECHAT_APPID = os.getenv('WECHAT_APPID', '')
 WECHAT_APPSECRET = os.getenv('WECHAT_APPSECRET', '')
+
+LEAGUE_NAME = '英超'

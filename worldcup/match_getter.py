@@ -6,7 +6,7 @@ import pytz
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 from worldcup.model import insert_match, update_match_score, update_match_handicap
-import sys
+from worldcup.app import config
 
 tz = pytz.timezone('Asia/Shanghai')
 
@@ -143,11 +143,7 @@ def populate_and_update(league, k, current_date=datetime.now(tz=tz)):
 
 
 if __name__ == "__main__":
-    usage = 'usage: match_getter.py [league name]'
-    if(len(sys.argv) != 2):
-        print(usage)
-
     try:
-        populate_and_update(sys.argv[1], 0)
+        populate_and_update(config['LEAGUE_NAME'], 0)
     except Exception as error:
         logging.info(error.args[0])
