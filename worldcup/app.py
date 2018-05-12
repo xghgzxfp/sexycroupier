@@ -32,7 +32,7 @@ def authenticated(f):
                 session['openid'] = 'wechat-openid-minizuan'
                 return render_template('signup.html', gambler='迷你钻')
             # 重定向至微信获取授权
-            wx_auth_base = 'https:#open.weixin.qq.com/connect/oauth2/authorize?'
+            wx_auth_base = 'https://open.weixin.qq.com/connect/oauth2/authorize?'
             wx_auth_params = dict(                          # 参数需按字典序 Python 3.6+ dict 确保有序
                 appid=app.config['WECHAT_APPID'],
                 redirect_uri=url_for('auth_complete', next=request.full_path, _external=True,),
@@ -58,7 +58,7 @@ def auth_complete():
 
     code = request.args.get('code')
 
-    wx_token_base = 'https:#api.weixin.qq.com/sns/oauth2/access_token?'
+    wx_token_base = 'https://api.weixin.qq.com/sns/oauth2/access_token?'
     wx_token_params = dict(
         appid=app.config['WECHAT_APPID'],
         secret=app.config['WECHAT_APPSECRET'],
