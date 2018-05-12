@@ -248,7 +248,7 @@ class Series:
         self.points[match.id] = self.latest_score
 
 
-def generate_series(cup: str) -> Dict[str, List[Series]]:
+def generate_series(cup: str) -> Dict[str, Series]:
     matches = find_matches(cup)
     Gamblers = find_gamblers()
     gambler_names = [G.name for G in Gamblers]
@@ -258,6 +258,11 @@ def generate_series(cup: str) -> Dict[str, List[Series]]:
         for gambler_series in gamblers_series.values():
             gambler_series.add_a_point(match)
     return gamblers_series
+
+
+def matchid_to_diplay(matchid : str):
+    parsed = matchid.split('-')
+    return parsed[-2] + " vs " + parsed[-1]
 
 
 if __name__ == "__main__":
