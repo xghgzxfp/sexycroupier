@@ -3,10 +3,10 @@
 import requests
 import logging
 import pytz
-import time
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
 from worldcup.model import insert_match, update_match_score, update_match_handicap
+import sys
 
 tz = pytz.timezone('Asia/Shanghai')
 
@@ -113,11 +113,11 @@ def get_match_data(league, date):
 def populate_match(league, date):
     current_time = datetime.now(tz=tz).replace(tzinfo=None)
 
-    log_file_name = 'MatchGetter.log'
+    log_file_name = '/tmp/bet_web/MatchGetter.log'
     logging.basicConfig(filename=log_file_name, level=logging.INFO, format='%(asctime)s %(message)s')
 
     matches = get_match_data(league, date)
-    logging.info('Match Data Collected from website')
+    logging.info('Match Data Collected from website for ' + league)
 
     for match in matches:
         insert_match(*match)
@@ -143,7 +143,11 @@ def populate_and_update(league, k, current_date=datetime.now(tz=tz)):
 
 
 if __name__ == "__main__":
+    usage = 'usage: match_getter.py [league name]'
+    if(len(sys.argv) != 2):
+        print(usage)
+
     try:
-        populate_and_update('英超', 0)
+        populate_and_update(sys.argv[1], 0)
     except Exception as error:
         logging.info(error.args[0])
