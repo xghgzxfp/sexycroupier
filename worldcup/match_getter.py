@@ -115,7 +115,6 @@ def populate_match(league, date):
 
     log_file_name = '/tmp/bet_web/MatchGetter.log'
     logging.basicConfig(filename=log_file_name, level=logging.INFO, format='%(asctime)s %(message)s')
-
     matches = get_match_data(league, date)
     logging.info('Match Data Collected from website for ' + league)
 
@@ -130,7 +129,7 @@ def populate_match(league, date):
     return
 
 
-def populate_and_update(league, k, current_date=datetime.now(tz=tz)):
+def populate_and_update(league, k=1, current_date=datetime.now(tz=tz)):
     """
     :param league: league filter
     :param current_date: the date from which getter starts
@@ -144,6 +143,6 @@ def populate_and_update(league, k, current_date=datetime.now(tz=tz)):
 
 if __name__ == "__main__":
     try:
-        populate_and_update(config['LEAGUE_NAME'], 0)
+        populate_and_update(config.LEAGUE_NAME)
     except Exception as error:
         logging.info(error.args[0])
