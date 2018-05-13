@@ -116,7 +116,7 @@ def index():
 
         model.update_match_gamblers(match_id, new_choice, g.me.name)
 
-    matches = model.find_matches(cup=app.config['LEAGUE_NAME'])
+    matches = model.find_matches_display(cup=app.config['LEAGUE_NAME'])
     return render_template('index.html', matches=matches)
 
 

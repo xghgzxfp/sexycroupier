@@ -228,7 +228,11 @@ def update_match_weight(match_time, team_a, team_b, weight):
 
 
 def find_matches(cup):
-    return list(map(lambda x: Match(**x), db.match.find({'league': cup}).sort('id', -1)))
+    return list(map(lambda x: Match(**x), db.match.find({'league': cup}).sort('id')))
+
+def find_matches_display(cup):
+    ret = find_matches(cup)
+    return reversed(ret)
 
 
 class Series:
