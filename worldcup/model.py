@@ -115,13 +115,15 @@ class Match:
         )
         self.result = None
 
-    def update_profit_and_loss_result(self) -> int:
-        '''
-        :return: 0 as match started, included for calculation
-                 1 as match not started yet, excluded
-        '''
+    def completed(self) -> bool:
         if self.a['score'] is None or self.b['score'] is None:
-            return 1
+            return False
+        else:
+            return True
+
+    def update_profit_and_loss_result(self) -> int:
+        if not self.completed():
+            return
         asc, bsc = self.a['score'], self.b['score']
         self.result = dict([(gambler, 0) for gambler in self.a['gamblers'] + self.b['gamblers']])
         for handicap in self.handicap:
@@ -147,11 +149,12 @@ class Match:
                 self.result[winner_team_gambler] += winner_reward
             if loser_team_gambler in winner['gamblers']:
                 self.result[loser_team_gambler] += winner_reward
-        return 0
-
 
     def get_profit_and_loss_result(self):
-        assert self.result is not None
+        if self.result is None:
+            self.update_profit_and_loss_result()
+        if not self.completed():
+            logging.warning('try to get result of uncompleted match')
         return self.result
 
     def __str__(self):
@@ -259,10 +262,10 @@ def generate_series(cup: str) -> Dict[str, Series]:
     gambler_names = [G.name for G in Gamblers]
     gamblers_series = dict([(gambler_name, Series(cup, gambler_name)) for gambler_name in gambler_names])
     for match in matches:
-        if(match.update_profit_and_loss_result() == 1):
-            continue
-        for gambler_series in gamblers_series.values():
-            gambler_series.add_a_point(match)
+        if match.completed():
+            match.update_profit_and_loss_result()
+            for gambler_series in gamblers_series.values():
+                gambler_series.add_a_point(match)
     return gamblers_series
 
 
