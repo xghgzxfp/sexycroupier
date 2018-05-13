@@ -113,7 +113,7 @@ def get_match_data(league, date):
 def populate_match(league, date):
     current_time = datetime.now(tz=tz).replace(tzinfo=None)
 
-    log_file_name = '/tmp/bet_web/MatchGetter.log'
+    log_file_name = current_time.strftime('/tmp/bet_web/%y-%m-%d-MatchGetter.log') 
     logging.basicConfig(filename=log_file_name, level=logging.INFO, format='%(asctime)s %(message)s')
     matches = get_match_data(league, date)
     logging.info('Match Data Collected from website for ' + league)
