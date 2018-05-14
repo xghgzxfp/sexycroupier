@@ -2,8 +2,6 @@
 
 import functools
 import requests
-import pytz
-from datetime import datetime
 
 from urllib.parse import urlencode
 
@@ -15,7 +13,6 @@ from . import config
 app = Flask(__name__)
 app.config.from_object(config)
 db = app.db = MongoClient(app.config['MONGO_URI'])[app.config['MONGO_DBNAME']]
-from worldcup.match_getter import cutofftime_bet
 from . import model
 
 title = '2018 World Cup'
