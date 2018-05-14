@@ -61,7 +61,19 @@
 </div>
 {% endfor %}
 <script>
-function generateCountDown(countObj, endTime) {
+function deactivateButton(matchObj){
+    var buttons = matchObj.getElementsByClassName("btn btn-primary");
+    var i;
+    for (i = 0; i < buttons.length; i++){
+        buttons[i].disabled = true;
+    }
+}
+
+function generateCountDown_updateButton(matchObj) {
+    var countObj = matchObj.getElementsByClassName("countdown")[0];
+    var endTime = countObj.getAttribute("data-matchtime");
+
+    console.log(matchObj);
 
     // Set the date we're counting down to
     var countDownDate = new Date(endTime).getTime();
@@ -94,14 +106,15 @@ function generateCountDown(countObj, endTime) {
         if (distance < 0) {
             clearInterval(x);
             countObj.innerHTML = "投注已结束";
+            deactivateButton(matchObj);
         }
     }, 1000);
 }
 
-var countdowns = document.getElementsByClassName("countdown");
+var matches = document.getElementsByClassName("card-body container");
 var i;
-for (i = 0; i < countdowns.length; i++){
-     generateCountDown(countdowns[i], countdowns[i].getAttribute("data-matchtime"));
+for (i = 0; i < matches.length; i++){
+     generateCountDown_updateButton(matches[i]);
 }
 </script>
 {% endblock %}
