@@ -1,67 +1,108 @@
 {% extends "_base.html" %}
-
 {% block content %}
-
 {% for match in matches %}
 <!-- match -->
 <div class="card text-center m-2">
-  <div class="card-body container">
-    <!-- match detail -->
-    <div class="row align-items-center">
-      <div class="col">
-        <div class="team">{{match["a"]["team"]}}</div>
-        <div class="score">
-          {% if match["a"]["score"] is none %} - {% else %} {{match["a"]["score"]}} {% endif %}
-        </div>
-      </div>
-      <div class="col text-nowrap">
-        <div>{{ match["match_time"].strftime('%Y-%m-%d') }}</div>
-        <div>{{ match["match_time"].strftime('%H:%M') }}</div>
-        <div>盘口</div>
-        <div class="score">
-          {% if match["handicap_display"] is defined %} {{match["handicap_display"]}} {% endif %}
-        </div>
-      </div>
-      <div class="col">
-        <div class="team">{{match["b"]["team"]}}</div>
-        <div class="score">
-          {% if match["b"]["score"] is none %} - {% else %} {{match["b"]["score"]}} {% endif %}
-        </div>
-      </div>
-    </div>
-
-    <hr>
-
-    <!-- bet detail -->
-    <div class="row align-items-center">
-      <div class="col">
-        {% for gambler in match["a"]["gamblers"] %}
-        <div>{{ gambler }}</div>
-        {% endfor %}
-      </div>
-      <div class="col">
-        {% for gambler in match["b"]["gamblers"] %}
-        <div>{{ gambler }}</div>
-        {% endfor %}
-      </div>
-    </div>
-
-    <hr>
-
-    <!-- action -->
-    <form action="/" method="post">
+   <div class="card-body container">
+      <!-- match detail -->
       <div class="row align-items-center">
-        <input type="hidden" name="match_id" value="{{ match['id'] }}">
-        <div class="col">
-          <button class="btn btn-primary" type="submit" name="betchoice" value="a"{% if g.me.name in match["a"]["gamblers"] %} disabled="true"{% endif %}>投注</button>
-        </div>
-        <div class="col">
-          <button class="btn btn-primary" type="submit" name="betchoice" value="b"{% if g.me.name in match["b"]["gamblers"] %} disabled="true"{% endif %}>投注</button>
-        </div>
+         <div class="col">
+            <div class="team">{{match["a"]["team"]}}</div>
+            <div class="score">
+               {% if match["a"]["score"] is none %} - {% else %} {{match["a"]["score"]}} {% endif %}
+            </div>
+         </div>
+         <div class="col text-nowrap">
+            <div>{{ match["match_time"].strftime('%Y-%m-%d') }}</div>
+            <div>{{ match["match_time"].strftime('%H:%M') }}</div>
+            <div>盘口</div>
+            <div class="score">
+               {% if match["handicap_display"] is defined %} {{match["handicap_display"]}} {% endif %}
+            </div>
+         </div>
+         <div class="col">
+            <div class="team">{{match["b"]["team"]}}</div>
+            <div class="score">
+               {% if match["b"]["score"] is none %} - {% else %} {{match["b"]["score"]}} {% endif %}
+            </div>
+         </div>
       </div>
-    </form>
-  </div>
+      <hr>
+      <!-- bet detail -->
+      <div class="row align-items-center">
+         <div class="col">
+            {% for gambler in match["a"]["gamblers"] %}
+            <div>{{ gambler }}</div>
+            {% endfor %}
+         </div>
+         <div class="col">
+            <p class="countdown" data-matchtime={{ match['match_time'].strftime("%Y-%m-%dT%H:%M:%SZ") }}></p>
+         </div>
+         <div class="col">
+            {% for gambler in match["b"]["gamblers"] %}
+            <div>{{ gambler }}</div>
+            {% endfor %}
+         </div>
+      </div>
+      <hr>
+      <!-- action -->
+      <form action="/" method="post">
+         <div class="row align-items-center">
+            <input type="hidden" name="match_id" value="{{ match['id'] }}">
+            <div class="col">
+               <button class="btn btn-primary" type="submit" name="betchoice" value="a"{% if g.me.name in match["a"]["gamblers"] %} disabled="true"{% endif %}>投注</button>
+            </div>
+            <div class="col">
+               <button class="btn btn-primary" type="submit" name="betchoice" value="b"{% if g.me.name in match["b"]["gamblers"] %} disabled="true"{% endif %}>投注</button>
+            </div>
+         </div>
+      </form>
+   </div>
 </div>
 {% endfor %}
+<script>
+function generateCountDown(countObj, endTime) {
 
+    // Set the date we're counting down to
+    var countDownDate = new Date(endTime).getTime();
+    // Update the count down every 1 second
+    var x = setInterval(function (inner_html) {
+        // Get todays date and time
+        var localDate = new Date();
+        var localTime = localDate.getTime()
+        // obtain local UTC offset and convert to msec
+        var utcOffset = localDate.getTimezoneOffset() * 60000;
+
+        // get current Beijing time
+        var beijingoffset = 8
+        var now =  localTime + utcOffset + beijingoffset * 60000;
+        // Find the distance between now an the count down date
+        var distance = countDownDate - now;
+
+        // Time calculations for days, hours, minutes and seconds
+        var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+        var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+        // Display the result in the element
+        countObj.innerHTML = "距投注结束还有\n" + (hours >   0? hours   + "时 " : "")
+                                              + (minutes > 0? minutes + "分 " : "")
+                                              + (seconds > 0? seconds + "秒 " : "");
+
+        // If the count down is finished, write some text
+        if (distance < 0) {
+            clearInterval(x);
+            countObj.innerHTML = "投注已结束";
+        }
+    }, 1000);
+}
+
+var countdowns = document.getElementsByClassName("countdown");
+var i;
+for (i = 0; i < countdowns.length; i++){
+     generateCountDown(countdowns[i], countdowns[i].getAttribute("data-matchtime"));
+}
+</script>
 {% endblock %}
+
