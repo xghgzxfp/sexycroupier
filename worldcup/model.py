@@ -71,7 +71,7 @@ class Auction:
     team = 'england'
     gambler = "gambler's name"
     price = 23
-'''    
+'''
 Auction = namedtuple('Auction', ['cup', 'team', 'gambler', 'price'])
 
 
@@ -80,7 +80,7 @@ def insert_auction(cup, team, gambler, price):
     db.auction.replace_one({'cup': cup, 'team': team}, auction._asdict(), upsert=True)
     return auction
 
-def find_auction(cup, team): 
+def find_auction(cup, team):
     a = db.auction.find_one({'cup': cup, 'team': team})
     if not a:
         return None
@@ -108,7 +108,7 @@ class Match:
     b = dict(
         team=None,
         premium=None,
-        score=None, 
+        score=None,
         gamblers=[],
     )
     handicap = (None, None)

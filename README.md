@@ -74,5 +74,5 @@ Loading .env environment variables…
 #### 进行单元测试
 
 ```
-$ py.test -v worldcup/test.py
+$ pipenv run py.test -v worldcup/test.py
 ```
