@@ -38,6 +38,7 @@ def cutofftime_bet(match_time):
     ed = match_time
     return (st, ed)
 
+
 def find_match_time_by_match_id(match_id):
     return db.match.find_one({'id': match_id})['match_time']
 
@@ -114,38 +115,38 @@ class Match:
     handicap = (None, None)
     weight = None
     '''
-    def __init__(self, *args, **kwargs):
-        if 'id' in kwargs:
-            self.__dict__ = kwargs
-            self.update()
-            return
-        league_name, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b = args
-        assert all(map(lambda x: x is not None, args))
-        if 'weight' in kwargs:
-            self.weight = kwargs['weight']
-        else:
-            self.weight = 2
-        self.id = generate_match_id(match_time, team_a, team_b)
-        self.league = league_name
+    def __init__(self, league, match_time, handicap_display,
+                 team_a, team_b, premium_a, premium_b, score_a: str, score_b: str,
+                 weight=2, id=None, **kwargs):
+        self.league = league
+
         self.match_time = match_time
         self.handicap_display = handicap_display
-
         self.handicap = generate_handicap_pair(handicap_display)
+
+        score_a = int(score_a) if score_a else None
+        score_b = int(score_b) if score_b else None
+
         self.a = dict(
             team=team_a,
             premium=float(premium_a),
-            score=int(score_a) if score_a != '' else None,
+            score=score_a,
             gamblers=[],
             lose=False,
         )
         self.b = dict(
             team=team_b,
             premium=float(premium_b),
-            score=int(score_b) if score_b != '' else None,
+            score=score_b,
             gamblers=[],
             lose=False,
         )
-        self.result = None
+
+        self.weight = weight
+        self.id = id or generate_match_id(match_time, team_a, team_b)
+
+        self._result = None
+
         self.update()
 
     def completed(self) -> bool:
@@ -165,7 +166,7 @@ class Match:
             if auc is not None:
                 return auc
             else:
-                return Auction(cup=cup, team=team, gambler=None, price=None)        
+                return Auction(cup=cup, team=team, gambler=None, price=None)
         self.a['auction_gambler']=safe_find_auction(self.league, self.a['team']).gambler
         self.a['auction_price']=safe_find_auction(self.league, self.a['team']).price
         self.b['auction_gambler']=safe_find_auction(self.league, self.b['team']).gambler
@@ -188,7 +189,7 @@ class Match:
             required_gamblers = []
         else:
             required_gamblers = list(map(lambda x: x.name, required_gamblers))
-        self.result = dict([(gambler, 0) 
+        self._result = dict([(gambler, 0)
             for gambler in self.a['gamblers'] + self.b['gamblers'] + required_gamblers])
         for handicap in self.handicap:
             if asc > bsc + handicap:
@@ -207,22 +208,22 @@ class Match:
             else:
                 winner_reward = 0
             for gambler in loser['gamblers']:
-                self.result[gambler] -= stack
+                self._result[gambler] -= stack
             for gambler in winner['gamblers']:
-                self.result[gambler] += winner_reward
+                self._result[gambler] += winner_reward
             winner_team_gambler = get_team_gambler_in_auctions(self.league, winner['team'])
             loser_team_gambler = get_team_gambler_in_auctions(self.league, loser['team'])
             if winner_team_gambler in winner['gamblers']:
-                self.result[winner_team_gambler] += winner_reward
+                self._result[winner_team_gambler] += winner_reward
             if loser_team_gambler in winner['gamblers']:
-                self.result[loser_team_gambler] += winner_reward
+                self._result[loser_team_gambler] += winner_reward
 
     def get_profit_and_loss_result(self):
-        if self.result is None:
+        if self._result is None:
             self.update_profit_and_loss_result()
         if not self.completed():
             logging.warning('try to get result of uncompleted match')
-        return self.result
+        return self._result
 
     def __str__(self):
         return str(self.__dict__)
