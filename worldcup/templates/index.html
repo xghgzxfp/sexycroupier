@@ -3,7 +3,7 @@
 {% for match in matches %}
 <!-- match -->
 <div class="card text-center m-2">
-   <div class="card-body container">
+   <div class="card-body container match_container">
       <!-- match detail -->
       <div class="row align-items-center">
          <div class="col">
@@ -36,7 +36,7 @@
             {% endfor %}
          </div>
          <div class="col">
-            <p class="countdown" data-matchtime={{ match['match_time'].strftime("%Y-%m-%dT%H:%M:%SZ") }}></p>
+            <p class="countdown" data-matchtime={{ match['match_time'].timestamp() }}></p>
          </div>
          <div class="col">
             {% for gambler in match["b"]["gamblers"] %}
@@ -71,23 +71,11 @@ function deactivateButton(matchObj){
 
 function generateCountDown_updateButton(matchObj) {
     var countObj = matchObj.getElementsByClassName("countdown")[0];
-    var endTime = countObj.getAttribute("data-matchtime");
+    var countDownDate = countObj.getAttribute("data-matchtime") * 1000 - 1000 * 60 * 60 * 8;
 
-    console.log(matchObj);
-
-    // Set the date we're counting down to
-    var countDownDate = new Date(endTime).getTime();
     // Update the count down every 1 second
     var x = setInterval(function (inner_html) {
-        // Get todays date and time
-        var localDate = new Date();
-        var localTime = localDate.getTime()
-        // obtain local UTC offset and convert to msec
-        var utcOffset = localDate.getTimezoneOffset() * 60000;
-
-        // get current Beijing time
-        var beijingoffset = 8
-        var now =  localTime + utcOffset + beijingoffset * 60000;
+        var now = Date.now();
         // Find the distance between now an the count down date
         var distance = countDownDate - now;
 
@@ -98,9 +86,10 @@ function generateCountDown_updateButton(matchObj) {
         var seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
         // Display the result in the element
-        countObj.innerHTML = "距投注结束还有\n" + (hours >   0? hours   + "时 " : "")
-                                              + (minutes > 0? minutes + "分 " : "")
-                                              + (seconds > 0? seconds + "秒 " : "");
+        countObj.innerHTML = "距投注结束还有<br>" + (days >   0? days   + "天 " : "")
+                                                + (hours >   0? hours   + "时 " : "")
+                                                + (minutes > 0? minutes + "分 " : "")
+                                                + (seconds > 0? seconds + "秒 " : "");
 
         // If the count down is finished, write some text
         if (distance < 0) {
@@ -111,7 +100,7 @@ function generateCountDown_updateButton(matchObj) {
     }, 1000);
 }
 
-var matches = document.getElementsByClassName("card-body container");
+var matches = document.getElementsByClassName("match_container");
 var i;
 for (i = 0; i < matches.length; i++){
      generateCountDown_updateButton(matches[i]);
