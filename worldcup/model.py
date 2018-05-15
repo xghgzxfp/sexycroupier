@@ -1,7 +1,7 @@
 # coding: utf-8
 
 from collections import namedtuple
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Dict
 from functools import lru_cache
 
@@ -14,6 +14,31 @@ import logging
 #     openid = 'wechat openid'
 
 Gambler = namedtuple('Gambler', ['name', 'openid'])
+
+def utc_to_beijing(utc_time):
+    return datetime.fromtimestamp(utc_time.timestamp() + 8 * 3600)
+
+
+def beijing_to_utc(beijing_time):
+    return datetime.fromtimestamp(beijing_time.timestamp() - 8 * 3600)
+
+
+def cutofftime_handicap(match_time):
+    # cutofftime_handicap is the time after which handicap will not change
+    res = datetime(match_time.year, match_time.month, match_time.day, 12, 0, 0)
+    if res >= match_time:
+        res -= timedelta(1)
+    return res
+
+
+def cutofftime_bet(match_time):
+    # cutofftime is the time during which bet is allowed fot the match
+    st = cutofftime_handicap(match_time)
+    ed = match_time
+    return (st, ed)
+
+def find_match_time_by_match_id(match_id):
+    return db.match.find_one({'id': match_id})['match_time']
 
 
 def insert_gambler(name: str, openid: str) -> Gambler:
@@ -212,13 +237,21 @@ def update_match_handicap(match_time, team_a, team_b, handicap_display):
     return
 
 
-def update_match_gamblers(matchid, team, gambler):
+def update_match_gamblers(match_id, team, gambler):
     """Update betting decision in database
 
     """
     list_out = ("a" if team == "b" else "b") + ".gamblers"
     list_in = team + '.gamblers'
-    return db.match.update({"id": matchid}, {"$pull": {list_out: gambler}, "$addToSet": {list_in: gambler}})
+    return db.match.update({"id": match_id}, {"$pull": {list_out: gambler}, "$addToSet": {list_in: gambler}})
+
+
+def update_match_gamblers_check_bet_time(match_id, team, gambler):
+    st, ed = cutofftime_bet(find_match_time_by_match_id(match_id))
+    current_time = datetime.now()
+    current_beijing_time = utc_to_beijing(current_time)
+    if st < current_time and current_time <= ed:
+        update_match_gamblers(match_id, team, gambler)
 
 
 def update_match_weight(match_time, team_a, team_b, weight):
