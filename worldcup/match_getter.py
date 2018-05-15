@@ -89,7 +89,6 @@ def get_match_data(league, date):
             score_a = scores[0]
             score_b = scores[1]
             match_entry = [league_name, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b]
-            print(match_entry)
             result.append(match_entry)
     return result
 
