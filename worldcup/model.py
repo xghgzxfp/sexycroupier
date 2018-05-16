@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from collections import namedtuple
+from collections import namedtuple, OrderedDict
 from datetime import datetime
 from typing import List, Dict
 from functools import lru_cache
@@ -251,7 +251,7 @@ class Series:
         self.cup = cup
         self.gambler = gambler_name
         self.latest_score = 0
-        self.points = dict()
+        self.points = OrderedDict()
 
     def add_a_point(self, match):
         result = match.get_profit_and_loss_result()
