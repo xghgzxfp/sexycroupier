@@ -2,27 +2,10 @@
 
 import requests
 import logging
-import pytz
 from datetime import datetime, timedelta
 from bs4 import BeautifulSoup
-from worldcup.model import insert_match, update_match_score, update_match_handicap
+from worldcup.model import insert_match, update_match_score, update_match_handicap, utc_to_beijing, cutofftime_handicap
 from worldcup.app import config
-
-tz = pytz.timezone('Asia/Shanghai')
-
-def cutofftime_handicap(match_time):
-    # cutofftime_handicap is the time after which handicap will not change
-    res = datetime(match_time.year, match_time.month, match_time.day, 12, 0, 0)
-    if res >= match_time:
-        res -= timedelta(1)
-    return res
-
-
-def cutofftime_bet(match_time):
-    # cutofftime is the time during which bet is allowed fot the match
-    st = cutofftime_handicap(match_time)
-    ed = match_time
-    return {st, ed}
 
 
 def get_match_page(league, date, url='http://odds.sports.sina.com.cn/odds/index.php'):
@@ -111,25 +94,24 @@ def get_match_data(league, date):
 
 
 def populate_match(league, date):
-    current_time = datetime.now(tz=tz).replace(tzinfo=None)
-
+    current_time = datetime.utcnow()
     log_file_name = current_time.strftime('/tmp/bet_web/%y-%m-%d-MatchGetter.log') 
     logging.basicConfig(filename=log_file_name, level=logging.INFO, format='%(asctime)s %(message)s')
     matches = get_match_data(league, date)
     logging.info('Match Data Collected from website for ' + league)
 
     for match in matches:
-        insert_match(*match)
-        cutofftime = cutofftime_handicap(match[1])
+        new_match = insert_match(*match)
+        cutofftime = cutofftime_handicap(new_match.match_time) # Beijing Time
         # if current time is 12 PM Beijing Time, then update handicap
-        if current_time < cutofftime:
-            update_match_handicap(match[1], match[3], match[4], match[2])
+        if utc_to_beijing(current_time) < cutofftime:
+            update_match_handicap(new_match.match_time, new_match.a['team'], new_match.b['team'], new_match.handicap_display)
         # if current score not equal to what we have in db, then update
-        update_match_score(match[1], match[3], match[4], match[-2], match[-1])
+        update_match_score(new_match.match_time, new_match.a['team'], new_match.b['team'], new_match.a['score'], new_match.b['score'])
     return
 
 
-def populate_and_update(league, k=1, current_date=datetime.now(tz=tz)):
+def populate_and_update(league, k=1, current_date=utc_to_beijing(datetime.now())):
     """
     :param league: league filter
     :param current_date: the date from which getter starts

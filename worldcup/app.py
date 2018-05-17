@@ -9,10 +9,10 @@ from flask import Flask, session, render_template, request, redirect, url_for, g
 from pymongo import MongoClient
 from . import config
 
+
 app = Flask(__name__)
 app.config.from_object(config)
 db = app.db = MongoClient(app.config['MONGO_URI'])[app.config['MONGO_DBNAME']]
-
 from . import model
 
 title = '2018 World Cup'
@@ -110,10 +110,6 @@ def index():
     if request.method == 'POST':
         match_id = request.values.get('match_id')
         new_choice = request.values.get('betchoice')
-
-        # TODO:
-        # check if current time is an effective time point to modify the bet choice
-
         model.update_match_gamblers(match_id, new_choice, g.me.name)
 
     matches = model.find_matches_display(cup=app.config['LEAGUE_NAME'])
@@ -154,7 +150,7 @@ def board():
         else:
             break
 
-    match_labels = [model.matchid_to_diplay(match_label) for match_label in match_labels]
+    match_labels = [model.match_id_to_diplay(match_label) for match_label in match_labels]
 
     datasets =[{'label' : label,
                 'data' : list(series.points.values()),
