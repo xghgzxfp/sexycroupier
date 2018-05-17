@@ -1,6 +1,7 @@
 # coding: utf-8
 
-from collections import namedtuple
+
+from collections import namedtuple, OrderedDict
 from datetime import datetime, timedelta
 from typing import List, Dict
 from functools import lru_cache
@@ -60,6 +61,10 @@ def find_gambler_by_openid(openid: str) -> Gambler:
 def find_gamblers() -> List[Gambler]:
     """获取全部 gambler"""
     return [Gambler(name=d['name'], openid=d['openid']) for d in db.gambler.find().sort('name') if d]
+
+def find_required_gamblers() -> List[Gambler]:
+    from .config import REQUIRED_GAMBLERS
+    return list(filter(lambda x: x.name in REQUIRED_GAMBLERS, find_gamblers()))
 
 '''
 class Auction:
@@ -146,11 +151,16 @@ class Match:
         else:
             return True
 
-    def update_profit_and_loss_result(self) -> int:
+    def update_profit_and_loss_result(self, required_gamblers=None) -> int:
         if not self.completed():
             return
         asc, bsc = self.a['score'], self.b['score']
-        self.result = dict([(gambler, 0) for gambler in self.a['gamblers'] + self.b['gamblers']])
+        if required_gamblers is None:
+            required_gamblers = []
+        else:
+            required_gamblers = list(map(lambda x: x.name, required_gamblers))
+        self.result = dict([(gambler, 0) 
+            for gambler in self.a['gamblers'] + self.b['gamblers'] + required_gamblers])
         for handicap in self.handicap:
             if asc > bsc + handicap:
                 winner, loser = self.a, self.b
@@ -158,6 +168,9 @@ class Match:
                 winner, loser = self.b, self.a
             else:
                 continue
+            for gambler in required_gamblers:
+                if gambler not in self.a['gamblers'] and gambler not in self.b['gamblers']:
+                    loser['gamblers'].append(gambler)
             stack = self.weight / len(self.handicap)
             reward_sum = stack * len(loser['gamblers'])
             if len(winner['gamblers']) > 0:
@@ -284,7 +297,7 @@ class Series:
         self.cup = cup
         self.gambler = gambler_name
         self.latest_score = 0
-        self.points = dict()
+        self.points = OrderedDict()
 
     def add_a_point(self, match):
         result = match.get_profit_and_loss_result()
@@ -298,9 +311,10 @@ def generate_series(cup: str) -> Dict[str, Series]:
     Gamblers = find_gamblers()
     gambler_names = [G.name for G in Gamblers]
     gamblers_series = dict([(gambler_name, Series(cup, gambler_name)) for gambler_name in gambler_names])
+    required_gamblers = find_required_gamblers()
     for match in matches:
         if match.completed():
-            match.update_profit_and_loss_result()
+            match.update_profit_and_loss_result(required_gamblers)
             for gambler_series in gamblers_series.values():
                 gambler_series.add_a_point(match)
     return gamblers_series

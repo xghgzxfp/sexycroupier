@@ -12,3 +12,5 @@ WECHAT_APPID = os.getenv('WECHAT_APPID', '')
 WECHAT_APPSECRET = os.getenv('WECHAT_APPSECRET', '')
 
 LEAGUE_NAME = '英超'
+
+REQUIRED_GAMBLERS = ['bigzuan', 'smallzuan', 'midzuan', 'minizuan']
