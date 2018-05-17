@@ -150,7 +150,7 @@ def board():
         else:
             break
 
-    match_labels = [model.matchid_to_diplay(match_label) for match_label in match_labels]
+    match_labels = [model.match_id_to_diplay(match_label) for match_label in match_labels]
 
     datasets =[{'label' : label,
                 'data' : list(series.points.values()),

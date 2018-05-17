@@ -94,20 +94,20 @@ def get_match_data(league, date):
 
 
 def populate_match(league, date):
-    current_time = datetime.now()
+    current_time = datetime.utcnow()
     log_file_name = current_time.strftime('/tmp/bet_web/%y-%m-%d-MatchGetter.log') 
     logging.basicConfig(filename=log_file_name, level=logging.INFO, format='%(asctime)s %(message)s')
     matches = get_match_data(league, date)
     logging.info('Match Data Collected from website for ' + league)
 
     for match in matches:
-        insert_match(*match)
-        cutofftime = cutofftime_handicap(match[1]) # Beijing Time
+        new_match = insert_match(*match)
+        cutofftime = cutofftime_handicap(new_match.match_time) # Beijing Time
         # if current time is 12 PM Beijing Time, then update handicap
         if utc_to_beijing(current_time) < cutofftime:
-            update_match_handicap(match[1], match[3], match[4], match[2])
+            update_match_handicap(new_match.match_time, new_match.a['team'], new_match.b['team'], new_match.handicap_display)
         # if current score not equal to what we have in db, then update
-        update_match_score(match[1], match[3], match[4], match[-2], match[-1])
+        update_match_score(new_match.match_time, new_match.a['team'], new_match.b['team'], new_match.a['score'], new_match.b['score'])
     return
 
 

@@ -5,8 +5,8 @@ from datetime import datetime, timedelta
 from typing import List, Dict
 from functools import lru_cache
 
-from .app import db
-from .constant import HANDICAP_DICT
+from worldcup.app import db
+from worldcup.constant import HANDICAP_DICT
 import logging
 
 # class Gambler:
@@ -129,13 +129,13 @@ class Match:
         self.a = dict(
             team=team_a,
             premium=float(premium_a),
-            score=float(score_a) if score_a != '' else None,
+            score=int(score_a) if score_a != '' else None,
             gamblers=[]
         )
         self.b = dict(
             team=team_b,
             premium=float(premium_b),
-            score=float(score_b) if score_b != '' else None,
+            score=int(score_b) if score_b != '' else None,
             gamblers=[]
         )
         self.result = None
@@ -209,7 +209,7 @@ def insert_match(league_name, match_time, handicap_display, team_a, team_b, prem
     new_match = Match(league_name, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b)
     # do nothing if duplicate
     if db.match.find({"id": new_match.id}).limit(1).count():
-        return
+        return new_match
     db.match.insert(new_match.__dict__)
     logging.info(new_match.id + ' is inserted')
     return new_match
@@ -217,13 +217,13 @@ def insert_match(league_name, match_time, handicap_display, team_a, team_b, prem
 
 def update_match_score(match_time, team_a, team_b, score_a, score_b):
     match_id = generate_match_id(match_time, team_a, team_b)
-    if score_a == '' or score_b == '':
+    if score_a == None or score_b == None:
         return
     db.match.update(
         {"id": match_id},
-        {"$set": {"a.score": int(score_a), "b.score": int(score_b)}}
+        {"$set": {"a.score": score_a, "b.score": score_b}}
     )
-    logging.info(match_id + ' score updated as ' + score_a + ':' + score_b)
+    logging.info(match_id + ' score updated as ' + str(score_a) + ':' + str(score_b))
     return
 
 
@@ -248,7 +248,7 @@ def update_match_gamblers(match_id, team, gambler):
 
 def update_match_gamblers_check_bet_time(match_id, team, gambler):
     st, ed = cutofftime_bet(find_match_time_by_match_id(match_id))
-    current_time = datetime.now()
+    current_time = datetime.utcnow()
     current_beijing_time = utc_to_beijing(current_time)
     if st < current_time and current_time <= ed:
         update_match_gamblers(match_id, team, gambler)
@@ -306,8 +306,8 @@ def generate_series(cup: str) -> Dict[str, Series]:
     return gamblers_series
 
 
-def matchid_to_diplay(matchid : str):
-    parsed = matchid.split('-')
+def match_id_to_diplay(match_id : str):
+    parsed = match_id.split('-')
     return parsed[-2] + " vs " + parsed[-1]
 
 
