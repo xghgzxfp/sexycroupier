@@ -71,31 +71,61 @@ function deactivateButton(matchObj){
 
 function generateCountDown_updateButton(matchObj) {
     var countObj = matchObj.getElementsByClassName("countdown")[0];
-    var countDownDate = countObj.getAttribute("data-matchtime") * 1000 - 1000 * 60 * 60 * 8;
+    var countDownDateTimeStamp = countObj.getAttribute("data-matchtime") * 1000 - 1000 * 60 * 60 * 8;
 
     // Update the count down every 1 second
-    var x = setInterval(function (inner_html) {
+    var x = setInterval(function () {
         var now = Date.now();
-        // Find the distance between now an the count down date
-        var distance = countDownDate - now;
+        var countDownDate = new Date(countDownDateTimeStamp);
+        var handicapCutoff = countDownDate.setHours(12, 0, 0, 0);
 
-        // Time calculations for days, hours, minutes and seconds
-        var days = Math.floor(distance / (1000 * 60 * 60 * 24));
-        var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-        var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+        if( handicapCutoff > countDownDate ){
+            handicapCutoff -= (1000 * 60 * 60 * 24);
+        }
 
-        // Display the result in the element
-        countObj.innerHTML = "距投注结束还有<br>" + (days >   0? days   + "天 " : "")
-                                                + (hours >   0? hours   + "时 " : "")
-                                                + (minutes > 0? minutes + "分 " : "")
-                                                + (seconds > 0? seconds + "秒 " : "");
+        // convert to utc
+        handicapCutoff_utc = handicapCutoff - (1000 * 60 * 60 * 12);
 
-        // If the count down is finished, write some text
-        if (distance < 0) {
-            clearInterval(x);
-            countObj.innerHTML = "投注已结束";
+        if( now < handicapCutoff_utc ){
+            // Find the distance between now and bet start time
+            var distance = handicapCutoff_utc - now;
+            console.log(now);
+            console.log(handicapCutoff_utc);
+            // Time calculations for days, hours, minutes and seconds
+            var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            // Display the result in the element
+            countObj.innerHTML = "盘口尚未确定<br>据投注开始还有<br>" + (days >   0? days   + "天 " : "")
+                                                                  + (hours >   0? hours   + "时 " : "")
+                                                                  + (minutes > 0? minutes + "分 " : "")
+                                                                  + (seconds > 0? seconds + "秒 " : "");
             deactivateButton(matchObj);
+        }
+        else{
+            // Find the distance between now an the count down date
+            var distance = countDownDateTimeStamp - now;
+            if( distance >= 0 ){
+                // Time calculations for days, hours, minutes and seconds
+                var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                // Display the result in the element
+                countObj.innerHTML = "距投注结束还有<br>" + (days >   0? days   + "天 " : "")
+                                                      + (hours >   0? hours   + "时 " : "")
+                                                      + (minutes > 0? minutes + "分 " : "")
+                                                      + (seconds > 0? seconds + "秒 " : "");
+            }
+            // If the count down is finished, write some text
+            else {
+                clearInterval(x);
+                countObj.innerHTML = "投注已结束";
+                deactivateButton(matchObj);
+            }
         }
     }, 1000);
 }
