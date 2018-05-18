@@ -89,8 +89,6 @@ function generateCountDown_updateButton(matchObj) {
         if( now < handicapCutoff_utc ){
             // Find the distance between now and bet start time
             var distance = handicapCutoff_utc - now;
-            console.log(now);
-            console.log(handicapCutoff_utc);
             // Time calculations for days, hours, minutes and seconds
             var days = Math.floor(distance / (1000 * 60 * 60 * 24));
             var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
