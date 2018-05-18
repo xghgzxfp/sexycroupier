@@ -263,7 +263,7 @@ def update_match_gamblers_check_bet_time(match_id, team, gambler):
     st, ed = cutofftime_bet(find_match_time_by_match_id(match_id))
     current_time = datetime.utcnow()
     current_beijing_time = utc_to_beijing(current_time)
-    if st < current_time and current_time <= ed:
+    if st < current_beijing_time <= ed:
         update_match_gamblers(match_id, team, gambler)
 
 

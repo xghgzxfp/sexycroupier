@@ -75,7 +75,8 @@ function generateCountDown_updateButton(matchObj) {
 
     // Update the count down every 1 second
     var x = setInterval(function () {
-        var now = Date.now();
+        var now = new Date();
+        var utcnow = now.getTime() + now.getTimezoneOffset()*60*1000;
         var countDownDate = new Date(countDownDateTimeStamp);
         var handicapCutoff = countDownDate.setHours(12, 0, 0, 0);
 
@@ -84,11 +85,15 @@ function generateCountDown_updateButton(matchObj) {
         }
 
         // convert to utc
-        handicapCutoff_utc = handicapCutoff - (1000 * 60 * 60 * 12);
+        handicapCutoff_utc = handicapCutoff - (1000 * 60 * 60 * 8);
 
-        if( now < handicapCutoff_utc ){
-            // Find the distance between now and bet start time
-            var distance = handicapCutoff_utc - now;
+        console.log(utcnow);
+        console.log(handicapCutoff_utc);
+        console.log(countDownDateTimeStamp);
+
+        if( utcnow < handicapCutoff_utc ){
+            // Find the distance between utcnow and bet start time
+            var distance = handicapCutoff_utc - utcnow;
             // Time calculations for days, hours, minutes and seconds
             var days = Math.floor(distance / (1000 * 60 * 60 * 24));
             var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
@@ -96,15 +101,14 @@ function generateCountDown_updateButton(matchObj) {
             var seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
             // Display the result in the element
-            countObj.innerHTML = "盘口尚未确定<br>据投注开始还有<br>" + (days >   0? days   + "天 " : "")
-                                                                  + (hours >   0? hours   + "时 " : "")
-                                                                  + (minutes > 0? minutes + "分 " : "")
-                                                                  + (seconds > 0? seconds + "秒 " : "");
+            countObj.innerHTML = "盘口未定<br>距投注开始还有<br>"  + (hours >   0? hours   + ":" : "")
+                                                                + (minutes > 0? minutes + ":" : "")
+                                                                + (seconds > 0? seconds : "");
             deactivateButton(matchObj);
         }
         else{
-            // Find the distance between now an the count down date
-            var distance = countDownDateTimeStamp - now;
+            // Find the distance between utcnow an the count down date
+            var distance = countDownDateTimeStamp - utcnow;
             if( distance >= 0 ){
                 // Time calculations for days, hours, minutes and seconds
                 var days = Math.floor(distance / (1000 * 60 * 60 * 24));
@@ -113,10 +117,9 @@ function generateCountDown_updateButton(matchObj) {
                 var seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
                 // Display the result in the element
-                countObj.innerHTML = "距投注结束还有<br>" + (days >   0? days   + "天 " : "")
-                                                      + (hours >   0? hours   + "时 " : "")
-                                                      + (minutes > 0? minutes + "分 " : "")
-                                                      + (seconds > 0? seconds + "秒 " : "");
+                countObj.innerHTML = "距投注结束还有<br>" + (hours >   0? hours   + ":" : "")
+                                                        + (minutes > 0? minutes + ":" : "")
+                                                        + (seconds > 0? seconds : "");
             }
             // If the count down is finished, write some text
             else {

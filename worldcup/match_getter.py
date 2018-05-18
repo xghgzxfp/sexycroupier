@@ -118,7 +118,7 @@ def populate_and_update(league, k=1, current_date=utc_to_beijing(datetime.now())
     :param k: get match data within k days
     :return:
     """
-    for day_diff in range(0, k + 1):
+    for day_diff in range(0, k):
         populate_match(league, current_date + timedelta(days=day_diff))
     return
 
