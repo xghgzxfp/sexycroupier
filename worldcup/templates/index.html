@@ -71,12 +71,12 @@ function deactivateButton(matchObj){
 
 function generateCountDown_updateButton(matchObj) {
     var countObj = matchObj.getElementsByClassName("countdown")[0];
-    var countDownDateTimeStamp = countObj.getAttribute("data-matchtime") * 1000;
 
     // Update the count down every 1 second
     var x = setInterval(function () {
         var now = new Date();
         var utcnow = now.getTime() + now.getTimezoneOffset()*60*1000;
+        var countDownDateTimeStamp = countObj.getAttribute("data-matchtime") * 1000 + now.getTimezoneOffset() * 60 * 1000 - 8 * 60 * 60 * 1000;;
         var countDownDate = new Date(countDownDateTimeStamp);
         var handicapCutoff = countDownDate.setHours(12, 0, 0, 0);
 
