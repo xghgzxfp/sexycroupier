@@ -139,6 +139,7 @@ def board():
         "rgb(255, 99, 132)",  # red
         "rgb(65, 174, 118)",  # lightgreen
         "rgb(255, 205, 86)",  # yellow
+        "rgb(0, 255, 255)",   # lightblue
     ]
 
     ret = model.generate_series(cup=app.config['LEAGUE_NAME'])
