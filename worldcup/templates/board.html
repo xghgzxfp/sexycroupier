@@ -17,6 +17,7 @@
   .canvasAdjust{
     height: calc(100vh - 56px);
     width: calc({{ match_cnt }}*50px);
+    min-width: 100%;
   }
 
 </style>
@@ -32,6 +33,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>
+<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
 <script>
   // override default chart settings
   Chart.defaults.global.elements.line.fill = false;
@@ -53,6 +55,9 @@
       }
     }
   })
+</script>
+<script>
+$( "div.chartWrapper" ).scrollLeft( document.getElementById('board').width );
 </script>
 
 {% endblock %}
