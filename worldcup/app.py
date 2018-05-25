@@ -8,6 +8,7 @@ from urllib.parse import urlencode
 from flask import Flask, session, render_template, request, redirect, url_for, g, abort
 from pymongo import MongoClient
 from . import config
+import random
 
 
 app = Flask(__name__)
@@ -159,7 +160,7 @@ def board():
                 'backgroundColor': chartColors[i]}
                 for i, (label, series) in enumerate(ret.items())]
 
-    return render_template('board.html', match_labels=match_labels, datasets=datasets)
+    return render_template('board.html', match_cnt=len(match_labels), match_labels=match_labels, datasets=datasets)
 
 
 @app.route('/rule', methods=['GET'])

@@ -2,12 +2,33 @@
 
 {% block head %}
 {{ super() }}
-<style>body{height:100vh;display:grid;grid-template-rows:auto 1fr}</style>
+<style>
+  body{
+    height:100vh;
+    width:100vw;
+    display:grid;
+    grid-template-rows:auto 1fr
+    }
+
+  .chartWrapper{
+    overflow-x: auto;
+  }
+
+  .canvasAdjust{
+    height: calc(100vh - 56px);
+    width: calc({{ match_cnt }}*50px);
+  }
+
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="postion-relative mh-100">
-  <canvas id="board"></canvas>
+<div class="card">
+    <div class="container chartWrapper">
+      <div class="canvasAdjust">
+        <canvas id="board"></canvas>
+      </div>
+    </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>
