@@ -132,8 +132,8 @@ def board():
 
     ret = model.generate_series(cup=app.config['LEAGUE_NAME'])
 
-    colors_num = len(ret)
-    chartColors = ['hsl({}, 100%, 70%)'.format(int(360/colors_num*i)) for i in range(colors_num)]
+    chartColors = ['hsl({}, 50%, 50%)'.format(int(360/len(ret)*i)) if i%2 else 'hsl({}, 100%, 70%)'.format(int(360/len(ret)*i))
+                    for i in range(len(ret))]
 
     match_labels = None
     for label, series in ret.items():
