@@ -18,7 +18,7 @@
          <div class="col text-nowrap">
             <div>{{ match.match_time.strftime('%Y-%m-%d') }}</div>
             <div>{{ match.match_time.strftime('%H:%M') }}</div>
-            <div>盘口</div>
+            <small>盘口</small>
             <div>{{ match.handicap_display or "-" }}</div>
          </div>
          <div class="col" {% if match.b["lose"] %} style="color:gray" {% endif %}>
@@ -34,19 +34,19 @@
       <hr>
       <!-- bet detail -->
       <div class="row align-items-center">
-         <div class="col">
-          {% for gambler in match.a["gamblers"] %}
-            <div>{{ gambler }}</div>
-          {% endfor %}
-         </div>
-         <div class="col">
+        <div class="col">
+        {% for gambler in match.a["gamblers"] %}
+          <div>{{ gambler }}</div>
+        {% endfor %}
+        </div>
+        <div class="col">
             <p class="countdown" data-cutoff-bet="{{ match.bet_cutoff_time.timestamp() }}" data-cutoff-handicap="{{ match.handicap_cutoff_time.timestamp() }}" ></p>
-         </div>
-         <div class="col">
-          {% for gambler in match.b["gamblers"] %}
-            <div>{{ gambler }}</div>
-          {% endfor %}
-         </div>
+        </div>
+        <div class="col">
+        {% for gambler in match.b["gamblers"] %}
+          <div>{{ gambler }}</div>
+        {% endfor %}
+        </div>
       </div>
       <hr>
       <!-- action -->
@@ -97,10 +97,10 @@ Array.from(document.getElementsByClassName("match-container")).forEach(function 
     var cutoffHandcap = countdown.getAttribute("data-cutoff-handicap")
 
     if (utcnow < cutoffHandcap) {
-      renderCountdown(countdown, cutoffHandcap - utcnow, "盘口未定<br>距投注开始还有<br>")
+      renderCountdown(countdown, cutoffHandcap - utcnow, "<small>盘口未定<br>距投注开始还有<br></small>")
       deactivateButtons(match);
     } else if (utcnow < cutoffBet) {
-      renderCountdown(countdown, cutoffBet - utcnow, "距投注结束还有<br>")
+      renderCountdown(countdown, cutoffBet - utcnow, "<small>距投注结束还有<br></small>")
     } else {
       clearInterval(x);
       // countdown.innerHTML = "投注已结束";
