@@ -3,139 +3,109 @@
 {% for match in matches %}
 <!-- match -->
 <div class="card text-center m-2">
-   <div class="card-body container match_container">
+   <div class="card-body container match-container">
       <!-- match detail -->
       <div class="row align-items-center">
-         <div class="col" {% if match["a"]["lose"] %} style="color:gray" {% endif %}>
-            <div class="team">{{match["a"]["team"]}}</div>
-            <div class="auction_gamber" style="font-size:x-small">{{match["a"]["auction_gambler"]}}$</div>
+         <div class="col" {% if match.a["lose"] %} style="color:gray" {% endif %}>
+            <div class="team">{{ match.a["team"] }}</div>
+          {% if match.a["auction_gambler"] %}
+            <small>{{ match.a["auction_gambler"] }}</small>
+          {% endif %}
             <div class="score">
-               {% if match["a"]["score"] is none %} - {% else %} {{match["a"]["score"]}} {% endif %}
+               {% if match.a["score"] is none %} - {% else %} {{ match.a["score"] }} {% endif %}
             </div>
          </div>
          <div class="col text-nowrap">
-            <div>{{ match["match_time"].strftime('%Y-%m-%d') }}</div>
-            <div>{{ match["match_time"].strftime('%H:%M') }}</div>
-            <div>盘口</div>
-            <div class="score">
-               {% if match["handicap_display"] is defined %} {{match["handicap_display"]}} {% endif %}
-            </div>
+            <div>{{ match.match_time.strftime('%Y-%m-%d') }}</div>
+            <div>{{ match.match_time.strftime('%H:%M') }}</div>
+            <small>盘口</small>
+            <div>{{ match.handicap_display or "-" }}</div>
          </div>
-         <div class="col" {% if match["b"]["lose"] %} style="color:gray" {% endif %}>
-            <div class="team">{{match["b"]["team"]}}</div>
-            <div class="auction_gamber" style="font-size:x-small">{{match["b"]["auction_gambler"]}}$</div>
+         <div class="col" {% if match.b["lose"] %} style="color:gray" {% endif %}>
+            <div class="team">{{ match.b["team"] }}</div>
+          {% if match.b["auction_gambler"] %}
+            <small>{{ match.b["auction_gambler"] }}</small>
+          {% endif %}
             <div class="score">
-               {% if match["b"]["score"] is none %} - {% else %} {{match["b"]["score"]}} {% endif %}
+               {% if match.b["score"] is none %} - {% else %} {{ match.b["score"] }} {% endif %}
             </div>
          </div>
       </div>
       <hr>
       <!-- bet detail -->
       <div class="row align-items-center">
-         <div class="col">
-            {% for gambler in match["a"]["gamblers"] %}
-            <div>{{ gambler }}</div>
-            {% endfor %}
-         </div>
-         <div class="col">
-            <p class="countdown" data-matchtime={{ match['match_time'].timestamp() }}></p>
-         </div>
-         <div class="col">
-            {% for gambler in match["b"]["gamblers"] %}
-            <div>{{ gambler }}</div>
-            {% endfor %}
-         </div>
+        <div class="col">
+        {% for gambler in match.a["gamblers"] %}
+          <div>{{ gambler }}</div>
+        {% endfor %}
+        </div>
+        <div class="col">
+            <p class="countdown" data-cutoff-bet="{{ match.bet_cutoff_time.timestamp() }}" data-cutoff-handicap="{{ match.handicap_cutoff_time.timestamp() }}" ></p>
+        </div>
+        <div class="col">
+        {% for gambler in match.b["gamblers"] %}
+          <div>{{ gambler }}</div>
+        {% endfor %}
+        </div>
       </div>
       <hr>
       <!-- action -->
       <form action="/" method="post">
-         <div class="row align-items-center">
-            <input type="hidden" name="match_id" value="{{ match['id'] }}">
-            <div class="col">
-               <button class="btn btn-primary" type="submit" name="betchoice" value="a"{% if g.me.name in match["a"]["gamblers"] %} disabled="true"{% endif %}>投注</button>
-            </div>
-	    <div class="col">
-	    </div>
-            <div class="col">
-               <button class="btn btn-primary" type="submit" name="betchoice" value="b"{% if g.me.name in match["b"]["gamblers"] %} disabled="true"{% endif %}>投注</button>
-            </div>
-         </div>
+        <div class="row align-items-center">
+          <input type="hidden" name="match_id" value="{{ match.id }}">
+          <div class="col">
+            <button class="btn btn-primary bet-button" type="submit" name="betchoice" value="a"{% if not match.can_bet() or g.me.name in match.a["gamblers"] %} disabled="true"{% endif %}>投注</button>
+          </div>
+	        <div class="col"></div>
+          <div class="col">
+            <button class="btn btn-primary bet-button" type="submit" name="betchoice" value="b"{% if not match.can_bet() or g.me.name in match.b["gamblers"] %} disabled="true"{% endif %}>投注</button>
+          </div>
+        </div>
       </form>
    </div>
 </div>
 {% endfor %}
 <script>
-function deactivateButton(matchObj){
-    var buttons = matchObj.getElementsByClassName("btn btn-primary");
-    var i;
-    for (i = 0; i < buttons.length; i++){
-        buttons[i].disabled = true;
+function deactivateButtons(match) {
+  Array.from(match.getElementsByClassName("bet-button")).forEach(function (button) {
+    button.disabled = true;
+  })
+}
+
+function renderCountdown(countdown, distance, announcement) {
+  // Time calculations for days, hours, minutes and seconds
+  var hours = Math.floor((distance % (60 * 60 * 24)) / (60 * 60));
+  var minutes = Math.floor((distance % (60 * 60)) / (60));
+  var seconds = Math.floor((distance % 60));
+
+  // Display the result in the element
+  countdown.innerHTML = announcement
+  countdown.innerHTML += (hours >= 0 ? (hours >= 10 ? hours : "0" + hours) + ":" : "")
+  countdown.innerHTML += (minutes >= 0 ? (minutes >= 10 ? minutes : "0" + minutes) + ":" : "")
+  countdown.innerHTML += (seconds >= 0 ? (seconds >= 10 ? seconds : "0" + seconds) : "");
+}
+
+// setup countdown for each match container
+Array.from(document.getElementsByClassName("match-container")).forEach(function (match) {
+  var countdown = match.getElementsByClassName("countdown")[0];
+
+  // update the count down every 1 second
+  var x = setInterval(function () {
+    var utcnow = (new Date()).getTime() / 1000.0;
+    var cutoffBet = countdown.getAttribute("data-cutoff-bet");
+    var cutoffHandcap = countdown.getAttribute("data-cutoff-handicap")
+
+    if (utcnow < cutoffHandcap) {
+      renderCountdown(countdown, cutoffHandcap - utcnow, "<small>盘口未定<br>距投注开始还有<br></small>")
+      deactivateButtons(match);
+    } else if (utcnow < cutoffBet) {
+      renderCountdown(countdown, cutoffBet - utcnow, "<small>距投注结束还有<br></small>")
+    } else {
+      clearInterval(x);
+      // countdown.innerHTML = "投注已结束";
+      deactivateButtons(match);
     }
-}
-
-function generateCountDown_updateButton(matchObj) {
-    var countObj = matchObj.getElementsByClassName("countdown")[0];
-
-    // Update the count down every 1 second
-    var x = setInterval(function () {
-        var now = new Date();
-        var utcnow = now.getTime() + now.getTimezoneOffset()*60*1000;
-        var countDownDateTimeStamp = countObj.getAttribute("data-matchtime") * 1000 + now.getTimezoneOffset() * 60 * 1000 - 8 * 60 * 60 * 1000;;
-        var countDownDate = new Date(countDownDateTimeStamp);
-        var handicapCutoff = countDownDate.setHours(12, 0, 0, 0);
-
-        if( handicapCutoff > countDownDate ){
-            handicapCutoff -= (1000 * 60 * 60 * 24);
-        }
-
-        // convert to utc
-        handicapCutoff_utc = handicapCutoff - (1000 * 60 * 60 * 8);
-
-        if( utcnow < handicapCutoff_utc ){
-            // Find the distance between utcnow and bet start time
-            var distance = handicapCutoff_utc - utcnow;
-            // Time calculations for days, hours, minutes and seconds
-            var days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            var seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-            // Display the result in the element
-            countObj.innerHTML = "盘口未定<br>距投注开始还有<br>"  + (hours >=   0? (hours >= 10? hours : "0" + hours)  + ":" : "")
-                                                        + (minutes >= 0? (minutes >= 10? minutes : "0" + minutes) + ":" : "")
-                                                        + (seconds >= 0? (seconds >= 10? seconds : "0" + seconds) : "");
-            deactivateButton(matchObj);
-        }
-        else{
-            // Find the distance between utcnow an the count down date
-            var distance = countDownDateTimeStamp - utcnow;
-            if( distance >= 0 ){
-                // Time calculations for days, hours, minutes and seconds
-                var days = Math.floor(distance / (1000 * 60 * 60 * 24));
-                var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                var seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-                // Display the result in the element
-                countObj.innerHTML = "距投注结束还有<br>" + (hours >=   0? (hours >= 10? hours : "0" + hours)  + ":" : "")
-                                                        + (minutes >= 0? (minutes >= 10? minutes : "0" + minutes) + ":" : "")
-                                                        + (seconds >= 0? (seconds >= 10? seconds : "0" + seconds) : "");
-            }
-            // If the count down is finished, write some text
-            else {
-                clearInterval(x);
-                countObj.innerHTML = "投注已结束";
-                deactivateButton(matchObj);
-            }
-        }
-    }, 1000);
-}
-
-var matches = document.getElementsByClassName("match_container");
-var i;
-for (i = 0; i < matches.length; i++){
-     generateCountDown_updateButton(matches[i]);
-}
+  }, 1000)
+})
 </script>
 {% endblock %}
-

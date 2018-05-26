@@ -93,13 +93,13 @@ def users_choose_teams():
     matche_ids = list(map(lambda x: model.Match(*x).id, test_matches))
     for name, choice in zip(test_names, test_gamblers_choice):
         for a_id, team in zip(matche_ids, choice):
-            model.update_match_gamblers(a_id, team, name)
+            model.update_match_gamblers(a_id, team, name, cutoff_check=False)
 
-def insert_auctions(): 
+def insert_auctions():
     for auc in test_auctions:
         model.insert_auction(test_cup, *auc)
 
-def delete_auctions(): 
+def delete_auctions():
     for auc in test_auctions:
         db.auction.delete_many({'cup': test_cup, 'team': auc[0]})
 

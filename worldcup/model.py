@@ -1,45 +1,27 @@
 # coding: utf-8
 
+import datetime
+import logging
+import pymongo
 
 from collections import namedtuple, OrderedDict
-from datetime import datetime, timedelta
-from typing import List, Dict
-from functools import lru_cache
 
-from worldcup.app import db
-from worldcup.constant import HANDICAP_DICT
-import logging
+# from functools import lru_cache
+from typing import List, Dict
+
+from .app import db
+from .constant import HANDICAP_DICT
+
+
+def utc_to_beijing(utc_time: datetime.datetime) -> datetime.datetime:
+    return utc_time + datetime.timedelta(hours=8)
+
 
 # class Gambler:
 #     name = "gambler's name"
 #     openid = 'wechat openid'
 
 Gambler = namedtuple('Gambler', ['name', 'openid'])
-
-def utc_to_beijing(utc_time):
-    return datetime.fromtimestamp(utc_time.timestamp() + 8 * 3600)
-
-
-def beijing_to_utc(beijing_time):
-    return datetime.fromtimestamp(beijing_time.timestamp() - 8 * 3600)
-
-
-def cutofftime_handicap(match_time):
-    # cutofftime_handicap is the time after which handicap will not change
-    res = datetime(match_time.year, match_time.month, match_time.day, 12, 0, 0)
-    if res >= match_time:
-        res -= timedelta(1)
-    return res
-
-
-def cutofftime_bet(match_time):
-    # cutofftime is the time during which bet is allowed fot the match
-    st = cutofftime_handicap(match_time)
-    ed = match_time
-    return (st, ed)
-
-def find_match_time_by_match_id(match_id):
-    return db.match.find_one({'id': match_id})['match_time']
 
 
 def insert_gambler(name: str, openid: str) -> Gambler:
@@ -65,13 +47,13 @@ def find_gamblers() -> List[Gambler]:
 def find_required_gamblers() -> List[Gambler]:
     return find_gamblers()
 
-'''
-class Auction:
-    cup = '2018-world-cup'
-    team = 'england'
-    gambler = "gambler's name"
-    price = 23
-'''    
+
+# class Auction:
+#     cup = '2018-world-cup'
+#     team = 'england'
+#     gambler = "gambler's name"
+#     price = 23
+
 Auction = namedtuple('Auction', ['cup', 'team', 'gambler', 'price'])
 
 
@@ -80,11 +62,13 @@ def insert_auction(cup, team, gambler, price):
     db.auction.replace_one({'cup': cup, 'team': team}, auction._asdict(), upsert=True)
     return auction
 
-def find_auction(cup, team): 
+
+def find_auction(cup, team):
     a = db.auction.find_one({'cup': cup, 'team': team})
     if not a:
         return None
     return Auction(cup=a['cup'], team=a['team'], gambler=a['gambler'], price=a['price'])
+
 
 # @lru_cache(maxsize=32)
 def get_team_gambler_in_auctions(cup, team):
@@ -93,66 +77,96 @@ def get_team_gambler_in_auctions(cup, team):
         return None
     return a.gambler
 
+
+# class Match
+#     id = None   # <%Y%m%d%H%M>-<team-a>-<team-b>
+#     league = None
+#     match_time = None
+#     handicap_display = None
+#     a = dict(
+#         team=None,
+#         premium=None,
+#         score=None,
+#         gamblers=[],
+#     )
+#     b = dict(
+#         team=None,
+#         premium=None,
+#         score=None,
+#         gamblers=[],
+#     )
+#     handicap = (None, None)
+#     weight = None
+
 class Match:
-    '''
-    id = None   # <%Y%m%d%H%M>-<team-a>-<team-b>
-    league = None
-    match_time = None
-    handicap_display = None
-    a = dict(
-        team=None,
-        premium=None,
-        score=None,
-        gamblers=[],
-    )
-    b = dict(
-        team=None,
-        premium=None,
-        score=None, 
-        gamblers=[],
-    )
-    handicap = (None, None)
-    weight = None
-    '''
-    def __init__(self, *args, **kwargs):
-        if 'id' in kwargs:
-            self.__dict__ = kwargs
-            self.update()
-            return
-        league_name, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b = args
-        assert all(map(lambda x: x is not None, args))
-        if 'weight' in kwargs:
-            self.weight = kwargs['weight']
-        else:
-            self.weight = 2
-        self.id = generate_match_id(match_time, team_a, team_b)
-        self.league = league_name
+
+    def __init__(self, league, match_time, handicap_display,
+                 team_a, team_b, premium_a, premium_b, score_a: str, score_b: str,
+                 weight=2, id=None, **kwargs):
+        self.league = league
+
         self.match_time = match_time
         self.handicap_display = handicap_display
-
         self.handicap = generate_handicap_pair(handicap_display)
+
+        score_a = int(score_a) if score_a else None
+        score_b = int(score_b) if score_b else None
+
         self.a = dict(
             team=team_a,
             premium=float(premium_a),
-            score=int(score_a) if score_a != '' else None,
+            score=score_a,
             gamblers=[],
             lose=False,
         )
         self.b = dict(
             team=team_b,
             premium=float(premium_b),
-            score=int(score_b) if score_b != '' else None,
+            score=score_b,
             gamblers=[],
             lose=False,
         )
-        self.result = None
+
+        self.weight = weight
+        self.id = id or generate_match_id(match_time, team_a, team_b)
+
+        self._result = None
+
         self.update()
 
-    def completed(self) -> bool:
+    @classmethod
+    def from_mongo(cls, m: dict):
+        """根据 mongo 返回的 record 构造 Match 对象"""
+        match = Match(league=m['league'], match_time=m['match_time'], handicap_display=m['handicap_display'],
+                      team_a=m['a']['team'], premium_a=m['a']['premium'], score_a=m['a']['score'],
+                      team_b=m['b']['team'], premium_b=m['b']['premium'], score_b=m['b']['score'],
+                      weight=m['weight'], id=m['id'])
+        match.a['gamblers'] = m['a']['gamblers']
+        match.b['gamblers'] = m['b']['gamblers']
+        return match
+
+    @property
+    def handicap_cutoff_time(self):
+        """盘口截止时间 此时间后盘口不再变化"""
+        cutoff_time = datetime.datetime(self.match_time.year, self.match_time.month, self.match_time.day, 12, 0, 0)
+        if cutoff_time >= self.match_time:
+            cutoff_time -= datetime.timedelta(days=1)
+        return cutoff_time
+
+    @property
+    def bet_cutoff_time(self):
+        """投注截止时间 此时间后无法再投注"""
+        return self.match_time
+
+    def can_bet(self) -> bool:
+        """比赛是否可投注"""
+        return self.handicap_cutoff_time < utc_to_beijing(datetime.datetime.utcnow()) <= self.bet_cutoff_time
+
+    def is_completed(self) -> bool:
+        """比赛是否已结束"""
         if self.a['score'] is None or self.b['score'] is None:
             return False
-        else:
-            return True
+        return True
 
     def update(self):
         self.update_auctions()
@@ -165,14 +179,14 @@ class Match:
             if auc is not None:
                 return auc
             else:
-                return Auction(cup=cup, team=team, gambler=None, price=None)        
+                return Auction(cup=cup, team=team, gambler=None, price=None)
         self.a['auction_gambler']=safe_find_auction(self.league, self.a['team']).gambler
         self.a['auction_price']=safe_find_auction(self.league, self.a['team']).price
         self.b['auction_gambler']=safe_find_auction(self.league, self.b['team']).gambler
         self.b['auction_price']=safe_find_auction(self.league, self.b['team']).price
 
     def update_team_losing_state(self):
-        if not self.completed():
+        if not self.is_completed():
             return
         for handicap in self.handicap:
             if self.a['score'] > self.b['score'] + handicap:
@@ -181,14 +195,14 @@ class Match:
                 self.a['lose'] = True
 
     def update_profit_and_loss_result(self, required_gamblers=None) -> int:
-        if not self.completed():
+        if not self.is_completed():
             return
         asc, bsc = self.a['score'], self.b['score']
         if required_gamblers is None:
             required_gamblers = []
         else:
             required_gamblers = list(map(lambda x: x.name, required_gamblers))
-        self.result = dict([(gambler, 0) 
+        self._result = dict([(gambler, 0)
             for gambler in self.a['gamblers'] + self.b['gamblers'] + required_gamblers])
         for handicap in self.handicap:
             if asc > bsc + handicap:
@@ -207,25 +221,25 @@ class Match:
             else:
                 winner_reward = 0
             for gambler in loser['gamblers']:
-                self.result[gambler] -= stack
+                self._result[gambler] -= stack
             for gambler in winner['gamblers']:
-                self.result[gambler] += winner_reward
+                self._result[gambler] += winner_reward
             winner_team_gambler = get_team_gambler_in_auctions(self.league, winner['team'])
             loser_team_gambler = get_team_gambler_in_auctions(self.league, loser['team'])
             if winner_team_gambler in winner['gamblers']:
-                self.result[winner_team_gambler] += winner_reward
+                self._result[winner_team_gambler] += winner_reward
             if loser_team_gambler in winner['gamblers']:
-                self.result[loser_team_gambler] += winner_reward
+                self._result[loser_team_gambler] += winner_reward
 
     def get_profit_and_loss_result(self):
-        if self.result is None:
+        if self._result is None:
             self.update_profit_and_loss_result()
-        if not self.completed():
+        if not self.is_completed():
             logging.warning('try to get result of uncompleted match')
-        return self.result
+        return self._result
 
     def __str__(self):
-        return str(self.__dict__)
+        return f'Match(id={self.id}, score_a={self.a["score"]}, score_b={self.b["score"]})'
 
 
 def generate_match_id(match_time, team_a, team_b):
@@ -234,7 +248,7 @@ def generate_match_id(match_time, team_a, team_b):
 
 
 def generate_handicap_pair(handicap_display):
-    if handicap_display[0] == '受':
+    if handicap_display.startswith('受'):
         sign = -1
         handicap_display = handicap_display[1:]
     else:
@@ -266,7 +280,6 @@ def update_match_score(match_time, team_a, team_b, score_a, score_b):
         {"$set": {"a.score": score_a, "b.score": score_b}}
     )
     logging.info(match_id + ' score updated as ' + str(score_a) + ':' + str(score_b))
-    return
 
 
 def update_match_handicap(match_time, team_a, team_b, handicap_display):
@@ -276,24 +289,17 @@ def update_match_handicap(match_time, team_a, team_b, handicap_display):
         {"$set": {"handicap": generate_handicap_pair(handicap_display)}}
     )
     logging.info(match_id + ' handicap updated as ' + handicap_display)
-    return
 
 
-def update_match_gamblers(match_id, team, gambler):
-    """Update betting decision in database
-
-    """
+def update_match_gamblers(match_id, team, gambler, cutoff_check=True):
+    """更新投注结果"""
+    match = find_match_by_id(match_id)
+    # 如果当前非投注时间则直接返回
+    if cutoff_check and not match.can_bet():
+        return
     list_out = ("a" if team == "b" else "b") + ".gamblers"
     list_in = team + '.gamblers'
     return db.match.update({"id": match_id}, {"$pull": {list_out: gambler}, "$addToSet": {list_in: gambler}})
-
-
-def update_match_gamblers_check_bet_time(match_id, team, gambler):
-    st, ed = cutofftime_bet(find_match_time_by_match_id(match_id))
-    current_time = datetime.utcnow()
-    current_beijing_time = utc_to_beijing(current_time)
-    if st < current_beijing_time <= ed:
-        update_match_gamblers(match_id, team, gambler)
 
 
 def update_match_weight(match_time, team_a, team_b, weight):
@@ -302,26 +308,28 @@ def update_match_weight(match_time, team_a, team_b, weight):
         {"id": match_id},
         {"$set": {"weight": float(weight)}}
     )
-    return
 
 
-def find_matches(cup):
-    return list(map(lambda x: Match(**x), db.match.find({'league': cup}).sort('id')))
+def find_matches(cup: str, reverse=False) -> List[Match]:
+    """返回所有比赛 默认为 id 升序"""
+    direction = pymongo.DESCENDING if reverse else pymongo.ASCENDING
+    return [Match.from_mongo(m) for m in db.match.find({'league': cup}).sort('id', direction=direction)]
 
-def find_matches_display(cup):
-    ret = find_matches(cup)
-    return reversed(ret)
 
+def find_match_by_id(match_id: str) -> Match:
+    return Match.from_mongo(db.match.find_one({'id': match_id}))
+
+
+# class Series:
+#     cup = '2018-world-cup'
+#     gambler = 'name1'
+#     points = dict([
+#         ('201806010100-法国-西班牙', 17),
+#         ('201806010330-英格兰-德国', 15),
+#     ])
 
 class Series:
-    '''
-    cup = '2018-world-cup'
-    gambler = 'name1'
-    points = dict([
-        ('201806010100-法国-西班牙', 17),
-        ('201806010330-英格兰-德国', 15),
-    ])
-    '''
+
     def __init__(self, cup, gambler_name):
         self.cup = cup
         self.gambler = gambler_name
@@ -342,7 +350,7 @@ def generate_series(cup: str) -> Dict[str, Series]:
     gamblers_series = dict([(gambler_name, Series(cup, gambler_name)) for gambler_name in gambler_names])
     required_gamblers = find_required_gamblers()
     for match in matches:
-        if match.completed():
+        if match.is_completed():
             match.update_profit_and_loss_result(required_gamblers)
             for gambler_series in gamblers_series.values():
                 gambler_series.add_a_point(match)
@@ -355,5 +363,5 @@ def match_id_to_diplay(match_id : str):
 
 
 if __name__ == "__main__":
-    #insert_match('意甲', datetime(2018, 3, 31, 18, 30), '受半球/一球', '博洛尼亚', '罗马', '1.98', '1.88', '', '')
-    update_match_score(datetime(2018, 3, 31, 18, 30), '博洛尼亚', '罗马', '0', '0')
+    #insert_match('意甲', datetime.datetime(2018, 3, 31, 18, 30), '受半球/一球', '博洛尼亚', '罗马', '1.98', '1.88', '', '')
+    update_match_score(datetime.datetime(2018, 3, 31, 18, 30), '博洛尼亚', '罗马', '0', '0')
