@@ -113,7 +113,7 @@ def index():
         new_choice = request.values.get('betchoice')
         model.update_match_gamblers(match_id, new_choice, g.me.name)
 
-    matches = model.find_matches_display(cup=app.config['LEAGUE_NAME'])
+    matches = model.find_matches(cup=app.config['LEAGUE_NAME'], reverse=True)
     return render_template('index.html', matches=matches)
 
 

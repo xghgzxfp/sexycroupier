@@ -1,6 +1,7 @@
 # coding: utf-8
 
 import logging
+import pymongo
 
 from collections import namedtuple, OrderedDict
 from datetime import datetime, timedelta
@@ -308,13 +309,16 @@ def update_match_weight(match_time, team_a, team_b, weight):
     )
 
 
-def find_matches(cup):
-    return list(map(lambda x: Match(**x), db.match.find({'league': cup}).sort('id')))
-
-
-def find_matches_display(cup):
-    ret = find_matches(cup)
-    return reversed(ret)
+def find_matches(cup: str, reverse=False) -> List[Match]:
+    """返回所有比赛 默认为 id 升序"""
+    direction = pymongo.DESCENDING if reverse else pymongo.ASCENDING
+    return [
+        Match(league=m['league'], match_time=m['match_time'], handicap_display=m['handicap_display'],
+              team_a=m['a']['team'], premium_a=m['a']['premium'], score_a=m['a']['score'],
+              team_b=m['b']['team'], premium_b=m['b']['premium'], score_b=m['b']['score'],
+              weight=m['weight'], id=m['id'])
+        for m in db.match.find({'league': cup}).sort('id', direction=direction)
+    ]
 
 
 # class Series:
