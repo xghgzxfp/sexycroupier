@@ -30,9 +30,11 @@
       </div>
     </div>
 </div>
+{% endblock %}
 
+{% block script %}
+{{ super() }}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>
-<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
 <script>
   // override default chart settings
   Chart.defaults.global.elements.line.fill = false;

@@ -1,4 +1,5 @@
 {% extends "_base.html" %}
+
 {% block content %}
 {% for match in matches %}
 <!-- match -->
@@ -67,6 +68,10 @@
    </div>
 </div>
 {% endfor %}
+{% endblock %}
+
+{% block script %}
+{{ super() }}
 <script>
 function deactivateButtons(match) {
   Array.from(match.getElementsByClassName("bet-button")).forEach(function (button) {
@@ -98,10 +103,10 @@ Array.from(document.getElementsByClassName("match-container")).forEach(function 
     var cutoffHandcap = countdown.getAttribute("data-cutoff-handicap");
 
     if (utcnow < cutoffHandcap) {
-      renderCountdown(countdown, cutoffHandcap - utcnow, "<small>盘口未定<br>距投注开始还有<br></small>");
+      renderCountdown(countdown, cutoffHandcap - utcnow, "<small>盘口未定<br>距投注开始<br></small>");
       deactivateButtons(match);
     } else if (utcnow < cutoffBet) {
-      renderCountdown(countdown, cutoffBet - utcnow, "<small>距投注结束还有<br></small>");
+      renderCountdown(countdown, cutoffBet - utcnow, "<small>距投注结束<br></small>");
     } else {
       clearInterval(x);
       // countdown.innerHTML = "投注已结束";
