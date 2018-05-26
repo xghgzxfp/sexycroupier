@@ -158,6 +158,10 @@ class Match:
         """投注截止时间 此时间后无法再投注"""
         return self.match_time
 
+    def can_bet(self) -> bool:
+        """比赛是否可投注"""
+        return self.handicap_cutoff_time < utc_to_beijing(datetime.datetime.utcnow()) <= self.bet_cutoff_time
+
     def is_completed(self) -> bool:
         """比赛是否已结束"""
         if self.a['score'] is None or self.b['score'] is None:
@@ -291,7 +295,7 @@ def update_match_gamblers(match_id, team, gambler, cutoff_check=True):
     """更新投注结果"""
     match = find_match_by_id(match_id)
     # 如果当前非投注时间则直接返回
-    if cutoff_check and not match.handicap_cutoff_time < utc_to_beijing(datetime.datetime.utcnow()) <= match.bet_cutoff_time:
+    if cutoff_check and not match.can_bet():
         return
     list_out = ("a" if team == "b" else "b") + ".gamblers"
     list_in = team + '.gamblers'
