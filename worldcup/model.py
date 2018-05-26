@@ -117,7 +117,7 @@ class Match:
     def __init__(self, *args, **kwargs):
         if 'id' in kwargs:
             self.__dict__ = kwargs
-            self.update_auctions()
+            self.update()
             return
         league_name, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b = args
         assert all(map(lambda x: x is not None, args))
@@ -136,21 +136,28 @@ class Match:
             premium=float(premium_a),
             score=int(score_a) if score_a != '' else None,
             gamblers=[],
+            lose=False,
         )
         self.b = dict(
             team=team_b,
             premium=float(premium_b),
             score=int(score_b) if score_b != '' else None,
             gamblers=[],
+            lose=False,
         )
         self.result = None
-        self.update_auctions()
+        self.update()
 
     def completed(self) -> bool:
         if self.a['score'] is None or self.b['score'] is None:
             return False
         else:
             return True
+
+    def update(self):
+        self.update_auctions()
+        self.update_team_losing_state()
+        self.update_profit_and_loss_result()
 
     def update_auctions(self):
         def safe_find_auction(cup, team):
@@ -163,6 +170,15 @@ class Match:
         self.a['auction_price']=safe_find_auction(self.league, self.a['team']).price
         self.b['auction_gambler']=safe_find_auction(self.league, self.b['team']).gambler
         self.b['auction_price']=safe_find_auction(self.league, self.b['team']).price
+
+    def update_team_losing_state(self):
+        if not self.completed():
+            return
+        for handicap in self.handicap:
+            if self.a['score'] > self.b['score'] + handicap:
+                self.b['lose'] = True
+            elif self.a['score'] < self.b['score'] + handicap:
+                self.a['lose'] = True
 
     def update_profit_and_loss_result(self, required_gamblers=None) -> int:
         if not self.completed():

@@ -6,7 +6,7 @@
    <div class="card-body container match_container">
       <!-- match detail -->
       <div class="row align-items-center">
-         <div class="col">
+         <div class="col" {% if match["a"]["lose"] %} style="color:gray" {% endif %}>
             <div class="team">{{match["a"]["team"]}}</div>
             <div class="auction_gamber" style="font-size:x-small">{{match["a"]["auction_gambler"]}}$</div>
             <div class="score">
@@ -21,7 +21,7 @@
                {% if match["handicap_display"] is defined %} {{match["handicap_display"]}} {% endif %}
             </div>
          </div>
-         <div class="col">
+         <div class="col" {% if match["b"]["lose"] %} style="color:gray" {% endif %}>
             <div class="team">{{match["b"]["team"]}}</div>
             <div class="auction_gamber" style="font-size:x-small">{{match["b"]["auction_gambler"]}}$</div>
             <div class="score">
