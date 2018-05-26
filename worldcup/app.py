@@ -1,5 +1,6 @@
 # coding: utf-8
 
+import datetime
 import functools
 import requests
 
@@ -8,7 +9,6 @@ from urllib.parse import urlencode
 from flask import Flask, session, render_template, request, redirect, url_for, g, abort
 from pymongo import MongoClient
 from . import config
-import random
 
 
 app = Flask(__name__)
@@ -17,6 +17,12 @@ db = app.db = MongoClient(app.config['MONGO_URI'])[app.config['MONGO_DBNAME']]
 from . import model
 
 title = '2018 World Cup'
+
+
+@app.template_filter('_ts')
+def _ts(time: datetime.datetime) -> int:
+    """把以 naive datetime 表示的北京时间正确转换为 unix timestamp"""
+    return time.replace(tzinfo=datetime.timezone.utc).timestamp() - 8 * 3600
 
 
 def next_url():

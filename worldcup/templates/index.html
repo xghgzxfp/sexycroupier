@@ -40,7 +40,7 @@
         {% endfor %}
         </div>
         <div class="col">
-            <p class="countdown" data-cutoff-bet="{{ match.bet_cutoff_time.timestamp() }}" data-cutoff-handicap="{{ match.handicap_cutoff_time.timestamp() }}" ></p>
+            <p class="countdown" data-cutoff-bet="{{ match.bet_cutoff_time | _ts }}" data-cutoff-handicap="{{ match.handicap_cutoff_time | _ts }}" ></p>
         </div>
         <div class="col">
         {% for gambler in match.b["gamblers"] %}
@@ -93,13 +93,13 @@ Array.from(document.getElementsByClassName("match-container")).forEach(function 
   var x = setInterval(function () {
     var utcnow = (new Date()).getTime() / 1000.0;
     var cutoffBet = countdown.getAttribute("data-cutoff-bet");
-    var cutoffHandcap = countdown.getAttribute("data-cutoff-handicap")
+    var cutoffHandcap = countdown.getAttribute("data-cutoff-handicap");
 
     if (utcnow < cutoffHandcap) {
-      renderCountdown(countdown, cutoffHandcap - utcnow, "<small>盘口未定<br>距投注开始还有<br></small>")
+      renderCountdown(countdown, cutoffHandcap - utcnow, "<small>盘口未定<br>距投注开始还有<br></small>");
       deactivateButtons(match);
     } else if (utcnow < cutoffBet) {
-      renderCountdown(countdown, cutoffBet - utcnow, "<small>距投注结束还有<br></small>")
+      renderCountdown(countdown, cutoffBet - utcnow, "<small>距投注结束还有<br></small>");
     } else {
       clearInterval(x);
       // countdown.innerHTML = "投注已结束";
