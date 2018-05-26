@@ -1,20 +1,15 @@
 # coding: utf-8
 
+import logging
 
 from collections import namedtuple, OrderedDict
 from datetime import datetime, timedelta
+# from functools import lru_cache
 from typing import List, Dict
-from functools import lru_cache
 
-from worldcup.app import db
-from worldcup.constant import HANDICAP_DICT
-import logging
+from .app import db
+from .constant import HANDICAP_DICT
 
-# class Gambler:
-#     name = "gambler's name"
-#     openid = 'wechat openid'
-
-Gambler = namedtuple('Gambler', ['name', 'openid'])
 
 def utc_to_beijing(utc_time):
     return datetime.fromtimestamp(utc_time.timestamp() + 8 * 3600)
@@ -43,6 +38,13 @@ def find_match_time_by_match_id(match_id):
     return db.match.find_one({'id': match_id})['match_time']
 
 
+# class Gambler:
+#     name = "gambler's name"
+#     openid = 'wechat openid'
+
+Gambler = namedtuple('Gambler', ['name', 'openid'])
+
+
 def insert_gambler(name: str, openid: str) -> Gambler:
     """根据 openid 创建 gambler"""
     gambler = Gambler(name=name, openid=openid)
@@ -66,13 +68,13 @@ def find_gamblers() -> List[Gambler]:
 def find_required_gamblers() -> List[Gambler]:
     return find_gamblers()
 
-'''
-class Auction:
-    cup = '2018-world-cup'
-    team = 'england'
-    gambler = "gambler's name"
-    price = 23
-'''
+
+# class Auction:
+#     cup = '2018-world-cup'
+#     team = 'england'
+#     gambler = "gambler's name"
+#     price = 23
+
 Auction = namedtuple('Auction', ['cup', 'team', 'gambler', 'price'])
 
 
@@ -81,11 +83,13 @@ def insert_auction(cup, team, gambler, price):
     db.auction.replace_one({'cup': cup, 'team': team}, auction._asdict(), upsert=True)
     return auction
 
+
 def find_auction(cup, team):
     a = db.auction.find_one({'cup': cup, 'team': team})
     if not a:
         return None
     return Auction(cup=a['cup'], team=a['team'], gambler=a['gambler'], price=a['price'])
+
 
 # @lru_cache(maxsize=32)
 def get_team_gambler_in_auctions(cup, team):
@@ -94,27 +98,29 @@ def get_team_gambler_in_auctions(cup, team):
         return None
     return a.gambler
 
+
+# class Match
+#     id = None   # <%Y%m%d%H%M>-<team-a>-<team-b>
+#     league = None
+#     match_time = None
+#     handicap_display = None
+#     a = dict(
+#         team=None,
+#         premium=None,
+#         score=None,
+#         gamblers=[],
+#     )
+#     b = dict(
+#         team=None,
+#         premium=None,
+#         score=None,
+#         gamblers=[],
+#     )
+#     handicap = (None, None)
+#     weight = None
+
 class Match:
-    '''
-    id = None   # <%Y%m%d%H%M>-<team-a>-<team-b>
-    league = None
-    match_time = None
-    handicap_display = None
-    a = dict(
-        team=None,
-        premium=None,
-        score=None,
-        gamblers=[],
-    )
-    b = dict(
-        team=None,
-        premium=None,
-        score=None,
-        gamblers=[],
-    )
-    handicap = (None, None)
-    weight = None
-    '''
+
     def __init__(self, league, match_time, handicap_display,
                  team_a, team_b, premium_a, premium_b, score_a: str, score_b: str,
                  weight=2, id=None, **kwargs):
@@ -152,8 +158,7 @@ class Match:
     def completed(self) -> bool:
         if self.a['score'] is None or self.b['score'] is None:
             return False
-        else:
-            return True
+        return True
 
     def update(self):
         self.update_auctions()
@@ -226,7 +231,7 @@ class Match:
         return self._result
 
     def __str__(self):
-        return str(self.__dict__)
+        return f'Match(id={self.id}, score_a={self.a["score"]}, score_b={self.b["score"]})'
 
 
 def generate_match_id(match_time, team_a, team_b):
@@ -235,7 +240,7 @@ def generate_match_id(match_time, team_a, team_b):
 
 
 def generate_handicap_pair(handicap_display):
-    if handicap_display[0] == '受':
+    if handicap_display.startswith('受'):
         sign = -1
         handicap_display = handicap_display[1:]
     else:
@@ -267,7 +272,6 @@ def update_match_score(match_time, team_a, team_b, score_a, score_b):
         {"$set": {"a.score": score_a, "b.score": score_b}}
     )
     logging.info(match_id + ' score updated as ' + str(score_a) + ':' + str(score_b))
-    return
 
 
 def update_match_handicap(match_time, team_a, team_b, handicap_display):
@@ -277,7 +281,6 @@ def update_match_handicap(match_time, team_a, team_b, handicap_display):
         {"$set": {"handicap": generate_handicap_pair(handicap_display)}}
     )
     logging.info(match_id + ' handicap updated as ' + handicap_display)
-    return
 
 
 def update_match_gamblers(match_id, team, gambler):
@@ -303,26 +306,27 @@ def update_match_weight(match_time, team_a, team_b, weight):
         {"id": match_id},
         {"$set": {"weight": float(weight)}}
     )
-    return
 
 
 def find_matches(cup):
     return list(map(lambda x: Match(**x), db.match.find({'league': cup}).sort('id')))
+
 
 def find_matches_display(cup):
     ret = find_matches(cup)
     return reversed(ret)
 
 
+# class Series:
+#     cup = '2018-world-cup'
+#     gambler = 'name1'
+#     points = dict([
+#         ('201806010100-法国-西班牙', 17),
+#         ('201806010330-英格兰-德国', 15),
+#     ])
+
 class Series:
-    '''
-    cup = '2018-world-cup'
-    gambler = 'name1'
-    points = dict([
-        ('201806010100-法国-西班牙', 17),
-        ('201806010330-英格兰-德国', 15),
-    ])
-    '''
+
     def __init__(self, cup, gambler_name):
         self.cup = cup
         self.gambler = gambler_name
