@@ -158,7 +158,8 @@ class Match:
         """投注截止时间 此时间后无法再投注"""
         return self.match_time
 
-    def completed(self) -> bool:
+    def is_completed(self) -> bool:
+        """比赛是否已结束"""
         if self.a['score'] is None or self.b['score'] is None:
             return False
         return True
@@ -181,7 +182,7 @@ class Match:
         self.b['auction_price']=safe_find_auction(self.league, self.b['team']).price
 
     def update_team_losing_state(self):
-        if not self.completed():
+        if not self.is_completed():
             return
         for handicap in self.handicap:
             if self.a['score'] > self.b['score'] + handicap:
@@ -190,7 +191,7 @@ class Match:
                 self.a['lose'] = True
 
     def update_profit_and_loss_result(self, required_gamblers=None) -> int:
-        if not self.completed():
+        if not self.is_completed():
             return
         asc, bsc = self.a['score'], self.b['score']
         if required_gamblers is None:
@@ -229,7 +230,7 @@ class Match:
     def get_profit_and_loss_result(self):
         if self._result is None:
             self.update_profit_and_loss_result()
-        if not self.completed():
+        if not self.is_completed():
             logging.warning('try to get result of uncompleted match')
         return self._result
 
@@ -345,7 +346,7 @@ def generate_series(cup: str) -> Dict[str, Series]:
     gamblers_series = dict([(gambler_name, Series(cup, gambler_name)) for gambler_name in gambler_names])
     required_gamblers = find_required_gamblers()
     for match in matches:
-        if match.completed():
+        if match.is_completed():
             match.update_profit_and_loss_result(required_gamblers)
             for gambler_series in gamblers_series.values():
                 gambler_series.add_a_point(match)
