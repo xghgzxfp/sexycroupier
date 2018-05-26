@@ -17,25 +17,6 @@ def utc_to_beijing(utc_time: datetime.datetime) -> datetime.datetime:
     return utc_time + datetime.timedelta(hours=8)
 
 
-def cutofftime_handicap(match_time):
-    """盘口截止时间 此时间后盘口不再变化"""
-    cutoff_time = datetime.datetime(match_time.year, match_time.month, match_time.day, 12, 0, 0)
-    if cutoff_time >= match_time:
-        cutoff_time -= datetime.timedelta(days=1)
-    return cutoff_time
-
-
-def cutofftime_bet(match_time):
-    """投注截止时间 此时间后无法再投注"""
-    st = cutofftime_handicap(match_time)
-    ed = match_time
-    return (st, ed)
-
-
-def find_match_time_by_match_id(match_id):
-    return db.match.find_one({'id': match_id})['match_time']
-
-
 # class Gambler:
 #     name = "gambler's name"
 #     openid = 'wechat openid'
@@ -152,6 +133,30 @@ class Match:
         self._result = None
 
         self.update()
+
+    @classmethod
+    def from_mongo(cls, m: dict):
+        """根据 mongo 返回的 record 构造 Match 对象"""
+        match = Match(league=m['league'], match_time=m['match_time'], handicap_display=m['handicap_display'],
+                      team_a=m['a']['team'], premium_a=m['a']['premium'], score_a=m['a']['score'],
+                      team_b=m['b']['team'], premium_b=m['b']['premium'], score_b=m['b']['score'],
+                      weight=m['weight'], id=m['id'])
+        match.a['gamblers'] = m['a']['gamblers']
+        match.b['gamblers'] = m['b']['gamblers']
+        return match
+
+    @property
+    def handicap_cutoff_time(self):
+        """盘口截止时间 此时间后盘口不再变化"""
+        cutoff_time = datetime.datetime(self.match_time.year, self.match_time.month, self.match_time.day, 12, 0, 0)
+        if cutoff_time >= self.match_time:
+            cutoff_time -= datetime.timedelta(days=1)
+        return cutoff_time
+
+    @property
+    def bet_cutoff_time(self):
+        """投注截止时间 此时间后无法再投注"""
+        return self.match_time
 
     def completed(self) -> bool:
         if self.a['score'] is None or self.b['score'] is None:
@@ -281,19 +286,15 @@ def update_match_handicap(match_time, team_a, team_b, handicap_display):
     logging.info(match_id + ' handicap updated as ' + handicap_display)
 
 
-def update_match_gamblers(match_id, team, gambler):
+def update_match_gamblers(match_id, team, gambler, cutoff_check=True):
     """更新投注结果"""
+    match = find_match_by_id(match_id)
+    # 如果当前非投注时间则直接返回
+    if cutoff_check and not match.handicap_cutoff_time < utc_to_beijing(datetime.datetime.utcnow()) <= match.bet_cutoff_time:
+        return
     list_out = ("a" if team == "b" else "b") + ".gamblers"
     list_in = team + '.gamblers'
     return db.match.update({"id": match_id}, {"$pull": {list_out: gambler}, "$addToSet": {list_in: gambler}})
-
-
-def update_match_gamblers_check_bet_time(match_id, team, gambler):
-    st, ed = cutofftime_bet(find_match_time_by_match_id(match_id))
-    current_time = datetime.datetime.utcnow()
-    current_beijing_time = utc_to_beijing(current_time)
-    if st < current_beijing_time <= ed:
-        update_match_gamblers(match_id, team, gambler)
 
 
 def update_match_weight(match_time, team_a, team_b, weight):
@@ -307,13 +308,11 @@ def update_match_weight(match_time, team_a, team_b, weight):
 def find_matches(cup: str, reverse=False) -> List[Match]:
     """返回所有比赛 默认为 id 升序"""
     direction = pymongo.DESCENDING if reverse else pymongo.ASCENDING
-    return [
-        Match(league=m['league'], match_time=m['match_time'], handicap_display=m['handicap_display'],
-              team_a=m['a']['team'], premium_a=m['a']['premium'], score_a=m['a']['score'],
-              team_b=m['b']['team'], premium_b=m['b']['premium'], score_b=m['b']['score'],
-              weight=m['weight'], id=m['id'])
-        for m in db.match.find({'league': cup}).sort('id', direction=direction)
-    ]
+    return [Match.from_mongo(m) for m in db.match.find({'league': cup}).sort('id', direction=direction)]
+
+
+def find_match_by_id(match_id: str) -> Match:
+    return Match.from_mongo(db.match.find_one({'id': match_id}))
 
 
 # class Series:

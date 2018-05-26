@@ -6,7 +6,7 @@ import requests
 
 from bs4 import BeautifulSoup
 
-from worldcup.model import insert_match, update_match_score, update_match_handicap, utc_to_beijing, cutofftime_handicap
+from worldcup.model import insert_match, update_match_score, update_match_handicap, utc_to_beijing
 from worldcup.app import config
 
 
@@ -104,9 +104,8 @@ def populate_match(league, date):
 
     for match in matches:
         new_match = insert_match(*match)
-        cutofftime = cutofftime_handicap(new_match.match_time) # Beijing Time
         # if current time is 12 PM Beijing Time, then update handicap
-        if utc_to_beijing(current_time) < cutofftime:
+        if utc_to_beijing(current_time) < new_match.handicap_cutoff_time:
             update_match_handicap(new_match.match_time, new_match.a['team'], new_match.b['team'], new_match.handicap_display)
         # if current score not equal to what we have in db, then update
         update_match_score(new_match.match_time, new_match.a['team'], new_match.b['team'], new_match.a['score'], new_match.b['score'])
