@@ -63,8 +63,7 @@ def find_gamblers() -> List[Gambler]:
     return [Gambler(name=d['name'], openid=d['openid']) for d in db.gambler.find().sort('name') if d]
 
 def find_required_gamblers() -> List[Gambler]:
-    from .config import REQUIRED_GAMBLERS
-    return list(filter(lambda x: x.name in REQUIRED_GAMBLERS, find_gamblers()))
+    return find_gamblers()
 
 '''
 class Auction:
