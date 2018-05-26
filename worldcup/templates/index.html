@@ -8,6 +8,7 @@
       <div class="row align-items-center">
          <div class="col">
             <div class="team">{{match["a"]["team"]}}</div>
+            <div class="auction_gamber" style="font-size:x-small">{{match["a"]["auction_gambler"]}}$</div>
             <div class="score">
                {% if match["a"]["score"] is none %} - {% else %} {{match["a"]["score"]}} {% endif %}
             </div>
@@ -22,6 +23,7 @@
          </div>
          <div class="col">
             <div class="team">{{match["b"]["team"]}}</div>
+            <div class="auction_gamber" style="font-size:x-small">{{match["b"]["auction_gambler"]}}$</div>
             <div class="score">
                {% if match["b"]["score"] is none %} - {% else %} {{match["b"]["score"]}} {% endif %}
             </div>
