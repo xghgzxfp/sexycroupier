@@ -6,30 +6,30 @@
    <div class="card-body container match-container">
       <!-- match detail -->
       <div class="row align-items-center">
-         <div class="col" {% if match.a["lose"] %} style="color:gray" {% endif %}>
-            <div class="team">{{ match.a["team"] }}</div>
-          {% if match.a["auction_gambler"] %}
-            <small>{{ match.a["auction_gambler"] }}</small>
-          {% endif %}
-            <div class="score">
-               {% if match.a["score"] is none %} - {% else %} {{ match.a["score"] }} {% endif %}
-            </div>
-         </div>
-         <div class="col text-nowrap">
-            <div>{{ match.match_time.strftime('%Y-%m-%d') }}</div>
-            <div>{{ match.match_time.strftime('%H:%M') }}</div>
-            <small>盘口</small>
-            <div>{{ match.handicap_display or "-" }}</div>
-         </div>
-         <div class="col" {% if match.b["lose"] %} style="color:gray" {% endif %}>
-            <div class="team">{{ match.b["team"] }}</div>
-          {% if match.b["auction_gambler"] %}
-            <small>{{ match.b["auction_gambler"] }}</small>
-          {% endif %}
-            <div class="score">
-               {% if match.b["score"] is none %} - {% else %} {{ match.b["score"] }} {% endif %}
-            </div>
-         </div>
+        <div class="col" {% if match.a["lose"] %} style="color:gray" {% endif %}>
+          <div class="team">{{ match.a["team"] }}</div>
+        {% if match.a["auction_gambler"] %}
+          <small>{{ match.a["auction_gambler"] }}</small>
+        {% endif %}
+          <div class="score">
+            {% if match.a["score"] is none %} - {% else %} {{ match.a["score"] }} {% endif %}
+          </div>
+        </div>
+        <div class="col text-nowrap">
+          <div>{{ match.match_time.strftime('%Y-%m-%d') }}</div>
+          <div>{{ match.match_time.strftime('%H:%M') }}</div>
+          <small>盘口</small>
+          <div>{{ match.handicap_display or "-" }}</div>
+        </div>
+        <div class="col" {% if match.b["lose"] %} style="color:gray" {% endif %}>
+          <div class="team">{{ match.b["team"] }}</div>
+        {% if match.b["auction_gambler"] %}
+          <small>{{ match.b["auction_gambler"] }}</small>
+        {% endif %}
+          <div class="score">
+            {% if match.b["score"] is none %} - {% else %} {{ match.b["score"] }} {% endif %}
+          </div>
+        </div>
       </div>
       <hr>
       <!-- bet detail -->
@@ -40,7 +40,7 @@
         {% endfor %}
         </div>
         <div class="col">
-            <p class="countdown" data-cutoff-bet="{{ match.bet_cutoff_time | _ts }}" data-cutoff-handicap="{{ match.handicap_cutoff_time | _ts }}" ></p>
+          <p class="countdown" data-cutoff-bet="{{ match.bet_cutoff_time | _ts }}" data-cutoff-handicap="{{ match.handicap_cutoff_time | _ts }}" ></p>
         </div>
         <div class="col">
         {% for gambler in match.b["gamblers"] %}
@@ -48,20 +48,22 @@
         {% endfor %}
         </div>
       </div>
+    {% if match.can_bet() %}
       <hr>
       <!-- action -->
       <form action="/" method="post">
         <div class="row align-items-center">
           <input type="hidden" name="match_id" value="{{ match.id }}">
           <div class="col">
-            <button class="btn btn-primary bet-button" type="submit" name="betchoice" value="a"{% if not match.can_bet() or g.me.name in match.a["gamblers"] %} disabled="true"{% endif %}>投注</button>
+            <button class="btn btn-primary bet-button" type="submit" name="betchoice" value="a"{% if g.me.name in match.a["gamblers"] %} disabled="true"{% endif %}>投注</button>
           </div>
 	        <div class="col"></div>
           <div class="col">
-            <button class="btn btn-primary bet-button" type="submit" name="betchoice" value="b"{% if not match.can_bet() or g.me.name in match.b["gamblers"] %} disabled="true"{% endif %}>投注</button>
+            <button class="btn btn-primary bet-button" type="submit" name="betchoice" value="b"{% if g.me.name in match.b["gamblers"] %} disabled="true"{% endif %}>投注</button>
           </div>
         </div>
       </form>
+    {% endif %}
    </div>
 </div>
 {% endfor %}
