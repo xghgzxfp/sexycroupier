@@ -130,20 +130,10 @@ def board():
     ]
     '''
 
-    chartColors = [
-        "rgb(54, 162, 235)",  # blue
-        "rgb(191, 91, 23)",  # brown
-        "rgb(201, 203, 207)",  # grey
-        "rgb(255, 159, 64)",  # orange
-        "rgb(153, 102, 255)",  # purple
-        "rgb(75, 192, 192)",  # green
-        "rgb(255, 99, 132)",  # red
-        "rgb(65, 174, 118)",  # lightgreen
-        "rgb(255, 205, 86)",  # yellow
-        "rgb(0, 255, 255)",   # lightblue
-    ]
-
     ret = model.generate_series(cup=app.config['LEAGUE_NAME'])
+
+    colors_num = len(ret)
+    chartColors = ['hsl({}, 100%, 70%)'.format(int(360/colors_num*i)) for i in range(colors_num)]
 
     match_labels = None
     for label, series in ret.items():
