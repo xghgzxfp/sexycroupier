@@ -357,11 +357,6 @@ def generate_series(cup: str) -> Dict[str, Series]:
     return gamblers_series
 
 
-def match_id_to_diplay(match_id : str):
-    parsed = match_id.split('-')
-    return parsed[-2] + " vs " + parsed[-1]
-
-
 if __name__ == "__main__":
     #insert_match('意甲', datetime.datetime(2018, 3, 31, 18, 30), '受半球/一球', '博洛尼亚', '罗马', '1.98', '1.88', '', '')
     update_match_score(datetime.datetime(2018, 3, 31, 18, 30), '博洛尼亚', '罗马', '0', '0')
