@@ -44,7 +44,9 @@ def find_gamblers() -> List[Gambler]:
     """获取全部 gambler"""
     return [Gambler(name=d['name'], openid=d['openid']) for d in db.gambler.find().sort('name') if d]
 
+
 def find_required_gamblers() -> List[Gambler]:
+    """获取必须参赛的 gambler"""
     return find_gamblers()
 
 
@@ -71,7 +73,7 @@ def find_auction(cup, team):
 
 
 # @lru_cache(maxsize=32)
-def get_team_gambler_in_auctions(cup, team):
+def find_team_owner(cup, team):
     a = find_auction(cup, team)
     if a is None:
         return None
@@ -224,12 +226,12 @@ class Match:
                 self._result[gambler] -= stack
             for gambler in winner['gamblers']:
                 self._result[gambler] += winner_reward
-            winner_team_gambler = get_team_gambler_in_auctions(self.league, winner['team'])
-            loser_team_gambler = get_team_gambler_in_auctions(self.league, loser['team'])
-            if winner_team_gambler in winner['gamblers']:
-                self._result[winner_team_gambler] += winner_reward
-            if loser_team_gambler in winner['gamblers']:
-                self._result[loser_team_gambler] += winner_reward
+            winner_team_owner = find_team_owner(self.league, winner['team'])
+            loser_team_owner = find_team_owner(self.league, loser['team'])
+            if winner_team_owner in winner['gamblers']:
+                self._result[winner_team_owner] += winner_reward
+            if loser_team_owner in winner['gamblers']:
+                self._result[loser_team_owner] += winner_reward
 
     def get_profit_and_loss_result(self):
         if self._result is None:
