@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 
-import requests
+import datetime
 import logging
-from datetime import datetime, timedelta
+import requests
+
 from bs4 import BeautifulSoup
+
 from worldcup.model import insert_match, update_match_score, update_match_handicap, utc_to_beijing, cutofftime_handicap
 from worldcup.app import config
 
@@ -84,7 +86,7 @@ def get_match_data(league, date):
             premium_a = cells[3].find(text=True).replace(u'\xa0', u'')
             handicap_display = cells[4].find(text=True).replace(u'\xa0', u'')
             premium_b = cells[5].find(text=True).replace(u'\xa0', u'')
-            match_time = datetime.strptime(date.strftime("%Y%m%d") + " " + match_time_hhmm, "%Y%m%d %H:%M")
+            match_time = datetime.datetime.strptime(date.strftime("%Y%m%d") + " " + match_time_hhmm, "%Y%m%d %H:%M")
             scores = parse_scores(cells[15])
             score_a = scores[0]
             score_b = scores[1]
@@ -94,8 +96,8 @@ def get_match_data(league, date):
 
 
 def populate_match(league, date):
-    current_time = datetime.utcnow()
-    log_file_name = current_time.strftime('/tmp/bet_web/%y-%m-%d-MatchGetter.log') 
+    current_time = datetime.datetime.utcnow()
+    log_file_name = current_time.strftime('/tmp/bet_web/%y-%m-%d-MatchGetter.log')
     logging.basicConfig(filename=log_file_name, level=logging.INFO, format='%(asctime)s %(message)s')
     matches = get_match_data(league, date)
     logging.info('Match Data Collected from website for ' + league)
@@ -111,7 +113,7 @@ def populate_match(league, date):
     return
 
 
-def populate_and_update(league, k=1, current_date=utc_to_beijing(datetime.now())):
+def populate_and_update(league, k=1, current_date=utc_to_beijing(datetime.datetime.utcnow())):
     """
     :param league: league filter
     :param current_date: the date from which getter starts
@@ -119,7 +121,7 @@ def populate_and_update(league, k=1, current_date=utc_to_beijing(datetime.now())
     :return:
     """
     for day_diff in range(0, k + 1):
-        populate_match(league, current_date + timedelta(days=day_diff))
+        populate_match(league, current_date + datetime.timedelta(days=day_diff))
     return
 
 

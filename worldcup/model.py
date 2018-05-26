@@ -1,10 +1,11 @@
 # coding: utf-8
 
+import datetime
 import logging
 import pymongo
 
 from collections import namedtuple, OrderedDict
-from datetime import datetime, timedelta
+
 # from functools import lru_cache
 from typing import List, Dict
 
@@ -12,24 +13,20 @@ from .app import db
 from .constant import HANDICAP_DICT
 
 
-def utc_to_beijing(utc_time):
-    return datetime.fromtimestamp(utc_time.timestamp() + 8 * 3600)
-
-
-def beijing_to_utc(beijing_time):
-    return datetime.fromtimestamp(beijing_time.timestamp() - 8 * 3600)
+def utc_to_beijing(utc_time: datetime.datetime) -> datetime.datetime:
+    return utc_time + datetime.timedelta(hours=8)
 
 
 def cutofftime_handicap(match_time):
-    # cutofftime_handicap is the time after which handicap will not change
-    res = datetime(match_time.year, match_time.month, match_time.day, 12, 0, 0)
-    if res >= match_time:
-        res -= timedelta(1)
-    return res
+    """盘口截止时间 此时间后盘口不再变化"""
+    cutoff_time = datetime.datetime(match_time.year, match_time.month, match_time.day, 12, 0, 0)
+    if cutoff_time >= match_time:
+        cutoff_time -= datetime.timedelta(days=1)
+    return cutoff_time
 
 
 def cutofftime_bet(match_time):
-    # cutofftime is the time during which bet is allowed fot the match
+    """投注截止时间 此时间后无法再投注"""
     st = cutofftime_handicap(match_time)
     ed = match_time
     return (st, ed)
@@ -285,9 +282,7 @@ def update_match_handicap(match_time, team_a, team_b, handicap_display):
 
 
 def update_match_gamblers(match_id, team, gambler):
-    """Update betting decision in database
-
-    """
+    """更新投注结果"""
     list_out = ("a" if team == "b" else "b") + ".gamblers"
     list_in = team + '.gamblers'
     return db.match.update({"id": match_id}, {"$pull": {list_out: gambler}, "$addToSet": {list_in: gambler}})
@@ -295,7 +290,7 @@ def update_match_gamblers(match_id, team, gambler):
 
 def update_match_gamblers_check_bet_time(match_id, team, gambler):
     st, ed = cutofftime_bet(find_match_time_by_match_id(match_id))
-    current_time = datetime.utcnow()
+    current_time = datetime.datetime.utcnow()
     current_beijing_time = utc_to_beijing(current_time)
     if st < current_beijing_time <= ed:
         update_match_gamblers(match_id, team, gambler)
@@ -364,5 +359,5 @@ def match_id_to_diplay(match_id : str):
 
 
 if __name__ == "__main__":
-    #insert_match('意甲', datetime(2018, 3, 31, 18, 30), '受半球/一球', '博洛尼亚', '罗马', '1.98', '1.88', '', '')
-    update_match_score(datetime(2018, 3, 31, 18, 30), '博洛尼亚', '罗马', '0', '0')
+    #insert_match('意甲', datetime.datetime(2018, 3, 31, 18, 30), '受半球/一球', '博洛尼亚', '罗马', '1.98', '1.88', '', '')
+    update_match_score(datetime.datetime(2018, 3, 31, 18, 30), '博洛尼亚', '罗马', '0', '0')
