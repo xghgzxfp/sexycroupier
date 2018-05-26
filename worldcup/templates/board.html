@@ -3,32 +3,17 @@
 {% block head %}
 {{ super() }}
 <style>
-  body{
-    height:100vh;
-    width:100vw;
-    display:grid;
-    grid-template-rows:auto 1fr
-    }
-
-  .chartWrapper{
-    overflow-x: auto;
-  }
-
-  .canvasAdjust{
-    height: calc(100vh - 56px);
-    width: calc({{ match_cnt }}*50px);
-    min-width: 100%;
-  }
+body{height:100vh;width:100vw;display:grid;grid-template-rows:auto 1fr}
+.chart-wrap{overflow-x:auto}
+.canvas-adjust{height:calc(100vh - 56px);width:{{ match_cnt * 50 }}px;min-width:100%}
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="card">
-    <div class="container chartWrapper">
-      <div class="canvasAdjust">
-        <canvas id="board"></canvas>
-      </div>
-    </div>
+<div class="chart-wrap">
+  <div class="canvas-adjust">
+    <canvas id="board"></canvas>
+  </div>
 </div>
 {% endblock %}
 
@@ -39,6 +24,7 @@
   // override default chart settings
   Chart.defaults.global.elements.line.fill = false;
   Chart.defaults.global.elements.line.tension = 0.0;
+  Chart.defaults.global.legend.position = 'right';
 
   // draw line chart
   var ctx = document.getElementById('board').getContext('2d');
@@ -57,9 +43,8 @@
       }
     }
   })
-</script>
-<script>
-$( "div.chartWrapper" ).scrollLeft( document.getElementById('board').width );
-</script>
 
+  // scroll to canvas rightmost end
+  $("div.chart-wrap").scrollLeft(document.getElementById('board').width)
+</script>
 {% endblock %}
