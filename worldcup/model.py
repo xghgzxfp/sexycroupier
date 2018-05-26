@@ -109,7 +109,7 @@ class Match:
 
         self.match_time = match_time
         self.handicap_display = handicap_display
-        self.handicap = generate_handicap_pair(handicap_display)
+        self.handicap = _generate_handicap_pair(handicap_display)
 
         score_a = int(score_a) if score_a else None
         score_b = int(score_b) if score_b else None
@@ -130,7 +130,7 @@ class Match:
         )
 
         self.weight = weight
-        self.id = id or generate_match_id(match_time, team_a, team_b)
+        self.id = id or _generate_match_id(match_time, team_a, team_b)
 
         self._result = None
 
@@ -244,12 +244,12 @@ class Match:
         return f'Match(id={self.id}, score_a={self.a["score"]}, score_b={self.b["score"]})'
 
 
-def generate_match_id(match_time, team_a, team_b):
+def _generate_match_id(match_time, team_a, team_b):
     res = match_time.strftime('%Y%m%d%H%M') + '-' + team_a + '-' + team_b
     return res
 
 
-def generate_handicap_pair(handicap_display):
+def _generate_handicap_pair(handicap_display):
     if handicap_display.startswith('受'):
         sign = -1
         handicap_display = handicap_display[1:]
@@ -274,7 +274,7 @@ def insert_match(league_name, match_time, handicap_display, team_a, team_b, prem
 
 
 def update_match_score(match_time, team_a, team_b, score_a, score_b):
-    match_id = generate_match_id(match_time, team_a, team_b)
+    match_id = _generate_match_id(match_time, team_a, team_b)
     if score_a == None or score_b == None:
         return
     db.match.update(
@@ -285,10 +285,10 @@ def update_match_score(match_time, team_a, team_b, score_a, score_b):
 
 
 def update_match_handicap(match_time, team_a, team_b, handicap_display):
-    match_id = generate_match_id(match_time, team_a, team_b)
+    match_id = _generate_match_id(match_time, team_a, team_b)
     db.match.update(
         {"id": match_id},
-        {"$set": {"handicap": generate_handicap_pair(handicap_display)}}
+        {"$set": {"handicap": _generate_handicap_pair(handicap_display)}}
     )
     logging.info(match_id + ' handicap updated as ' + handicap_display)
 
@@ -305,7 +305,7 @@ def update_match_gamblers(match_id, team, gambler, cutoff_check=True):
 
 
 def update_match_weight(match_time, team_a, team_b, weight):
-    match_id = generate_match_id(match_time, team_a, team_b)
+    match_id = _generate_match_id(match_time, team_a, team_b)
     db.match.update(
         {"id": match_id},
         {"$set": {"weight": float(weight)}}
