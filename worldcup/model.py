@@ -260,11 +260,16 @@ def _generate_handicap_pair(handicap_display):
 
 
 def insert_match(league_name, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b):
-    new_match = Match(league_name, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b)
-    # 用 replace_one(upsert=True) 避免插入重复记录
-    db.match.replace_one({"id": new_match.id}, new_match._asdict(), upsert=True)
-    logging.info('New match: match={}'.format(new_match.id))
-    return new_match
+    # 如果 match 已存在则直接返回
+    match = find_match_by_id(_generate_match_id(match_time, team_a, team_b))
+    if match:
+        logging.info('Existing match: match={}'.format(match.id))
+        return match
+    # 否则插入新 match
+    match = Match(league_name, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b)
+    db.match.insert(match._asdict())
+    logging.info('New match: match={}'.format(match.id))
+    return match
 
 
 def update_match_score(match_time, team_a, team_b, score_a: Optional[int], score_b: Optional[int]):
