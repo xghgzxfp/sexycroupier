@@ -148,7 +148,7 @@ def board():
         else:
             break
 
-    match_labels = [match_label.replace('-', ' vs ') for match_label in match_labels]
+    match_labels = ['{1} vs {2}'.format(*match_label.split('-')) for match_label in match_labels]
 
     datasets =[{'label' : label,
                 'data' : list(series.points.values()),
