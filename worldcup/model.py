@@ -98,8 +98,8 @@ def find_team_owner(cup, team):
 class Match:
 
     def __init__(self, league, match_time, handicap_display,
-                 team_a, team_b, premium_a, premium_b, score_a: str, score_b: str,
-                 weight=2, id=None, **kwargs):
+                 team_a, team_b, premium_a, premium_b, score_a, score_b,
+                 weight=2, id=None):
         self.league = league
 
         self.match_time = match_time
@@ -195,7 +195,7 @@ class Match:
             elif self.a['score'] < self.b['score'] + handicap:
                 self.a['lose'] = True
 
-    def update_profit_and_loss_result(self, required_gamblers=None) -> int:
+    def update_profit_and_loss_result(self, required_gamblers: List[Gambler]) -> dict:
         if not self.is_completed():
             return
         asc, bsc = self.a['score'], self.b['score']
@@ -232,11 +232,6 @@ class Match:
             if loser_team_owner in winner['gamblers']:
                 self._result[loser_team_owner] += winner_reward
 
-    def get_profit_and_loss_result(self):
-        if self._result is None:
-            self.update_profit_and_loss_result()
-        if not self.is_completed():
-            logging.warning('try to get result of uncompleted match')
         return self._result
 
     def __str__(self):
@@ -331,18 +326,18 @@ def find_match_by_id(match_id: str) -> Match:
 
 class Series:
 
-    def __init__(self, cup: str, gambler: str, matches: list):
+    def __init__(self, cup: str, gambler: str, matches: list, required_gamblers: List[Gambler]):
         self.cup = cup
         self.gambler = gambler
         self.points = OrderedDict()
-        self._add_matches(matches)
+        self._add_matches(matches, required_gamblers)
 
-    def _add_matches(self, matches: list):
+    def _add_matches(self, matches: list, required_gamblers: List[Gambler]):
         latest = 0
         for match in sorted(matches, key=lambda m: m.match_time):
             if not match.is_completed():
                 continue
-            result = match.get_profit_and_loss_result()
+            result = match.update_profit_and_loss_result(required_gamblers=required_gamblers)
             latest += result and result.get(self.gambler) or 0
             self.points[match.id] = latest
 
@@ -350,7 +345,7 @@ class Series:
 def generate_series(cup: str) -> List[Series]:
     gamblers = find_gamblers()
     matches = find_matches(cup)
-    return [Series(cup, gambler.name, matches) for gambler in gamblers]
+    return [Series(cup, gambler.name, matches, gamblers) for gambler in gamblers]
 
 
 if __name__ == "__main__":
