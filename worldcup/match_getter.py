@@ -93,7 +93,7 @@ def populate_match(league, date):
     log_file_name = current_time.strftime('/tmp/bet_web/%y-%m-%d-MatchGetter.log')
     logging.basicConfig(filename=log_file_name, level=logging.INFO, format='%(asctime)s %(message)s')
     matches = get_match_data(league, date)
-    logging.info('Match Data Collected from website for ' + league)
+    logging.info('Matches collected: date="{}" cup={} count={}'.format(date, league, len(matches)))
 
     for match in matches:
         new_match = insert_match(*match)

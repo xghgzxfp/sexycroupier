@@ -242,7 +242,7 @@ def insert_match(league_name, match_time, handicap_display, team_a, team_b, prem
     if db.match.find({"id": new_match.id}).limit(1).count():
         return new_match
     db.match.insert(new_match.__dict__)
-    logging.info(new_match.id + ' is inserted')
+    logging.info('New match: match={}'.format(new_match.id))
     return new_match
 
 
@@ -254,7 +254,7 @@ def update_match_score(match_time, team_a, team_b, score_a, score_b):
         {"id": match_id},
         {"$set": {"a.score": score_a, "b.score": score_b}}
     )
-    logging.info(match_id + ' score updated as ' + str(score_a) + ':' + str(score_b))
+    logging.info('Score updated: match={} score="{}:{}"'.format(match_id, score_a, score_b))
 
 
 def update_match_handicap(match_time, team_a, team_b, handicap_display):
@@ -263,7 +263,7 @@ def update_match_handicap(match_time, team_a, team_b, handicap_display):
         {"id": match_id},
         {"$set": {"handicap": _generate_handicap_pair(handicap_display)}}
     )
-    logging.info(match_id + ' handicap updated as ' + handicap_display)
+    logging.info('Handicap updated: match={} handicap="{}"'.format(match_id, handicap_display))
 
 
 def update_match_gamblers(match_id, team, gambler, cutoff_check=True):
