@@ -111,8 +111,12 @@ class Match:
         self.handicap_display = handicap_display
         self.handicap = _generate_handicap_pair(handicap_display)
 
-        score_a = int(score_a) if score_a else None
-        score_b = int(score_b) if score_b else None
+        try:
+            score_a = int(score_a)
+            score_b = int(score_b)
+        except Exception:
+            score_a = None
+            score_b = None
 
         self.a = dict(
             team=team_a,
