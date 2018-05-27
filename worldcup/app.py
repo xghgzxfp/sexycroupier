@@ -148,15 +148,19 @@ def board():
         else:
             break
 
-    match_labels = ['{1} vs {2}'.format(*match_label.split('-')) for match_label in match_labels]
+    match_labels = [''] + ['{1} vs {2}'.format(*match_label.split('-')) for match_label in match_labels]
 
-    datasets =[{'label' : label,
-                'data' : list(series.points.values()),
+    datasets =[{'label' : series.gambler,
+                'data' : [0] + list(series.points.values()),
                 'borderColor' : chartColors[i],
                 'backgroundColor': chartColors[i]}
                 for i, (label, series) in enumerate(ret.items())]
 
-    return render_template('board.html', match_cnt=len(match_labels), match_labels=match_labels, datasets=datasets)
+    data = dict()
+    data['labels'] = match_labels
+    data['datasets'] = datasets
+
+    return render_template('board.html', match_cnt=len(match_labels), data=data)
 
 
 @app.route('/rule', methods=['GET'])
