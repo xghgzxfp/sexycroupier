@@ -7,7 +7,7 @@ import pymongo
 from collections import namedtuple, OrderedDict
 
 # from functools import lru_cache
-from typing import List, Dict
+from typing import List
 
 from .app import db
 from .constant import HANDICAP_DICT
@@ -43,11 +43,6 @@ def find_gambler_by_openid(openid: str) -> Gambler:
 def find_gamblers() -> List[Gambler]:
     """获取全部 gambler"""
     return [Gambler(name=d['name'], openid=d['openid']) for d in db.gambler.find().sort('name') if d]
-
-
-def find_required_gamblers() -> List[Gambler]:
-    """获取必须参赛的 gambler"""
-    return find_gamblers()
 
 
 # class Auction:
@@ -138,7 +133,7 @@ class Match:
 
         self._result = None
 
-        self.update()
+        # self.update()
 
     @classmethod
     def from_mongo(cls, m: dict):
@@ -336,31 +331,26 @@ def find_match_by_id(match_id: str) -> Match:
 
 class Series:
 
-    def __init__(self, cup, gambler_name):
+    def __init__(self, cup: str, gambler: str, matches: list):
         self.cup = cup
-        self.gambler = gambler_name
-        self.latest_score = 0
+        self.gambler = gambler
         self.points = OrderedDict()
+        self._add_matches(matches)
 
-    def add_a_point(self, match):
-        result = match.get_profit_and_loss_result()
-        if self.gambler in result:
-            self.latest_score += result[self.gambler]
-        self.points[match.id] = self.latest_score
+    def _add_matches(self, matches: list):
+        latest = 0
+        for match in sorted(matches, key=lambda m: m.match_time):
+            if not match.is_completed():
+                continue
+            result = match.get_profit_and_loss_result()
+            latest += result and result.get(self.gambler) or 0
+            self.points[match.id] = latest
 
 
-def generate_series(cup: str) -> Dict[str, Series]:
+def generate_series(cup: str) -> List[Series]:
+    gamblers = find_gamblers()
     matches = find_matches(cup)
-    Gamblers = find_gamblers()
-    gambler_names = [G.name for G in Gamblers]
-    gamblers_series = dict([(gambler_name, Series(cup, gambler_name)) for gambler_name in gambler_names])
-    required_gamblers = find_required_gamblers()
-    for match in matches:
-        if match.is_completed():
-            match.update_profit_and_loss_result(required_gamblers)
-            for gambler_series in gamblers_series.values():
-                gambler_series.add_a_point(match)
-    return gamblers_series
+    return [Series(cup, gambler.name, matches) for gambler in gamblers]
 
 
 if __name__ == "__main__":

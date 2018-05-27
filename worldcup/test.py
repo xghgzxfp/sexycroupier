@@ -7,6 +7,7 @@ import datetime
 import json
 import os
 
+
 test_names = ['bigzuan', 'midzuan', 'smallzuan', 'minizuan']
 test_gamblers_choice = [
     ['a', 'a', 'a', 'a'],
@@ -16,26 +17,26 @@ test_gamblers_choice = [
 ]
 
 test_matches = [
-        ['硬糙', datetime.datetime(2018, 3, 31, 19, 30), '受一球', '水宫', '利浦', '2.08', '1.78', '2', '4'],
-        ['硬糙', datetime.datetime(2018, 3, 31, 22, 0), '平手', '白顿', '莱特城', '2.02', '1.84', '3', '3'],
-        ['硬糙', datetime.datetime(2018, 3, 31, 22, 10), '球半', '曼特联', '斯西', '1.78', '2.08', '1', '1'],
-        ['硬糙', datetime.datetime(2018, 3, 31, 22, 10), '半球/一球', '纽尔联', '哈尔德', '2.02', '1.84', '2', '1'],
-    ]
+    ['硬糙', datetime.datetime(2018, 3, 31, 19, 30), '受一球', '水宫', '利浦', '2.08', '1.78', '2', '4'],
+    ['硬糙', datetime.datetime(2018, 3, 31, 22, 0), '平手', '白顿', '莱特城', '2.02', '1.84', '3', '3'],
+    ['硬糙', datetime.datetime(2018, 3, 31, 22, 10), '球半', '曼特联', '斯西', '1.78', '2.08', '1', '1'],
+    ['硬糙', datetime.datetime(2018, 3, 31, 22, 10), '半球/一球', '纽尔联', '哈尔德', '2.02', '1.84', '2', '1'],
+]
 
 test_cup = '硬糙'
 
 test_result = {
-    'bigzuan': -3,
-    'midzuan': -5,
-    'smallzuan': 7,
-    'minizuan': 1
+    'bigzuan': [-2, -2, -4, -3],
+    'midzuan': [-2, -2, -4, -5],
+    'smallzuan': [2, 2, 8, 7],
+    'minizuan': [2, 2, 0, 1],
 }
 
 test_result_with_auctions = {
-    'bigzuan': -2,
-    'midzuan': -5,
-    'smallzuan': 13,
-    'minizuan': 2
+    'bigzuan': [-2, -2, -4, -2],
+    'midzuan': [-2, -2, -4, -5],
+    'smallzuan': [2, 2, 14, 13],
+    'minizuan': [2, 2, 0, 2],
 }
 
 test_auctions = [
@@ -60,6 +61,7 @@ def del_user():
         if db.gambler.find({"name": name}).count() >= 1:
             db.gambler.delete_many({'name': name})
 
+
 def load_data(cup, filename):
     file_path = os.path.join(os.path.dirname(__file__), 'test_data', cup, filename)
     return json.load(open(file_path, 'r'))
@@ -70,6 +72,7 @@ def load_users(cup):
     for gambler in gamblers.keys():
         model.insert_gambler(gambler, gambler + '_openid')
     return len(gamblers)
+
 
 def del_loaded_users(cup):
     gamblers = load_data(cup, 'players.json')
@@ -95,9 +98,11 @@ def users_choose_teams():
         for a_id, team in zip(matche_ids, choice):
             model.update_match_gamblers(a_id, team, name, cutoff_check=False)
 
+
 def insert_auctions():
     for auc in test_auctions:
         model.insert_auction(test_cup, *auc)
+
 
 def delete_auctions():
     for auc in test_auctions:
@@ -118,6 +123,7 @@ def test_del_user():
     del_user()
     assert db.gambler.find().count() == cnt - len(test_names)
 
+
 def test_load_users():
     cup = 'E_Cup'
     del_loaded_users(cup)
@@ -126,6 +132,7 @@ def test_load_users():
     assert db.gambler.find().count() == cnt + n
     del_loaded_users(cup)
     assert db.gambler.find().count() == cnt
+
 
 def test_insert_matches():
     del_test_matches()
@@ -136,6 +143,7 @@ def test_insert_matches():
     assert db.match.find().count() == cnt + len(test_matches)
     del_test_matches()
     assert db.match.find().count() == cnt
+
 
 def test_insert_auctions():
     delete_auctions()
@@ -176,16 +184,17 @@ def test_result_correctness():
     del_user()
     add_user()
     users_choose_teams()
-    gamblers_series = model.generate_series(test_cup)
+    many_series = model.generate_series(test_cup)
     cnt = 0
-    for gambler, seris in gamblers_series.items():
-        if gambler not in test_result:
+    for series in many_series:
+        if series.gambler not in test_result:
             continue
         cnt += 1
-        assert seris.latest_score == test_result[gambler]
+        assert list(series.points.values()) == test_result[series.gambler]
     assert cnt == len(test_result)
     del_user()
     del_test_matches()
+
 
 def test_result_correctness_with_auctions():
     del_test_matches()
@@ -194,15 +203,14 @@ def test_result_correctness_with_auctions():
     add_user()
     users_choose_teams()
     insert_auctions()
-    gamblers_series = model.generate_series(test_cup)
+    many_series = model.generate_series(test_cup)
     cnt = 0
-    for gambler, seris in gamblers_series.items():
-        if gambler not in test_result_with_auctions:
+    for series in many_series:
+        if series.gambler not in test_result_with_auctions:
             continue
         cnt += 1
-        assert seris.latest_score == test_result_with_auctions[gambler], gambler
+        assert list(series.points.values()) == test_result_with_auctions[series.gambler]
     assert cnt == len(test_result_with_auctions)
     del_user()
     del_test_matches()
     delete_auctions()
-

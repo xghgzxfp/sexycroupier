@@ -126,41 +126,28 @@ def index():
 @app.route('/board', methods=['GET'])
 @authenticated
 def board():
-    '''
-    match_labels = ['比赛1', '比赛2', '比赛3', '比赛4']
+    many_series = model.generate_series(cup=app.config['LEAGUE_NAME'])
 
-    datasets = [
-        {'label': '迷你钻', 'data': [2, 4, 6, 10], 'borderColor': chartColors[0], 'backgroundColor': chartColors[0]},
-        {'label': '巨型钻', 'data': [4, 2, 4, 7], 'borderColor': chartColors[1], 'backgroundColor': chartColors[1]},
-        {'label': '小型钻', 'data': [4, 0, 9, 7], 'borderColor': chartColors[2], 'backgroundColor': chartColors[2]},
-    ]
-    '''
+    match_ids = many_series and many_series[0].points.keys() or []
+    labels = ['{1} vs {2}'.format(*match_id.split('-')) for match_id in sorted(match_ids)]  # 用 sorted() 确保 match_ids 有序
 
-    ret = model.generate_series(cup=app.config['LEAGUE_NAME'])
+    datasets = []
+    for i, series in enumerate(many_series):
+        s, l = (50, 50) if (i % 2) else (100, 70)
+        color = 'hsl({h}, {s}%, {l}%)'.format(h=int(360 / len(many_series) * i), s=s, l=l)
+        datasets.append(dict(label=series.gambler, data=list(series.points.values()),
+                             borderColor=color, backgroundColor=color))
 
-    chartColors = ['hsl({}, 50%, 50%)'.format(int(360/len(ret)*i)) if i%2 else 'hsl({}, 100%, 70%)'.format(int(360/len(ret)*i))
-                    for i in range(len(ret))]
-
-    match_labels = None
-    for label, series in ret.items():
-        if match_labels == None:
-            match_labels = list(series.points.keys())
-        else:
-            break
-
-    match_labels = [''] + ['{1} vs {2}'.format(*match_label.split('-')) for match_label in match_labels]
-
-    datasets =[{'label' : series.gambler,
-                'data' : [0] + list(series.points.values()),
-                'borderColor' : chartColors[i],
-                'backgroundColor': chartColors[i]}
-                for i, (label, series) in enumerate(ret.items())]
+    # 插入初始 0 值
+    labels.insert(0, '')
+    for d in datasets:
+        d['data'].insert(0, 0)
 
     data = dict()
-    data['labels'] = match_labels
+    data['labels'] = labels
     data['datasets'] = datasets
 
-    return render_template('board.html', match_cnt=len(match_labels), data=data)
+    return render_template('board.html', label_count=len(labels), data=data)
 
 
 @app.route('/rule', methods=['GET'])
