@@ -20,30 +20,23 @@ def get_match_page(league, date, url='http://odds.sports.sina.com.cn/odds/index.
         'day': date.day
     }
 
-    retry = 5
-    logging.info('Getting data from website')
-    connected = False
-    r = None
+    logging.info('Getting data from website: date="{}"'.format(date))
 
-    while retry and (not connected):
-        logging.debug('Retries left:' + str(retry))
+    retry = 5
+    while retry:
         try:
             r = requests.get(url, form_data, timeout=1)
-            connected = True
+            break
         except Exception:
             retry -= 1
 
     if retry <= 0:
-        raise Exception("Request tried out")
+        raise Exception("Request failed")
 
-    logging.info('Request finished')
     r.encoding = 'GBK'
-    return r.text
 
-'''
-def convert_handicap(origin_handicap):
-    handicaps = origin_handicap.split('/')
-'''
+    logging.info('Request finished: url={} status={}'.format(r.url, r.status_code))
+    return r.text
 
 
 def parse_teams(team_str):
