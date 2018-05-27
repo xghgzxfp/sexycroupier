@@ -70,9 +70,7 @@ def find_auction(cup, team):
 # @lru_cache(maxsize=32)
 def find_team_owner(cup, team):
     a = find_auction(cup, team)
-    if a is None:
-        return None
-    return a.gambler
+    return a and a.gambler
 
 
 # class Match
@@ -118,22 +116,20 @@ class Match:
             premium=float(premium_a),
             score=score_a,
             gamblers=[],
-            lose=False,
+            owner=find_team_owner(cup=self.league, team=team_a),
         )
         self.b = dict(
             team=team_b,
             premium=float(premium_b),
             score=score_b,
             gamblers=[],
-            lose=False,
+            owner=find_team_owner(cup=self.league, team=team_b),
         )
 
         self.weight = weight
         self.id = id or _generate_match_id(match_time, team_a, team_b)
 
         self._result = None
-
-        # self.update()
 
     @classmethod
     def from_mongo(cls, m: dict):
@@ -169,31 +165,15 @@ class Match:
             return False
         return True
 
-    def update(self):
-        self.update_auctions()
-        self.update_team_losing_state()
-        self.update_profit_and_loss_result()
-
-    def update_auctions(self):
-        def safe_find_auction(cup, team):
-            auc = find_auction(cup, team)
-            if auc is not None:
-                return auc
-            else:
-                return Auction(cup=cup, team=team, gambler=None, price=None)
-        self.a['auction_gambler']=safe_find_auction(self.league, self.a['team']).gambler
-        self.a['auction_price']=safe_find_auction(self.league, self.a['team']).price
-        self.b['auction_gambler']=safe_find_auction(self.league, self.b['team']).gambler
-        self.b['auction_price']=safe_find_auction(self.league, self.b['team']).price
-
-    def update_team_losing_state(self):
+    def is_loser(self, team) -> bool:
         if not self.is_completed():
-            return
+            return False
         for handicap in self.handicap:
             if self.a['score'] > self.b['score'] + handicap:
-                self.b['lose'] = True
-            elif self.a['score'] < self.b['score'] + handicap:
-                self.a['lose'] = True
+                return team == self.b['team']
+            if self.a['score'] < self.b['score'] + handicap:
+                return team == self.a['team']
+        return False
 
     def update_profit_and_loss_result(self, required_gamblers: List[Gambler]) -> dict:
         if not self.is_completed():
@@ -239,8 +219,7 @@ class Match:
 
 
 def _generate_match_id(match_time, team_a, team_b):
-    res = match_time.strftime('%Y%m%d%H%M') + '-' + team_a + '-' + team_b
-    return res
+    return match_time.strftime('%Y%m%d%H%M') + '-' + team_a + '-' + team_b
 
 
 def _generate_handicap_pair(handicap_display):

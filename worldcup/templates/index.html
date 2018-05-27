@@ -7,10 +7,10 @@
    <div class="card-body container match-container">
       <!-- match detail -->
       <div class="row align-items-center">
-        <div class="col" {% if match.a["lose"] %} style="color:gray" {% endif %}>
+        <div class="col" {% if match.is_loser(match.a["team"]) %} style="color:gray" {% endif %}>
           <div class="team">{{ match.a["team"] }}</div>
-        {% if match.a["auction_gambler"] %}
-          <small>{{ match.a["auction_gambler"] }}</small>
+        {% if match.a["owner"] %}
+          <small>{{ match.a["owner"] }}</small>
         {% endif %}
           <div class="score">
             {% if match.a["score"] is none %} - {% else %} {{ match.a["score"] }} {% endif %}
@@ -22,10 +22,10 @@
           <small>盘口</small>
           <div>{{ match.handicap_display or "-" }}</div>
         </div>
-        <div class="col" {% if match.b["lose"] %} style="color:gray" {% endif %}>
+        <div class="col" {% if match.is_loser(match.b["team"]) %} style="color:gray" {% endif %}>
           <div class="team">{{ match.b["team"] }}</div>
-        {% if match.b["auction_gambler"] %}
-          <small>{{ match.b["auction_gambler"] }}</small>
+        {% if match.b["owner"] %}
+          <small>{{ match.b["owner"] }}</small>
         {% endif %}
           <div class="score">
             {% if match.b["score"] is none %} - {% else %} {{ match.b["score"] }} {% endif %}
