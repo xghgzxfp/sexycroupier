@@ -238,7 +238,7 @@ class Match:
         return self._result
 
     def __str__(self):
-        return 'Match(id={}, score_a={}, score_b={})'.format(self.id, self.a['score'], self.b['score_b'])
+        return 'Match(id={}, score_a={}, score_b={})'.format(self.id, self.a['score'], self.b['score'])
 
 
 def _generate_match_id(match_time, team_a, team_b):
