@@ -155,6 +155,29 @@ class Match:
         """投注截止时间 此时间后无法再投注"""
         return self.match_time
 
+    def _asdict(self) -> dict:
+        """存入数据库的结构
+
+        明确了哪些数据会被存入数据库持久化，而其他数据则只暂存在内存中
+        """
+        def _team_asdict(team: dict) -> dict:
+            return dict(
+                team=team['team'],
+                premium=team['premium'],
+                score=team['score'],
+                gamblers=team['gamblers'],
+            )
+        return dict(
+            league=self.league,
+            match_time=self.match_time,
+            handicap_display=self.handicap_display,
+            handicap=self.handicap,
+            a=_team_asdict(self.a),
+            b=_team_asdict(self.b),
+            weight=self.weight,
+            id=self.id,
+        )
+
     def can_bet(self) -> bool:
         """比赛是否可投注"""
         return self.handicap_cutoff_time < utc_to_beijing(datetime.datetime.utcnow()) <= self.bet_cutoff_time
@@ -238,10 +261,8 @@ def _generate_handicap_pair(handicap_display):
 
 def insert_match(league_name, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b):
     new_match = Match(league_name, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b)
-    # do nothing if duplicate
-    if db.match.find({"id": new_match.id}).limit(1).count():
-        return new_match
-    db.match.insert(new_match.__dict__)
+    # 用 replace_one(upsert=True) 避免插入重复记录
+    db.match.replace_one({"id": new_match.id}, new_match._asdict(), upsert=True)
     logging.info('New match: match={}'.format(new_match.id))
     return new_match
 
