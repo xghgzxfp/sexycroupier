@@ -7,7 +7,7 @@ import pymongo
 from collections import namedtuple, OrderedDict
 
 # from functools import lru_cache
-from typing import List
+from typing import List, Optional
 
 from .app import db
 from .constant import HANDICAP_DICT
@@ -267,9 +267,9 @@ def insert_match(league_name, match_time, handicap_display, team_a, team_b, prem
     return new_match
 
 
-def update_match_score(match_time, team_a, team_b, score_a, score_b):
+def update_match_score(match_time, team_a, team_b, score_a: Optional[int], score_b: Optional[int]):
     match_id = _generate_match_id(match_time, team_a, team_b)
-    if score_a == None or score_b == None:
+    if score_a is None or score_b is None:
         return
     db.match.update(
         {"id": match_id},
@@ -278,7 +278,7 @@ def update_match_score(match_time, team_a, team_b, score_a, score_b):
     logging.info('Score updated: match={} score="{}:{}"'.format(match_id, score_a, score_b))
 
 
-def update_match_handicap(match_time, team_a, team_b, handicap_display):
+def update_match_handicap(match_time, team_a, team_b, handicap_display: str):
     match_id = _generate_match_id(match_time, team_a, team_b)
     db.match.update(
         {"id": match_id},
