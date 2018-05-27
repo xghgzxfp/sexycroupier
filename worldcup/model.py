@@ -240,7 +240,7 @@ class Match:
         return self._result
 
     def __str__(self):
-        return f'Match(id={self.id}, score_a={self.a["score"]}, score_b={self.b["score"]})'
+        return 'Match(id={}, score_a={}, score_b={})'.format(self.id, self.a['score'], self.b['score_b'])
 
 
 def _generate_match_id(match_time, team_a, team_b):
