@@ -237,7 +237,7 @@ class Match:
 
         return self._result
 
-    def __str__(self):
+    def __repr__(self):
         return 'Match(id={}, score_a={}, score_b={})'.format(self.id, self.a['score'], self.b['score'])
 
 
