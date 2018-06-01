@@ -261,22 +261,24 @@ def _generate_handicap_pair(handicap_display):
         return sign * HANDICAP_DICT[handicaps[0]], sign * HANDICAP_DICT[handicaps[1]]
 
 
-def insert_match(league_name, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b):
+def insert_match(league, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b):
     # 如果 match 已存在则直接返回
     match = find_match_by_id(_generate_match_id(match_time, team_a, team_b))
     if match:
         logging.info('Existing match: match={}'.format(match.id))
         return match
     # 否则插入新 match
-    match = Match(league_name, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b)
+    match = Match(league, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b)
     db.match.insert(match._asdict())
     logging.info('New match: match={}'.format(match.id))
     return match
 
 
-def update_match_score(match_time, team_a, team_b, score_a: Optional[int], score_b: Optional[int]):
-    match_id = _generate_match_id(match_time, team_a, team_b)
-    if score_a is None or score_b is None:
+def update_match_score(match_id: str, score_a: str, score_b: str):
+    try:
+        score_a = int(score_a)
+        score_b = int(score_b)
+    except Exception:
         return
     db.match.update(
         {"id": match_id},
@@ -285,8 +287,7 @@ def update_match_score(match_time, team_a, team_b, score_a: Optional[int], score
     logging.info('Score updated: match={} score="{}:{}"'.format(match_id, score_a, score_b))
 
 
-def update_match_handicap(match_time, team_a, team_b, handicap_display: str):
-    match_id = _generate_match_id(match_time, team_a, team_b)
+def update_match_handicap(match_id: str, handicap_display: str):
     db.match.update(
         {"id": match_id},
         {"$set": {"handicap": _generate_handicap_pair(handicap_display)}}
@@ -354,8 +355,3 @@ def generate_series(cup: str) -> List[Series]:
     gamblers = find_gamblers()
     matches = find_matches(cup)
     return [Series(cup, gambler.name, matches, gamblers) for gambler in gamblers]
-
-
-if __name__ == "__main__":
-    #insert_match('意甲', datetime.datetime(2018, 3, 31, 18, 30), '受半球/一球', '博洛尼亚', '罗马', '1.98', '1.88', '', '')
-    update_match_score(datetime.datetime(2018, 3, 31, 18, 30), '博洛尼亚', '罗马', '0', '0')
