@@ -1,5 +1,12 @@
 {% extends "_base.html" %}
 
+{% block head %}
+{{ super() }}
+<style>
+.bet-detail{min-height:48px}
+</style>
+{% endblock %}
+
 {% block content %}
 {% for match in matches %}
 <!-- match -->
@@ -34,7 +41,7 @@
       </div>
       <hr>
       <!-- bet detail -->
-      <div class="row align-items-center">
+      <div class="row align-items-center bet-detail">
         <div class="col">
         {% for gambler in match.a["gamblers"] %}
           <div>{{ gambler }}</div>
