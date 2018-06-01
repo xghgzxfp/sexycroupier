@@ -115,8 +115,8 @@ def auth_signup():
 @authenticated
 def index():
     if request.method == 'POST':
-        match_id = request.values.get('match_id')
-        new_choice = request.values.get('betchoice')
+        match_id = request.values.get('match-id')
+        new_choice = request.values.get('bet-choice')
         model.update_match_gamblers(match_id, new_choice, g.me.name)
 
     matches = model.find_matches(cup=app.config['LEAGUE_NAME'], reverse=True)

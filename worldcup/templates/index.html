@@ -4,7 +4,7 @@
 {% for match in matches %}
 <!-- match -->
 <div class="card text-center m-2">
-   <div class="card-body container match-container">
+   <div class="card-body container match-container" data-match-id="{{ match.id }}">
       <!-- match detail -->
       <div class="row align-items-center">
         <div class="col" {% if match.is_loser(match.a["team"]) %} style="color:gray" {% endif %}>
@@ -41,7 +41,7 @@
         {% endfor %}
         </div>
         <div class="col">
-          <p class="countdown" data-cutoff-bet="{{ match.bet_cutoff_time | _ts }}" data-cutoff-handicap="{{ match.handicap_cutoff_time | _ts }}" ></p>
+          <div class="countdown" data-cutoff-bet="{{ match.bet_cutoff_time | _ts }}" data-cutoff-handicap="{{ match.handicap_cutoff_time | _ts }}" ></div>
         </div>
         <div class="col">
         {% for gambler in match.b["gamblers"] %}
@@ -52,18 +52,23 @@
     {% if match.can_bet() %}
       <hr>
       <!-- action -->
-      <form action="/" method="post">
-        <div class="row align-items-center">
-          <input type="hidden" name="match_id" value="{{ match.id }}">
-          <div class="col">
-            <button class="btn btn-primary bet-button" type="submit" name="betchoice" value="a"{% if g.me.name in match.a["gamblers"] %} disabled="true"{% endif %}>投注</button>
-          </div>
-	        <div class="col"></div>
-          <div class="col">
-            <button class="btn btn-primary bet-button" type="submit" name="betchoice" value="b"{% if g.me.name in match.b["gamblers"] %} disabled="true"{% endif %}>投注</button>
-          </div>
+      <div class="row align-items-center">
+        <div class="col">
+          <form action="/" method="post" class="bet-form">
+            <input type="hidden" name="match-id" value="{{ match.id }}">
+            <input type="hidden" name="bet-choice" value="a">
+            <button class="btn btn-primary bet-button" type="submit"{% if g.me.name in match.a["gamblers"] %} disabled="true"{% endif %}>投注</button>
+          </form>
         </div>
-      </form>
+        <div class="col"></div>
+        <div class="col">
+          <form action="/" method="post" class="bet-form">
+            <input type="hidden" name="match-id" value="{{ match.id }}">
+            <input type="hidden" name="bet-choice" value="b">
+            <button class="btn btn-primary bet-button" type="submit"{% if g.me.name in match.b["gamblers"] %} disabled="true"{% endif %}>投注</button>
+          </form>
+        </div>
+      </div>
     {% endif %}
    </div>
 </div>
@@ -75,44 +80,76 @@
 <script>
 function deactivateButtons(match) {
   Array.from(match.getElementsByClassName("bet-button")).forEach(function (button) {
-    button.disabled = true;
+    button.disabled = true
   })
 }
 
 function renderCountdown(countdown, distance, announcement) {
   // Time calculations for days, hours, minutes and seconds
-  var hours = Math.floor((distance % (60 * 60 * 24)) / (60 * 60));
-  var minutes = Math.floor((distance % (60 * 60)) / (60));
-  var seconds = Math.floor((distance % 60));
+  var hours = Math.floor((distance % (60 * 60 * 24)) / (60 * 60))
+  var minutes = Math.floor((distance % (60 * 60)) / (60))
+  var seconds = Math.floor((distance % 60))
 
   // Display the result in the element
   countdown.innerHTML = announcement
   countdown.innerHTML += (hours >= 0 ? (hours >= 10 ? hours : "0" + hours) + ":" : "")
   countdown.innerHTML += (minutes >= 0 ? (minutes >= 10 ? minutes : "0" + minutes) + ":" : "")
-  countdown.innerHTML += (seconds >= 0 ? (seconds >= 10 ? seconds : "0" + seconds) : "");
+  countdown.innerHTML += (seconds >= 0 ? (seconds >= 10 ? seconds : "0" + seconds) : "")
 }
 
-// setup countdown for each match container
-Array.from(document.getElementsByClassName("match-container")).forEach(function (match) {
-  var countdown = match.getElementsByClassName("countdown")[0];
+function setupCountdown(match) {
+  var countdown = match.getElementsByClassName("countdown")[0]
 
   // update the count down every 1 second
   var x = setInterval(function () {
-    var utcnow = (new Date()).getTime() / 1000.0;
-    var cutoffBet = countdown.getAttribute("data-cutoff-bet");
-    var cutoffHandcap = countdown.getAttribute("data-cutoff-handicap");
+    var utcnow = (new Date()).getTime() / 1000.0
+    var cutoffBet = countdown.getAttribute("data-cutoff-bet")
+    var cutoffHandcap = countdown.getAttribute("data-cutoff-handicap")
 
     if (utcnow < cutoffHandcap) {
-      renderCountdown(countdown, cutoffHandcap - utcnow, "<small>盘口未定<br>距投注开始<br></small>");
-      deactivateButtons(match);
+      renderCountdown(countdown, cutoffHandcap - utcnow, "<small>盘口未定<br></small>")
+      deactivateButtons(match)
     } else if (utcnow < cutoffBet) {
-      renderCountdown(countdown, cutoffBet - utcnow, "<small>距投注结束<br></small>");
+      renderCountdown(countdown, cutoffBet - utcnow, "<small>距投注结束<br></small>")
     } else {
-      clearInterval(x);
-      // countdown.innerHTML = "投注已结束";
-      deactivateButtons(match);
+      clearInterval(x)
+      countdown.innerHTML = "投注已结束"
+      deactivateButtons(match)
     }
   }, 1000)
+}
+
+// setup countdown for each match container
+Array.from(document.getElementsByClassName("match-container")).forEach(setupCountdown)
+
+// ajax submit
+$(document).on('submit', 'form.bet-form', function (e) {
+  e.preventDefault()
+
+  var $btn = $(this).find('button.bet-button')
+  $btn.attr('disabled', 'disabled')
+
+  var matchId = $(this).find('input[name=match-id]').val()
+
+  $.ajax({
+    url: this.action,
+    type: this.method,
+    dataType: 'html',
+    data: $(this).serialize(),
+  }).done(function (data) {
+    matchSelector = '.match-container[data-match-id=' + matchId + ']'
+    $updatedMatch = $(matchSelector, data).eq(0)
+    if (0 === $updatedMatch.length) {
+      $updatedMatch = $(data).filter(this.itemsContainerSelector).eq(0)
+    }
+    if ($updatedMatch) {
+      $(matchSelector).parent().html($updatedMatch)
+      setupCountdown($updatedMatch.get(0))
+    }
+  }).fail(function (e) {
+    alert('投注失败：' + (e.message || "未知原因"))
+    location.reload()
+  })
 })
 </script>
 {% endblock %}
