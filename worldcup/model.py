@@ -134,6 +134,8 @@ class Match:
     @classmethod
     def from_mongo(cls, m: dict):
         """根据 mongo 返回的 record 构造 Match 对象"""
+        if not m:
+            return
         match = Match(league=m['league'], match_time=m['match_time'], handicap_display=m['handicap_display'],
                       team_a=m['a']['team'], premium_a=m['a']['premium'], score_a=m['a']['score'],
                       team_b=m['b']['team'], premium_b=m['b']['premium'], score_b=m['b']['score'],
