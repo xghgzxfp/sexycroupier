@@ -319,7 +319,8 @@ def find_matches(cup: str, reverse=False) -> List[Match]:
     return [Match.from_mongo(m) for m in db.match.find({'league': cup}).sort('id', direction=direction)]
 
 
-def find_match_by_id(match_id: str) -> Match:
+def find_match_by_id(match_id: str) -> Optional[Match]:
+    """根据 ID 返回比赛 找不到时返回 None"""
     return Match.from_mongo(db.match.find_one({'id': match_id}))
 
 
