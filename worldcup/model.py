@@ -217,11 +217,12 @@ class Match:
                 winner, loser = self.b, self.a
             else:
                 continue
+            punishi_gamblers = []
             for gambler in required_gamblers:
                 if gambler not in self.a['gamblers'] and gambler not in self.b['gamblers']:
-                    loser['gamblers'].append(gambler)
+                    punishi_gamblers.append(gambler)
             stack = self.weight / len(self.handicap)
-            reward_sum = stack * len(loser['gamblers'])
+            reward_sum = stack * (len(loser['gamblers']) + len(punishi_gamblers)) 
             if len(winner['gamblers']) > 0:
                 winner_reward = reward_sum / len(winner['gamblers'])
             else:
@@ -230,6 +231,8 @@ class Match:
                 self._result[gambler] -= stack
             for gambler in winner['gamblers']:
                 self._result[gambler] += winner_reward
+            for gambler in punishi_gamblers:
+                self._result[gambler] -= stack
             winner_team_owner = find_team_owner(self.league, winner['team'])
             loser_team_owner = find_team_owner(self.league, loser['team'])
             if winner_team_owner in winner['gamblers']:
