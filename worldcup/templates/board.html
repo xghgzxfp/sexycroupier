@@ -22,12 +22,12 @@ body{height:100vh;width:100vw;display:grid;grid-template-rows:auto 1fr}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>
 <script>
   // override default chart settings
-  Chart.defaults.global.elements.line.fill = false;
-  Chart.defaults.global.elements.line.tension = 0.0;
-  Chart.defaults.global.legend.position = 'right';
+  Chart.defaults.global.elements.line.fill = false
+  Chart.defaults.global.elements.line.tension = 0.0
+  Chart.defaults.global.legend.position = 'right'
 
   // draw line chart
-  var ctx = document.getElementById('board').getContext('2d');
+  var ctx = document.getElementById('board').getContext('2d')
   var chart = new Chart(ctx, {
     type: 'line',
     data: {{ data | tojson }},
@@ -37,12 +37,15 @@ body{height:100vh;width:100vw;display:grid;grid-template-rows:auto 1fr}
       tooltips: {
         mode: 'index',
         intersect: false,
+        itemSort: function (a, b) {
+          return a.y - b.y
+        },
         callbacks: {
           label: function(tooltipItem, data) {
-            var label = data.datasets[tooltipItem.datasetIndex].label || '';
+            var label = data.datasets[tooltipItem.datasetIndex].label || ''
             if (label) { label += ': ' }
-            label += Math.round(tooltipItem.yLabel * 100) / 100;
-            return label;
+            label += Math.round(tooltipItem.yLabel * 100) / 100
+            return label
           }
         }
       }
