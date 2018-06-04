@@ -84,6 +84,8 @@ def insert_test_matches():
     for mch in test_matches:
         match_getter.insert_match(*mch)
 
+def insert_a_test_match(match):
+    match_getter.insert_match(*match)
 
 def del_test_matches():
     matches = map(lambda x: model.Match(*x), test_matches)
@@ -91,12 +93,21 @@ def del_test_matches():
         if db.match.find({'id': m.id}).count() >= 1:
             db.match.delete_many({'id': m.id})
 
+def del_a_test_match(match):
+    match = model.Match(*match)
+    if db.match.find({'id': match.id}).count() >= 1:
+        db.match.delete_many({'id': match.id})
 
 def users_choose_teams():
     matche_ids = list(map(lambda x: model.Match(*x).id, test_matches))
     for name, choice in zip(test_names, test_gamblers_choice):
         for a_id, team in zip(matche_ids, choice):
             model.update_match_gamblers(a_id, team, name, cutoff_check=False)
+            
+
+def insert_a_user_choice(match, name, choice):
+    match_id = model.Match(*match).id
+    model.update_match_gamblers(match_id, choice, name, cutoff_check=False)
 
 
 def insert_auctions():
@@ -214,3 +225,76 @@ def test_result_correctness_with_auctions():
     del_user()
     del_test_matches()
     delete_auctions()
+
+
+def test_one_match_result():
+    del_user()
+    add_user()
+    del_test_matches
+    insert_a_test_match(test_matches[1])
+    for name, choice in zip(test_names, test_gamblers_choice[1]):
+        insert_a_user_choice(test_matches[1], name, choice)
+    many_series = model.generate_series(test_cup)
+    for series in many_series:        
+        assert list(series.points.values()) == [0]
+    assert len(many_series) == len(test_names)
+    del_user()
+    del_test_matches()
+    
+
+def test_forget_case_tie():
+    del_user()
+    add_user()
+    del_test_matches
+    insert_a_test_match(test_matches[1])
+    for name, choice in zip(test_names[:-1], test_gamblers_choice[1][:-1]):
+        insert_a_user_choice(test_matches[1], name, choice)
+    many_series = model.generate_series(test_cup)
+    for series in many_series:        
+        if series.gambler in test_names[:-1]:
+            assert list(series.points.values()) == [0]
+        else:
+            assert list(series.points.values()) == [-2]
+    assert len(many_series) == len(test_names)
+    del_user()
+    del_test_matches()
+    
+
+def test_forget_case_win_lose():
+    del_user()
+    add_user()
+    del_test_matches()
+    insert_a_test_match(test_matches[0])
+    for name, choice in zip(test_names[:-1], test_gamblers_choice[1][:-1]):
+        insert_a_user_choice(test_matches[0], name, choice)
+    many_series = model.generate_series(test_cup)
+    for series in many_series:        
+        if series.gambler in [test_names[0], test_names[2], test_names[3]]:
+            assert list(series.points.values()) == [-2]
+        else:
+            assert list(series.points.values()) == [6]
+    assert len(many_series) == len(test_names)
+    del_user()
+    del_test_matches()
+    
+def test_forget_case_win_lose_tie():
+    del_user()
+    add_user()
+    del_test_matches()
+    insert_a_test_match(test_matches[3])
+    for name, choice in zip(test_names[:-1], test_gamblers_choice[1][:-1]):
+        insert_a_user_choice(test_matches[3], name, choice)
+    many_series = model.generate_series(test_cup)
+    for series in many_series:        
+        if series.gambler in [test_names[0], test_names[2]]:
+            assert list(series.points.values()) == [1]
+        elif series.gambler in [test_names[1]]:
+            assert list(series.points.values()) == [-1]
+        else:
+            assert list(series.points.values()) == [-2]
+    assert len(many_series) == len(test_names)
+    del_user()
+    del_test_matches()
+    
+   
+
