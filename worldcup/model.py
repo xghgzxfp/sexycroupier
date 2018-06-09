@@ -302,7 +302,7 @@ def update_match_handicap(match_id: str, handicap_display: str, cutoff_check=Tru
         return
     db.match.update(
         {"id": match_id},
-        {"$set": {"handicap": _generate_handicap_pair(handicap_display)}}
+        {"$set": {"handicap": _generate_handicap_pair(handicap_display), "handicap_display": handicap_display}}
     )
     logging.info('Handicap updated: match={} handicap="{}"'.format(match_id, handicap_display))
 
