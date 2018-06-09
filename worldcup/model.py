@@ -32,7 +32,7 @@ def insert_gambler(name: str, openid: str) -> Gambler:
     return gambler
 
 
-def find_gambler_by_openid(openid: str) -> Gambler:
+def find_gambler_by_openid(openid: str) -> Optional[Gambler]:
     """根据 openid 获取 gambler"""
     d = db.gambler.find_one({'openid': openid})
     if not d:
@@ -218,7 +218,7 @@ class Match:
             stack = self.weight / len(self.handicap)
             for gambler in punish_gamblers:
                 self._result[gambler] -= stack
-           
+
             if asc > bsc + handicap:
                 winner, loser = self.a, self.b
             elif asc < bsc + handicap:
