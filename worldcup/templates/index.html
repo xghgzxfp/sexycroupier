@@ -120,7 +120,7 @@ function setupCountdown(match) {
       renderCountdown(countdown, cutoffBet - utcnow, "<small>距投注结束<br></small>")
     } else {
       clearInterval(x)
-      countdown.innerHTML = "投注已结束"
+      // countdown.innerHTML = "投注已结束"
       deactivateButtons(match)
     }
   }, 1000)
