@@ -318,8 +318,7 @@ def update_match_gamblers(match_id, team, gambler, cutoff_check=True):
     return db.match.update({"id": match_id}, {"$pull": {list_out: gambler}, "$addToSet": {list_in: gambler}})
 
 
-def update_match_weight(match_time, team_a, team_b, weight):
-    match_id = _generate_match_id(match_time, team_a, team_b)
+def update_match_weight(match_id, weight):
     db.match.update(
         {"id": match_id},
         {"$set": {"weight": float(weight)}}
