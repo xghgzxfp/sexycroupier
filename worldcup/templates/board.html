@@ -4,7 +4,7 @@
 {{ super() }}
 <style>
 body{height:100vh;width:100vw;display:grid;grid-template-rows:auto 1fr}
-.chart-wrap{overflow-x:auto}
+.chart-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .canvas-adjust{height:calc(100vh - 56px);width:{{ label_count * 50 }}px;min-width:100%}
 </style>
 {% endblock %}
