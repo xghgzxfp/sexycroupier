@@ -44,11 +44,6 @@ def g4():
 
 
 @pytest.fixture
-def g5():
-    return model.insert_gambler('g5', 'g5')
-
-
-@pytest.fixture
 def match1():  # simple handicap
     return model.insert_match('硬糙', datetime.datetime(2018, 3, 31, 19, 30), '受一球', '水宫', '利浦', 2.08, 1.78, 2, 4)
 
@@ -115,11 +110,6 @@ def load_ecup():
 # insert_* tests
 
 
-def test_model_insert_gambler():
-    model.insert_gambler('g0', 'g0')
-    assert db.gambler.find().count() == 1
-
-
 def test_model_insert_match():
     model.insert_match('硬糙', datetime.datetime(2018, 3, 31, 19, 30), '受一球', '水宫', '利浦', 2.08, 1.78, 2, 4)
     assert db.match.find().count() == 1
@@ -134,13 +124,16 @@ def test_model_insert_auction():
 
 
 def test_model_find_gambler_by_openid(g1):
-    gambler_found = model.find_gambler_by_openid('g1')
-    assert gambler_found is not None and gambler_found.name == 'g1' and gambler_found.openid == 'g1'
+    gambler_found = model.find_gambler_by_openid(g1.openid)
+    assert gambler_found is not None and gambler_found.name == g1.name and gambler_found.openid == g1.openid
+
+    gambler_not_found = model.find_gambler_by_openid('non-existent')
+    assert gambler_not_found is None
 
 
-def test_model_find_gamblers(g1, g2, g3, g4, g5):
+def test_model_find_gamblers(g1, g2, g3, g4):
     gamblers_found = model.find_gamblers()
-    assert sorted(gamblers_found) == gamblers_found
+    assert gamblers_found == [g1, g2, g3, g4]
 
 
 def test_model_find_auction(auction2):
