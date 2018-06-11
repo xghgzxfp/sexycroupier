@@ -69,45 +69,9 @@ def auction2():
         model.insert_auction(*auc)
 
 
-def load_data(cup, filename):
-    file_path = os.path.join(os.path.dirname(__file__), 'test_data', cup, filename)
-    return json.load(open(file_path, 'r'))
-
-
-@pytest.fixture
-def load_ecup():
-    team = load_data('E_Cup', 'team.json')
-    for t, g in team.items():
-        model.insert_auction('E_cup', t, g, 1)
-
-    players = load_data('E_Cup', 'players.json')
-    for g, tmp in players.items():
-        model.insert_gambler(g, g)
-
-    for match_file in os.listdir(os.path.join(os.path.dirname(__file__), 'test_data', 'E_cup', 'match_data')):
-        match_data = load_data('E_cup/match_data', match_file)
-        match_date = datetime.datetime.strptime(str(match_data['date']), '%Y%m%d%H')
-        match_obj = model.insert_match('E_Cup', match_date, '平手', match_data['teamA'],
-                                       match_data['teamB'], 1, 1, match_data['scoreA'], match_data['scoreB'])
-        db.match.update(
-            {"id": match_obj.id},
-            {"$set": {"handicap": (match_data['HandicapA'], match_data['HandicapB'])}, "$set": {
-                "id": match_date.strftime("%Y%m%d") + match_data['teamA'] + match_data['teamB']}}
-
-        )
-
-    for bet_file in os.listdir(os.path.join(os.path.dirname(__file__), 'test_data', 'E_cup', 'bet_data')):
-        bet_data = load_data('E_cup/bet_data', bet_file)
-        match_obj = model.find_match_by_id(bet_data['ID'])
-        for g, b in bet_data.items():
-            if g != 'ID':
-                if b == match_obj.a['team']:
-                    model.update_match_gamblers(match_obj.id, g, 'a', cutoff_check=False)
-                else:
-                    model.update_match_gamblers(match_obj.id, g, 'b', cutoff_check=False)
-
-
+##########
 # insert_* tests
+##########
 
 
 def test_model_insert_match():
@@ -120,7 +84,9 @@ def test_model_insert_auction():
     assert db.auction.find().count() == 1
 
 
+##########
 # find_* tests
+##########
 
 
 def test_model_find_gambler_by_openid(g1):
@@ -146,7 +112,9 @@ def test_model_find_team_owner(auction2):
     assert team_owner == 'g4'
 
 
+##########
 # update_* test
+##########
 
 
 def test_model_update_match_score(match1):
@@ -207,7 +175,9 @@ def test_model_update_match_weight(match1):
     assert match_found.weight == 4
 
 
+##########
 # calculation tests
+##########
 
 
 @pytest.mark.parametrize('choice_a,choice_b,no_choice,handicap,score_a,score_b,expected', [
@@ -294,6 +264,50 @@ def test_model_generate_series(g1, g2, g3, g4, match1, match2):
         {'cup': '硬糙', 'gambler': 'g4', 'points': OrderedDict([('201803311930-水宫-利浦', -2.0), ('201803312210-纽尔联-哈尔德', -4.0)])}
     ]
     assert json_results == expected
+
+
+def load_data(cup, filename):
+    file_path = os.path.join(os.path.dirname(__file__), 'test_data', cup, filename)
+    with open(file_path) as f:
+        return json.load(f)
+
+
+##########
+# integration tests
+##########
+
+
+@pytest.fixture
+def load_ecup():
+    team = load_data('E_Cup', 'team.json')
+    for t, g in team.items():
+        model.insert_auction('E_cup', t, g, 1)
+
+    players = load_data('E_Cup', 'players.json')
+    for g, tmp in players.items():
+        model.insert_gambler(g, g)
+
+    for match_file in os.listdir(os.path.join(os.path.dirname(__file__), 'test_data', 'E_cup', 'match_data')):
+        match_data = load_data('E_cup/match_data', match_file)
+        match_date = datetime.datetime.strptime(str(match_data['date']), '%Y%m%d%H')
+        match_obj = model.insert_match('E_Cup', match_date, '平手', match_data['teamA'],
+                                       match_data['teamB'], 1, 1, match_data['scoreA'], match_data['scoreB'])
+        db.match.update(
+            {"id": match_obj.id},
+            {"$set": {"handicap": (match_data['HandicapA'], match_data['HandicapB'])}, "$set": {
+                "id": match_date.strftime("%Y%m%d") + match_data['teamA'] + match_data['teamB']}}
+
+        )
+
+    for bet_file in os.listdir(os.path.join(os.path.dirname(__file__), 'test_data', 'E_cup', 'bet_data')):
+        bet_data = load_data('E_cup/bet_data', bet_file)
+        match_obj = model.find_match_by_id(bet_data['ID'])
+        for g, b in bet_data.items():
+            if g != 'ID':
+                if b == match_obj.a['team']:
+                    model.update_match_gamblers(match_obj.id, g, 'a', cutoff_check=False)
+                else:
+                    model.update_match_gamblers(match_obj.id, g, 'b', cutoff_check=False)
 
 
 def test_load_ecup(load_ecup):
