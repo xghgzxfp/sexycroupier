@@ -19,7 +19,7 @@ body{height:100vh;width:100vw;display:grid;grid-template-rows:auto 1fr}
 
 {% block script %}
 {{ super() }}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js"></script>
 <script>
   // override default chart settings
   Chart.defaults.global.elements.line.fill = false
@@ -34,6 +34,7 @@ body{height:100vh;width:100vw;display:grid;grid-template-rows:auto 1fr}
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      devicePixelRatio: 2,
       tooltips: {
         mode: 'index',
         intersect: false,
