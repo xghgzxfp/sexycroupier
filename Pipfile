@@ -5,14 +5,13 @@ name = "pypi"
 
 [dev-packages]
 pytest = "*"
+freezegun = "*"
 
 [packages]
-flask = "*"
+Flask = "*"
 pymongo = "*"
 requests = "*"
 "bs4" = "*"
 "html5lib" = "*"
-pytz = "*"
-pytest = "*"
 
 [requires]

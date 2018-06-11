@@ -98,10 +98,7 @@ def populate_match(league, date):
 
     for league, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b in matches:
         match = insert_match(league, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b)
-        # if not yet cutoff, then update handicap
-        if utc_to_beijing(current_time) < match.handicap_cutoff_time:
-            update_match_handicap(match_id=match.id, handicap_display=handicap_display)
-        # always update score
+        update_match_handicap(match_id=match.id, handicap_display=handicap_display)
         update_match_score(match_id=match.id, score_a=score_a, score_b=score_b)
     return
 
