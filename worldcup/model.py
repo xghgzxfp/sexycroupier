@@ -5,8 +5,6 @@ import logging
 import pymongo
 
 from collections import namedtuple, OrderedDict
-
-# from functools import lru_cache
 from typing import List, Optional
 
 from .app import db
@@ -54,23 +52,25 @@ def find_gamblers() -> List[Gambler]:
 Auction = namedtuple('Auction', ['cup', 'team', 'gambler', 'price'])
 
 
-def insert_auction(cup, team, gambler, price):
+def insert_auction(cup: str, team: str, gambler: str, price: int) -> Auction:
+    """插入拍卖记录"""
     auction = Auction(cup=cup, team=team, gambler=gambler, price=price)
     db.auction.replace_one({'cup': cup, 'team': team}, auction._asdict(), upsert=True)
     return auction
 
 
-def find_auction(cup, team):
+def find_auction(cup: str, team: str) -> Optional[Auction]:
+    """根据 team 查找拍卖记录"""
     a = db.auction.find_one({'cup': cup, 'team': team})
     if not a:
         return None
     return Auction(cup=a['cup'], team=a['team'], gambler=a['gambler'], price=a['price'])
 
 
-# @lru_cache(maxsize=32)
-def find_team_owner(cup, team):
+def find_team_owner(cup: str, team: str) -> Optional[str]:
+    """根据拍卖记录查找 team owner"""
     a = find_auction(cup, team)
-    return a and a.gambler
+    return a.gambler if a else None
 
 
 # class Match
@@ -145,7 +145,7 @@ class Match:
         return match
 
     @property
-    def handicap_cutoff_time(self):
+    def handicap_cutoff_time(self) -> datetime.datetime:
         """盘口截止时间 此时间后盘口不再变化"""
         cutoff_time = datetime.datetime(self.match_time.year, self.match_time.month, self.match_time.day, 12, 0, 0)
         if cutoff_time >= self.match_time:
@@ -153,7 +153,7 @@ class Match:
         return cutoff_time
 
     @property
-    def bet_cutoff_time(self):
+    def bet_cutoff_time(self) -> datetime.datetime:
         """投注截止时间 此时间后无法再投注"""
         return self.match_time
 
@@ -270,6 +270,7 @@ def _generate_handicap_pair(handicap_display):
 
 
 def insert_match(league, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b):
+    """创建新比赛或返回已存在比赛"""
     # 如果 match 已存在则直接返回
     match = find_match_by_id(_generate_match_id(match_time, team_a, team_b))
     if match:
@@ -283,6 +284,7 @@ def insert_match(league, match_time, handicap_display, team_a, team_b, premium_a
 
 
 def update_match_score(match_id: str, score_a: str, score_b: str):
+    """更新比分"""
     try:
         score_a = int(score_a)
         score_b = int(score_b)
@@ -296,6 +298,7 @@ def update_match_score(match_id: str, score_a: str, score_b: str):
 
 
 def update_match_handicap(match_id: str, handicap_display: str, cutoff_check=True):
+    """更新盘口"""
     match = find_match_by_id(match_id)
     # 若比赛不存在或当前盘口已定则直接返回
     if not match or (cutoff_check and not match.can_update_handicap()):
@@ -319,6 +322,7 @@ def update_match_gamblers(match_id, team, gambler, cutoff_check=True):
 
 
 def update_match_weight(match_id, weight):
+    """更新本场赌注"""
     db.match.update(
         {"id": match_id},
         {"$set": {"weight": float(weight)}}
@@ -339,7 +343,7 @@ def find_match_by_id(match_id: str) -> Optional[Match]:
 # class Series:
 #     cup = '2018-world-cup'
 #     gambler = 'name1'
-#     points = dict([
+#     points = OrderedDict([
 #         ('201806010100-法国-西班牙', 17),
 #         ('201806010330-英格兰-德国', 15),
 #     ])

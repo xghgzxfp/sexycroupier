@@ -266,15 +266,15 @@ def test_model_generate_series(g1, g2, g3, g4, match1, match2):
     assert json_results == expected
 
 
+##########
+# integration tests
+##########
+
+
 def load_data(cup, filename):
     file_path = os.path.join(os.path.dirname(__file__), 'test_data', cup, filename)
     with open(file_path) as f:
         return json.load(f)
-
-
-##########
-# integration tests
-##########
 
 
 @pytest.fixture
