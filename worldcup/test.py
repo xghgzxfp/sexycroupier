@@ -175,6 +175,19 @@ def test_model_update_match_weight(match1):
     assert match_found.weight == 4
 
 
+def test_model_update_match_time(match1):
+    orig_time = match1.match_time
+
+    next_time = orig_time + datetime.timedelta(hours=1)
+    next_id = model._generate_match_id(match_time=next_time, team_a=match1.a['team'], team_b=match1.b['team'])
+
+    assert model.find_match_by_id(match_id=next_id) is None
+
+    model.update_match_time(match_id=match1.id, match_time=next_time)
+
+    assert model.find_match_by_id(match_id=next_id).match_time == next_time
+
+
 ##########
 # calculation tests
 ##########

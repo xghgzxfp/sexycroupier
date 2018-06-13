@@ -329,6 +329,20 @@ def update_match_weight(match_id, weight):
     )
 
 
+def update_match_time(match_id: str, match_time: datetime.datetime):
+    """更新比赛时间
+
+    id 由 match_time 生成 两个字段需同时更新
+    """
+    match = find_match_by_id(match_id)
+    if not match:
+        return
+    db.match.update(
+        {"id": match_id},
+        {"$set": {"id": _generate_match_id(match_time, match.a['team'], match.b['team']), "match_time": match_time}}
+    )
+
+
 def find_matches(cup: str, reverse=False) -> List[Match]:
     """返回所有比赛 默认为 id 升序"""
     direction = pymongo.DESCENDING if reverse else pymongo.ASCENDING
