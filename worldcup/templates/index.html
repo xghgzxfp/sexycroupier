@@ -93,7 +93,7 @@ function deactivateButtons(match) {
 
 function renderCountdown(countdown, distance, announcement) {
   // Time calculations for days, hours, minutes and seconds
-  var hours = Math.floor((distance % (60 * 60 * 24)) / (60 * 60))
+  var hours = Math.floor(distance / (60 * 60))
   var minutes = Math.floor((distance % (60 * 60)) / (60))
   var seconds = Math.floor((distance % 60))
 
@@ -111,10 +111,10 @@ function setupCountdown(match) {
   var x = setInterval(function () {
     var utcnow = (new Date()).getTime() / 1000.0
     var cutoffBet = countdown.getAttribute("data-cutoff-bet")
-    var cutoffHandcap = countdown.getAttribute("data-cutoff-handicap")
+    var cutoffHandicap = countdown.getAttribute("data-cutoff-handicap")
 
-    if (utcnow < cutoffHandcap) {
-      renderCountdown(countdown, cutoffHandcap - utcnow, "<small>盘口未定<br></small>")
+    if (utcnow < cutoffHandicap) {
+      renderCountdown(countdown, cutoffHandicap - utcnow, "<small>盘口未定<br></small>")
       deactivateButtons(match)
     } else if (utcnow < cutoffBet) {
       renderCountdown(countdown, cutoffBet - utcnow, "<small>距投注结束<br></small>")
