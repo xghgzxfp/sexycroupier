@@ -150,6 +150,9 @@ class Match:
 
         self._result = None
 
+    def __eq__(self, other):
+        return self._asdict() == other._asdict()
+
     @classmethod
     def from_mongo(cls, m: dict): # -> Optional[Match]
         """根据 mongo 返回的 record 构造 Match 对象"""

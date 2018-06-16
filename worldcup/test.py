@@ -72,22 +72,7 @@ def auction2():
 
 
 ##########
-# insert_* tests
-##########
-
-
-def test_model_insert_match():
-    model.insert_match('硬糙', datetime.datetime(2018, 3, 31, 19, 30), '受一球', '水宫', '利浦', 2.08, 1.78, 2, 4)
-    assert db.match.find().count() == 1
-
-
-def test_model_insert_auction():
-    model.insert_auction('硬糙', '水宫', 'g0', 10)
-    assert db.auction.find().count() == 1
-
-
-##########
-# find_* tests
+# data retrieval tests
 ##########
 
 
@@ -116,8 +101,21 @@ def test_model_find_team_owner(auction2):
     assert team_owner == 'g4'
 
 
+def test_model_find_match_by_id(match1):
+    found = model.find_match_by_id(match1.id)
+    assert found == match1
+
+
+def test_model_find_matches(match1, match2):
+    matches_found = model.find_matches(cup=match1.league, reverse=False)
+    assert matches_found == [match1, match2]
+
+    matches_found = model.find_matches(cup=match1.league, reverse=True)
+    assert matches_found == [match2, match1]
+
+
 ##########
-# update_* test
+# data manipulation tests
 ##########
 
 
