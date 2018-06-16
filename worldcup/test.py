@@ -121,6 +121,36 @@ def test_model_find_team_owner(auction2):
 ##########
 
 
+def test_model_update_gambler_name(auction2, match1, match2, g1, g2):
+    G1_NEW = '巨型钻'
+
+    model.update_match_gamblers(match1.id, 'a', g1.name, cutoff_check=False)
+    model.update_match_gamblers(match2.id, 'b', g1.name, cutoff_check=False)
+
+    model.update_gambler_name(current=g1.name, new=G1_NEW)
+    # gambler
+    assert model.find_gambler_by_name(G1_NEW)
+    # match
+    assert db.match.find({'a.gamblers': G1_NEW}).count() == 1
+    assert db.match.find({'b.gamblers': G1_NEW}).count() == 1
+    # auction
+    assert db.auction.find({'gambler': G1_NEW}).count() == 2
+
+    G2_NEW = '小型钻'
+
+    model.update_match_gamblers(match1.id, 'b', g2.name, cutoff_check=False)
+    model.update_match_gamblers(match2.id, 'b', g2.name, cutoff_check=False)
+
+    model.update_gambler_name(current=g2.name, new=G2_NEW)
+    # gambler
+    assert model.find_gambler_by_name(G2_NEW)
+    # match
+    assert db.match.find({'a.gamblers': G2_NEW}).count() == 0
+    assert db.match.find({'b.gamblers': G2_NEW}).count() == 2
+    # auction
+    assert db.auction.find({'gambler': G2_NEW}).count() == 2
+
+
 def test_model_update_match_score(match1):
     model.update_match_score(match1.id, "1", "0")
     match_found = model.find_match_by_id(match1.id)

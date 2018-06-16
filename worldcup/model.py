@@ -30,6 +30,17 @@ def insert_gambler(name: str, openid: str) -> Gambler:
     return gambler
 
 
+def update_gambler_name(current: str, new: str):
+    """重命名 gambler"""
+    # gambler
+    db.gambler.update_one({'name': current}, {'$set': {'name': new}})
+    # match
+    db.match.update_many({'a.gamblers': current}, {'$set': {'a.gamblers.$': new}})
+    db.match.update_many({'b.gamblers': current}, {'$set': {'b.gamblers.$': new}})
+    # auction
+    db.auction.update_many({'gambler': current}, {'$set': {'gambler': new}})
+
+
 def find_gambler_by_name(name: str) -> Optional[Gambler]:
     """根据 name 获取 gambler"""
     d = db.gambler.find_one({'name': name})
