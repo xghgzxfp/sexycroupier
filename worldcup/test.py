@@ -323,7 +323,7 @@ def load_ecup():
                     model.update_match_gamblers(match_obj.id, g, 'b', cutoff_check=False)
 
 
-def test_load_ecup(load_ecup):
-    assert db.gambler.find().count() == 8
-    assert len(model.find_matches('E_Cup')) == 51
-    assert db.auction.find().count() == 24
+# def test_load_ecup(load_ecup):
+#     assert db.gambler.find().count() == 8
+#     assert len(model.find_matches('E_Cup')) == 51
+#     assert db.auction.find().count() == 24
