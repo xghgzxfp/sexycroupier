@@ -30,6 +30,19 @@ def insert_gambler(name: str, openid: str) -> Gambler:
     return gambler
 
 
+def drop_gambler(ident: str):
+    """根据 name / openid 删除 gambler"""
+    gambler = find_gambler_by_name(ident) or find_gambler_by_openid(ident)
+    if not gambler:
+        return
+    # gambler
+    db.gambler.delete_one({'name': gambler.name, 'openid': gambler.openid})
+    # match
+    db.match.update_many({}, {'$pull': {'a.gamblers': gambler.name, 'b.gamblers': gambler.name}})
+    # auction
+    # 不删除 auction 以免丢失交易记录
+
+
 def update_gambler_name(current: str, new: str):
     """重命名 gambler"""
     # gambler

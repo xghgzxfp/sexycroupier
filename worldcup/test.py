@@ -119,6 +119,22 @@ def test_model_find_matches(match1, match2):
 ##########
 
 
+@pytest.mark.parametrize('p', ['name', 'openid'])
+def test_model_drop_gambler(auction2, match1, match2, g1, g2, p):
+    model.update_match_gamblers(match1.id, 'a', g1.name, cutoff_check=False)
+    model.update_match_gamblers(match2.id, 'b', g1.name, cutoff_check=False)
+
+    # drop by name
+    model.drop_gambler(getattr(g1, p))
+    # gambler
+    assert not model.find_gambler_by_openid(g1.openid)
+    # match
+    assert db.match.find({'a.gamblers': g1.name}).count() == 0
+    assert db.match.find({'b.gamblers': g1.name}).count() == 0
+    # auction
+    assert db.auction.find({'gambler': g1.name}).count() == 2
+
+
 def test_model_update_gambler_name(auction2, match1, match2, g1, g2):
     G1_NEW = '巨型钻'
 
