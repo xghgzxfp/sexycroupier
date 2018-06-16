@@ -30,6 +30,14 @@ def insert_gambler(name: str, openid: str) -> Gambler:
     return gambler
 
 
+def find_gambler_by_name(name: str) -> Optional[Gambler]:
+    """根据 name 获取 gambler"""
+    d = db.gambler.find_one({'name': name})
+    if not d:
+        return
+    return Gambler(name=d['name'], openid=d['openid'])
+
+
 def find_gambler_by_openid(openid: str) -> Optional[Gambler]:
     """根据 openid 获取 gambler"""
     d = db.gambler.find_one({'openid': openid})

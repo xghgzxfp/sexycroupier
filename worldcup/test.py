@@ -25,31 +25,33 @@ def setupforall():
 
 @pytest.fixture
 def g1():
-    return model.insert_gambler('g1', 'g1')
+    return model.insert_gambler('g1', 'openid-g1')
 
 
 @pytest.fixture
 def g2():
-    return model.insert_gambler('g2', 'g2')
+    return model.insert_gambler('g2', 'openid-g2')
 
 
 @pytest.fixture
 def g3():
-    return model.insert_gambler('g3', 'g3')
+    return model.insert_gambler('g3', 'openid-g3')
 
 
 @pytest.fixture
 def g4():
-    return model.insert_gambler('g4', 'g4')
+    return model.insert_gambler('g4', 'openid-g4')
 
 
 @pytest.fixture
-def match1():  # simple handicap
+def match1():
+    # simple handicap
     return model.insert_match('硬糙', datetime.datetime(2018, 3, 31, 19, 30), '受一球', '水宫', '利浦', 2.08, 1.78, 2, 4)
 
 
 @pytest.fixture
-def match2():  # complex handicap
+def match2():
+    # complex handicap
     return model.insert_match('硬糙', datetime.datetime(2018, 3, 31, 22, 10), '半球/一球', '纽尔联', '哈尔德', 2.02, 1.84, 2, 1)
 
 
@@ -89,12 +91,14 @@ def test_model_insert_auction():
 ##########
 
 
-def test_model_find_gambler_by_openid(g1):
-    gambler_found = model.find_gambler_by_openid(g1.openid)
-    assert gambler_found is not None and gambler_found.name == g1.name and gambler_found.openid == g1.openid
+def test_find_one_gambler(g1):
+    found = model.find_gambler_by_openid(g1.openid)
+    assert found is not None and found.name == g1.name and found.openid == g1.openid
+    assert model.find_gambler_by_openid('non-existent') is None
 
-    gambler_not_found = model.find_gambler_by_openid('non-existent')
-    assert gambler_not_found is None
+    found = model.find_gambler_by_name(g1.name)
+    assert found is not None and found.name == g1.name and found.openid == g1.openid
+    assert model.find_gambler_by_name('non-existent') is None
 
 
 def test_model_find_gamblers(g1, g2, g3, g4):
