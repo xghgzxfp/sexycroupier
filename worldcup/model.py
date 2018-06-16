@@ -278,7 +278,7 @@ def insert_match(league, match_time, handicap_display, team_a, team_b, premium_a
         return match
     # 否则插入新 match
     match = Match(league, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b)
-    db.match.insert(match._asdict())
+    db.match.insert_one(match._asdict())
     logging.info('New match: match={}'.format(match.id))
     return match
 
@@ -290,7 +290,7 @@ def update_match_score(match_id: str, score_a: str, score_b: str):
         score_b = int(score_b)
     except Exception:
         return
-    db.match.update(
+    db.match.update_one(
         {"id": match_id},
         {"$set": {"a.score": score_a, "b.score": score_b}}
     )
@@ -303,7 +303,7 @@ def update_match_handicap(match_id: str, handicap_display: str, cutoff_check=Tru
     # 若比赛不存在或当前盘口已定则直接返回
     if not match or (cutoff_check and not match.can_update_handicap()):
         return
-    db.match.update(
+    db.match.update_one(
         {"id": match_id},
         {"$set": {"handicap": _generate_handicap_pair(handicap_display), "handicap_display": handicap_display}}
     )
@@ -318,12 +318,12 @@ def update_match_gamblers(match_id, team, gambler, cutoff_check=True):
         return
     list_out = ("a" if team == "b" else "b") + ".gamblers"
     list_in = team + '.gamblers'
-    return db.match.update({"id": match_id}, {"$pull": {list_out: gambler}, "$addToSet": {list_in: gambler}})
+    return db.match.update_one({"id": match_id}, {"$pull": {list_out: gambler}, "$addToSet": {list_in: gambler}})
 
 
 def update_match_weight(match_id, weight):
     """更新本场赌注"""
-    db.match.update(
+    db.match.update_one(
         {"id": match_id},
         {"$set": {"weight": float(weight)}}
     )
@@ -337,7 +337,7 @@ def update_match_time(match_id: str, match_time: datetime.datetime):
     match = find_match_by_id(match_id)
     if not match:
         return
-    db.match.update(
+    db.match.update_one(
         {"id": match_id},
         {"$set": {"id": _generate_match_id(match_time, match.a['team'], match.b['team']), "match_time": match_time}}
     )
