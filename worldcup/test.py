@@ -315,6 +315,43 @@ def test_Match_update_profit_and_loss_with_auction(choice_a, choice_b, no_choice
         assert result.get(k) == v
 
 
+@pytest.mark.parametrize('choice_a,choice_b,no_choice,handicap,score_a,score_b,expected', [
+    (['g1', 'g2'], ['g3', 'g4'],      [],       '球半', '3', '1', {'g1': 2, 'g2': 2, 'g3': -2, 'g4': -2}),  # 有胜负
+    (['g1', 'g2'], ['g3', 'g4'],      [],       '平手', '0', '0', {'g1': 0,  'g2': 0,  'g3': 0, 'g4': 0}),  # 平局
+    (['g1', 'g2'], ['g3', 'g4'],      [], '受半球/一球', '1', '2', {'g1': -1, 'g2': -1, 'g3': 1, 'g4': 2}),  # 赢一半
+    (['g1', 'g2'],       ['g3'],  ['g4'],       '半球', '0', '0', {'g1': -2, 'g2': -2, 'g3': 6, 'g4': -2}),  # 未投注
+    (['g1', 'g2', 'g3', 'g4'],  [],   [], '受一球/球半', '0', '0', {'g1': 0, 'g2': 0, 'g3': 0, 'g4': 0}),  # 全胜
+    (['g1', 'g2', 'g3', 'g4'],  [],   [], '一球/球半', '0', '0',   {'g1': -2, 'g2': -2, 'g3': -2, 'g4': -2}),  # 全负
+])
+def test_Match_update_profit_and_loss_with_self_auction(choice_a, choice_b, no_choice, handicap, score_a, score_b, expected, auction2):
+    # prepare gamblers
+    for g in choice_a + choice_b + no_choice:
+        model.insert_gambler(name=g, openid=g)
+
+    # prepare match
+    match = model.insert_match('硬糙', datetime.datetime(2018, 4, 1, 20, 30), '平手', '水宫', '纽尔联', 1.01, 1.39, 0, 1)
+
+    # prepare bet choice
+    for g in choice_a:
+        model.update_match_gamblers(match.id, 'a', g, cutoff_check=False)
+
+    for g in choice_b:
+        model.update_match_gamblers(match.id, 'b', g, cutoff_check=False)
+
+    # prepare match score
+    model.update_match_score(match.id, score_a, score_b)
+
+    # prepare match handicap
+    model.update_match_handicap(match.id, handicap, cutoff_check=False)
+
+    # calculate PNL
+    match = model.find_match_by_id(match.id)
+    result = match.update_profit_and_loss_result(required_gamblers=model.find_gamblers())
+
+    for k, v in expected.items():
+        assert result.get(k) == v
+
+
 def test_model_generate_series(g1, g2, g3, g4, match1, match2):
     results = model.generate_series('硬糙')
     json_results = [series.__dict__ for series in results]
