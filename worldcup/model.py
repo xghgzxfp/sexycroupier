@@ -304,7 +304,7 @@ def _generate_handicap_pair(handicap_display):
         return sign * HANDICAP_DICT[handicaps[0]], sign * HANDICAP_DICT[handicaps[1]]
 
 
-def insert_match(league, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b):
+def insert_match(league, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b, weight=2):
     """创建新比赛或返回已存在比赛"""
     # 如果 match 已存在则直接返回
     match = find_match_by_id(_generate_match_id(match_time, team_a, team_b))
@@ -312,7 +312,7 @@ def insert_match(league, match_time, handicap_display, team_a, team_b, premium_a
         logging.info('Existing match: match={}'.format(match.id))
         return match
     # 否则插入新 match
-    match = Match(league, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b)
+    match = Match(league, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b, weight)
     db.match.insert_one(match._asdict())
     logging.info('New match: match={}'.format(match.id))
     return match
