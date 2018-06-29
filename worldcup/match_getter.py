@@ -96,8 +96,23 @@ def populate_match(league, date):
 
     logging.info('Matches collected: date="{}" cup={} count={}'.format(date, league, len(matches)))
 
+    weight = 2
+
+    worldcup_weights = [ (datetime.datetime(2018, 6, 30), datetime.datetime(2018, 7,  5) ,  2),  # 1/8 final
+                         (datetime.datetime(2018, 7,  6), datetime.datetime(2018, 7,  9) ,  4),  # 1/4 final
+                         (datetime.datetime(2018, 7, 11), datetime.datetime(2018, 7, 13) ,  8),  # semi final
+                         (datetime.datetime(2018, 7, 14), datetime.datetime(2018, 7, 16) , 16), # final and 3rd 4th final
+                        ]
+
+    beijing_time = utc_to_beijing(current_time)
+
+    for (r1, r2, w) in worldcup_weights:
+        if r1 <= beijing_time < r2:
+            weight = w
+            break
+
     for league, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b in matches:
-        match = insert_match(league, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b)
+        match = insert_match(league, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b, weight)
         update_match_handicap(match_id=match.id, handicap_display=handicap_display)
         update_match_score(match_id=match.id, score_a=score_a, score_b=score_b)
     return
