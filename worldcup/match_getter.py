@@ -76,6 +76,9 @@ def get_match_data(league, date):
             teams = parse_teams(cells[2])
             team_a = teams[0]
             team_b = teams[1]
+            # ignore overtime, penalty shootout and other weird stuff
+            if ')' in team_a and ')' in team_b:
+                continue
             premium_a = cells[3].find(text=True).replace(u'\xa0', u'')
             handicap_display = cells[4].find(text=True).replace(u'\xa0', u'')
             premium_b = cells[5].find(text=True).replace(u'\xa0', u'')
