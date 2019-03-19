@@ -22,7 +22,7 @@ from . import model
 title = '2018 World Cup'
 
 def get_tournamentdb(dbname=None):
-    dbname = dbname or g.dbname or app.config['MONGO_DBNAME']
+    dbname = dbname or g.dbname or config.REQUIRED_GAMBLERS.keys()[-1]
     return dbclient[dbname]
 
 tournamentdb = LocalProxy(get_tournamentdb())
