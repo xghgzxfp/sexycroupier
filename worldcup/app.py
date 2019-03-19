@@ -5,7 +5,7 @@ import functools
 import requests
 
 from urllib.parse import urlencode
-
+from werkzeug.local import LocalProxy
 from flask import Flask, session, render_template, request, redirect, url_for, g, abort
 from pymongo import MongoClient
 from . import config
@@ -13,11 +13,19 @@ from . import config
 
 app = Flask(__name__)
 app.config.from_object(config)
-db = app.db = MongoClient(app.config['MONGO_URI'])[app.config['MONGO_DBNAME']]
+
+dbclient = app.dbclient = MongoClient(app.config['MONGO_URI'])
+logindb = app.logindb = dbclient[app.config['MONGO_LOGINDB']]
+
 from . import model
 
 title = '2018 World Cup'
 
+def get_tournamentdb(dbname=None):
+    dbname = dbname or g.dbname or app.config['MONGO_DBNAME']
+    return dbclient[dbname]
+
+tournamentdb = LocalProxy(get_tournamentdb())
 
 @app.template_filter('_ts')
 def _ts(time: datetime.datetime) -> int:
@@ -56,6 +64,7 @@ def authenticated(f):
 def before_request():
     openid = session.get('openid')
     g.me = model.find_gambler_by_openid(openid)
+    g.dbname = config.REQUIRED_GAMBLERS.keys()[-1]
 
 
 @app.route('/auth/complete', methods=['GET'])
@@ -119,14 +128,14 @@ def index():
         new_choice = request.values.get('bet-choice')
         model.update_match_gamblers(match_id, new_choice, g.me.name)
 
-    matches = model.find_matches(cup=app.config['LEAGUE_NAME'], reverse=True)
+    matches = model.find_matches(reverse=True)
     return render_template('index.html', matches=matches)
 
 
 @app.route('/board', methods=['GET'])
 @authenticated
 def board():
-    many_series = model.generate_series(cup=app.config['LEAGUE_NAME'])
+    many_series = model.generate_series(cup=g.dbname)
 
     match_ids = many_series and many_series[0].points.keys() or []
     labels = ['{1} vs {2}'.format(*match_id.split('-')) for match_id in sorted(match_ids)]  # 用 sorted() 确保 match_ids 有序

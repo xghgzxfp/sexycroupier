@@ -6,8 +6,7 @@ import pymongo
 
 from collections import namedtuple, OrderedDict
 from typing import List, Optional
-
-from .app import db
+from .app import logindb, tournamentdb, config
 from .constant import HANDICAP_DICT
 
 
@@ -26,7 +25,7 @@ def insert_gambler(name: str, openid: str) -> Gambler:
     """根据 openid 创建 gambler"""
     gambler = Gambler(name=name, openid=openid)
     # 用 replace_one(upsert=True) 避免插入重复记录
-    db.gambler.replace_one({'openid': openid}, gambler._asdict(), upsert=True)
+    logindb.gambler.replace_one({'openid': openid}, gambler._asdict(), upsert=True)
     return gambler
 
 
@@ -36,9 +35,10 @@ def drop_gambler(ident: str):
     if not gambler:
         return
     # gambler
-    db.gambler.delete_one({'name': gambler.name, 'openid': gambler.openid})
+    logindb.gambler.delete_one({'name': gambler.name, 'openid': gambler.openid})
+    # TODO: drop should be done in all tournament dbs
     # match
-    db.match.update_many({}, {'$pull': {'a.gamblers': gambler.name, 'b.gamblers': gambler.name}})
+    # tournamentdb.match.update_many({}, {'$pull': {'a.gamblers': gambler.name, 'b.gamblers': gambler.name}})
     # auction
     # 不删除 auction 以免丢失交易记录
 
@@ -46,17 +46,17 @@ def drop_gambler(ident: str):
 def update_gambler_name(current: str, new: str):
     """重命名 gambler"""
     # gambler
-    db.gambler.update_one({'name': current}, {'$set': {'name': new}})
-    # match
-    db.match.update_many({'a.gamblers': current}, {'$set': {'a.gamblers.$': new}})
-    db.match.update_many({'b.gamblers': current}, {'$set': {'b.gamblers.$': new}})
-    # auction
-    db.auction.update_many({'gambler': current}, {'$set': {'gambler': new}})
-
+    logindb.gambler.update_one({'name': current}, {'$set': {'name': new}})
+    # TODO: update all tournament dbs' match and auction with new gambler name
+    #for tournament_str in config.REQUIRED_GAMBLERS.keys():
+    #    tournamentdb=MongoClient(config['MONGO_URI'])[tournament_str]
+    #    tournamentdb.match.update_many({'a.gamblers': current}, {'$set': {'a.gamblers.$': new}})
+    #    tournamentdb.match.update_many({'b.gamblers': current}, {'$set': {'b.gamblers.$': new}})
+    #    tournamentdb.auction.update_many({'gambler': current}, {'$set': {'gambler': new}})
 
 def find_gambler_by_name(name: str) -> Optional[Gambler]:
     """根据 name 获取 gambler"""
-    d = db.gambler.find_one({'name': name})
+    d = logindb.gambler.find_one({'name': name})
     if not d:
         return
     return Gambler(name=d['name'], openid=d['openid'])
@@ -64,15 +64,15 @@ def find_gambler_by_name(name: str) -> Optional[Gambler]:
 
 def find_gambler_by_openid(openid: str) -> Optional[Gambler]:
     """根据 openid 获取 gambler"""
-    d = db.gambler.find_one({'openid': openid})
+    d = logindb.gambler.find_one({'openid': openid})
     if not d:
         return
     return Gambler(name=d['name'], openid=d['openid'])
 
 
-def find_gamblers() -> List[Gambler]:
+def find_gamblers(cup: str) -> List[Gambler]:
     """获取全部 gambler"""
-    return [Gambler(name=d['name'], openid=d['openid']) for d in db.gambler.find().sort('name') if d]
+    return [find_gambler_by_name(gambler_name) for gambler_name in config.REQUIRED_GAMBLERS[cup]]
 
 
 # class Auction:
@@ -87,13 +87,13 @@ Auction = namedtuple('Auction', ['cup', 'team', 'gambler', 'price'])
 def insert_auction(cup: str, team: str, gambler: str, price: int) -> Auction:
     """插入拍卖记录"""
     auction = Auction(cup=cup, team=team, gambler=gambler, price=price)
-    db.auction.replace_one({'cup': cup, 'team': team}, auction._asdict(), upsert=True)
+    tournamentdb.auction.replace_one({'cup': cup, 'team': team}, auction._asdict(), upsert=True)
     return auction
 
 
 def find_auction(cup: str, team: str) -> Optional[Auction]:
     """根据 team 查找拍卖记录"""
-    a = db.auction.find_one({'cup': cup, 'team': team})
+    a = tournamentdb.auction.find_one({'cup': cup, 'team': team})
     if not a:
         return None
     return Auction(cup=a['cup'], team=a['team'], gambler=a['gambler'], price=a['price'])
@@ -313,7 +313,7 @@ def insert_match(league, match_time, handicap_display, team_a, team_b, premium_a
         return match
     # 否则插入新 match
     match = Match(league, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b, weight)
-    db.match.insert_one(match._asdict())
+    tournamentdb.match.insert_one(match._asdict())
     logging.info('New match: match={}'.format(match.id))
     return match
 
@@ -325,7 +325,7 @@ def update_match_score(match_id: str, score_a: str, score_b: str):
         score_b = int(score_b)
     except Exception:
         return
-    db.match.update_one(
+    tournamentdb.match.update_one(
         {"id": match_id},
         {"$set": {"a.score": score_a, "b.score": score_b}}
     )
@@ -338,7 +338,7 @@ def update_match_handicap(match_id: str, handicap_display: str, cutoff_check=Tru
     # 若比赛不存在或当前盘口已定则直接返回
     if not match or (cutoff_check and not match.can_update_handicap()):
         return
-    db.match.update_one(
+    tournamentdb.match.update_one(
         {"id": match_id},
         {"$set": {"handicap": _generate_handicap_pair(handicap_display), "handicap_display": handicap_display}}
     )
@@ -353,12 +353,12 @@ def update_match_gamblers(match_id, team, gambler, cutoff_check=True):
         return
     list_out = ("a" if team == "b" else "b") + ".gamblers"
     list_in = team + '.gamblers'
-    return db.match.update_one({"id": match_id}, {"$pull": {list_out: gambler}, "$addToSet": {list_in: gambler}})
+    return tournamentdb.match.update_one({"id": match_id}, {"$pull": {list_out: gambler}, "$addToSet": {list_in: gambler}})
 
 
 def update_match_weight(match_id, weight):
     """更新本场赌注"""
-    db.match.update_one(
+    tournamentdb.match.update_one(
         {"id": match_id},
         {"$set": {"weight": float(weight)}}
     )
@@ -372,21 +372,21 @@ def update_match_time(match_id: str, match_time: datetime.datetime):
     match = find_match_by_id(match_id)
     if not match:
         return
-    db.match.update_one(
+    tournamentdb.match.update_one(
         {"id": match_id},
         {"$set": {"id": _generate_match_id(match_time, match.a['team'], match.b['team']), "match_time": match_time}}
     )
 
 
-def find_matches(cup: str, reverse=False) -> List[Match]:
+def find_matches(reverse=False) -> List[Match]:
     """返回所有比赛 默认为 id 升序"""
     direction = pymongo.DESCENDING if reverse else pymongo.ASCENDING
-    return [Match.from_mongo(m) for m in db.match.find({'league': cup}).sort('id', direction=direction)]
+    return [Match.from_mongo(m) for m in tournamentdb.match.find().sort('id', direction=direction)]
 
 
 def find_match_by_id(match_id: str) -> Optional[Match]:
     """根据 ID 返回比赛 找不到时返回 None"""
-    return Match.from_mongo(db.match.find_one({'id': match_id}))
+    return Match.from_mongo(tournamentdb.match.find_one({'id': match_id}))
 
 
 # class Series:
@@ -416,6 +416,6 @@ class Series:
 
 
 def generate_series(cup: str) -> List[Series]:
-    gamblers = find_gamblers()
-    matches = find_matches(cup)
+    gamblers = find_gamblers(cup)
+    matches = find_matches()
     return [Series(cup, gambler.name, matches, gamblers) for gambler in gamblers]
