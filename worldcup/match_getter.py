@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 
 from worldcup.model import insert_match, update_match_score, update_match_handicap, utc_to_beijing
 from worldcup.app import app
-
+from worldcup.constant import DB_MAP
 
 def get_match_page(league, date, url='http://odds.sports.sina.com.cn/odds/index.php'):
     form_data = {
@@ -134,6 +134,6 @@ def populate_and_update(league, k=1, current_date=utc_to_beijing(datetime.dateti
 
 if __name__ == "__main__":
     try:
-        populate_and_update(app.config['LEAGUE_NAME'])
+        populate_and_update(list(DB_MAP.items())[-1][1])
     except Exception as error:
         logging.info(error.args[0])

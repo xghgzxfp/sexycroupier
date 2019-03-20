@@ -9,6 +9,7 @@ from werkzeug.local import LocalProxy
 from flask import Flask, session, render_template, request, redirect, url_for, g, abort
 from pymongo import MongoClient
 from . import config
+from .constant import DB_MAP
 
 
 app = Flask(__name__)
@@ -18,11 +19,11 @@ dbclient = app.dbclient = MongoClient(app.config['MONGO_URI'])
 logindb = app.logindb = dbclient[app.config['MONGO_LOGINDB']]
 
 def get_tournamentdb(dbname=None):
-    dbname = dbname or (g.dbname if 'dbname' in g else list(config.REQUIRED_GAMBLERS.keys())[-1])
+    dbname = dbname or (g.dbname if 'dbname' in g else list(DB_MAP.items())[-1][0])
     return dbclient[dbname]
 
 with app.app_context():
-    tournamentdb = app.tournamentdb = LocalProxy(get_tournamentdb())
+    tournamentdb = app.tournamentdb = get_tournamentdb()
 
 from . import model
 

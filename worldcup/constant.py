@@ -22,3 +22,8 @@ HANDICAP_DICT = {
     '九球': 9,
     '九球半': 9.5,
 }
+
+DB_MAP = {
+    'eurocup2016'  : '欧国杯',
+    'worldcup2018' : '世界杯',
+}
