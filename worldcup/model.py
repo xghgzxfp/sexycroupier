@@ -70,9 +70,9 @@ def find_gambler_by_openid(openid: str) -> Optional[Gambler]:
     return Gambler(name=d['name'], openid=d['openid'])
 
 
-def find_gamblers(cup: str) -> List[Gambler]:
+def find_gamblers() -> List[Gambler]:
     """获取全部 gambler"""
-    return [find_gambler_by_name(gambler_name) for gambler_name in config.REQUIRED_GAMBLERS[cup]]
+    return [find_gambler_by_name(gambler['name']) for gambler in tournamentdb.gambler.find()]
 
 
 # class Auction:
@@ -416,6 +416,6 @@ class Series:
 
 
 def generate_series(cup: str) -> List[Series]:
-    gamblers = find_gamblers(cup)
+    gamblers = find_gamblers()
     matches = find_matches()
     return [Series(cup, gambler.name, matches, gamblers) for gambler in gamblers]

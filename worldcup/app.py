@@ -67,7 +67,7 @@ def before_request():
     openid = session.get('openid')
     g.me = model.find_gambler_by_openid(openid)
     # will support dbname switch in future
-    g.dbname = list(config.REQUIRED_GAMBLERS.keys())[-1]
+    g.dbname = list(DB_MAP.keys())[-1]
 
 
 @app.route('/auth/complete', methods=['GET'])
