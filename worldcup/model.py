@@ -272,8 +272,8 @@ class Match:
                 self._result[gambler] -= stack
             for gambler in winner['gamblers']:
                 self._result[gambler] += winner_reward
-            winner_team_owner = find_team_owner(self.league, winner['team'])
-            loser_team_owner = find_team_owner(self.league, loser['team'])
+            winner_team_owner = find_team_owner(winner['team'])
+            loser_team_owner = find_team_owner(loser['team'])
             if winner_team_owner in winner['gamblers']:
                 self._result[winner_team_owner] += winner_reward
             if winner_team_owner != loser_team_owner and loser_team_owner in winner['gamblers']:
