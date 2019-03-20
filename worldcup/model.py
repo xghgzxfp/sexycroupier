@@ -6,7 +6,7 @@ import pymongo
 
 from collections import namedtuple, OrderedDict
 from typing import List, Optional
-from .app import logindb, tournamentdb, config
+from .app import logindb, tournamentdb
 from .constant import HANDICAP_DICT
 
 
@@ -76,32 +76,31 @@ def find_gamblers() -> List[User]:
 
 
 # class Auction:
-#     cup = '2018-world-cup'
 #     team = 'england'
 #     gambler = "gambler's name"
 #     price = 23
-# TODO: remove cup from Auction
-Auction = namedtuple('Auction', ['cup', 'team', 'gambler', 'price'])
+
+Auction = namedtuple('Auction', ['team', 'gambler', 'price'])
 
 
-def insert_auction(cup: str, team: str, gambler: str, price: int) -> Auction:
+def insert_auction(team: str, gambler: str, price: int) -> Auction:
     """插入拍卖记录"""
-    auction = Auction(cup=cup, team=team, gambler=gambler, price=price)
-    tournamentdb.auction.replace_one({'cup': cup, 'team': team}, auction._asdict(), upsert=True)
+    auction = Auction(team=team, gambler=gambler, price=price)
+    tournamentdb.auction.replace_one({'team': team}, auction._asdict(), upsert=True)
     return auction
 
 
-def find_auction(cup: str, team: str) -> Optional[Auction]:
+def find_auction(team: str) -> Optional[Auction]:
     """根据 team 查找拍卖记录"""
-    a = tournamentdb.auction.find_one({'cup': cup, 'team': team})
+    a = tournamentdb.auction.find_one({'team': team})
     if not a:
         return None
-    return Auction(cup=a['cup'], team=a['team'], gambler=a['gambler'], price=a['price'])
+    return Auction(team=a['team'], gambler=a['gambler'], price=a['price'])
 
 
-def find_team_owner(cup: str, team: str) -> Optional[str]:
+def find_team_owner(team: str) -> Optional[str]:
     """根据拍卖记录查找 team owner"""
-    a = find_auction(cup, team)
+    a = find_auction(team)
     return a.gambler if a else None
 
 
@@ -148,14 +147,14 @@ class Match:
             premium=float(premium_a),
             score=score_a,
             gamblers=[],
-            owner=find_team_owner(cup=self.league, team=team_a),
+            owner=find_team_owner(team=team_a),
         )
         self.b = dict(
             team=team_b,
             premium=float(premium_b),
             score=score_b,
             gamblers=[],
-            owner=find_team_owner(cup=self.league, team=team_b),
+            owner=find_team_owner(team=team_b),
         )
 
         self.weight = weight
