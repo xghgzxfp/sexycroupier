@@ -137,7 +137,7 @@ def index():
 @app.route('/board', methods=['GET'])
 @authenticated
 def board():
-    many_series = model.generate_series(cup=g.dbname)
+    many_series = model.generate_series()
 
     match_ids = many_series and many_series[0].points.keys() or []
     labels = ['{1} vs {2}'.format(*match_id.split('-')) for match_id in sorted(match_ids)]  # 用 sorted() 确保 match_ids 有序

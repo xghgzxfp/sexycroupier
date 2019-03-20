@@ -80,7 +80,7 @@ def find_gamblers() -> List[User]:
 #     team = 'england'
 #     gambler = "gambler's name"
 #     price = 23
-
+# TODO: remove cup from Auction
 Auction = namedtuple('Auction', ['cup', 'team', 'gambler', 'price'])
 
 
@@ -390,7 +390,6 @@ def find_match_by_id(match_id: str) -> Optional[Match]:
 
 
 # class Series:
-#     cup = '2018-world-cup'
 #     gambler = 'name1'
 #     points = OrderedDict([
 #         ('201806010100-法国-西班牙', 17),
@@ -399,8 +398,7 @@ def find_match_by_id(match_id: str) -> Optional[Match]:
 
 class Series:
 
-    def __init__(self, cup: str, gambler: str, matches: list, required_gamblers: List[User]):
-        self.cup = cup
+    def __init__(self, gambler: str, matches: list, required_gamblers: List[User]):
         self.gambler = gambler
         self.points = OrderedDict()
         self._add_matches(matches, required_gamblers)
@@ -415,7 +413,7 @@ class Series:
             self.points[match.id] = latest
 
 
-def generate_series(cup: str) -> List[Series]:
+def generate_series() -> List[Series]:
     gamblers = find_gamblers()
     matches = find_matches()
-    return [Series(cup, gambler.name, matches, gamblers) for gambler in gamblers]
+    return [Series(gambler.name, matches, gamblers) for gambler in gamblers]
