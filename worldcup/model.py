@@ -18,35 +18,35 @@ def utc_to_beijing(utc_time: datetime.datetime) -> datetime.datetime:
 #     name = "gambler's name"
 #     openid = 'wechat openid'
 
-Gambler = namedtuple('Gambler', ['name', 'openid'])
+User = namedtuple('User', ['name', 'openid'])
 
 
-def insert_gambler(name: str, openid: str) -> Gambler:
+def insert_gambler(name: str, openid: str) -> User:
     """根据 openid 创建 gambler"""
-    gambler = Gambler(name=name, openid=openid)
+    user = User(name=name, openid=openid)
     # 用 replace_one(upsert=True) 避免插入重复记录
-    logindb.gambler.replace_one({'openid': openid}, gambler._asdict(), upsert=True)
-    return gambler
+    logindb.user.replace_one({'openid': openid}, user._asdict(), upsert=True)
+    return user
 
 
-def drop_gambler(ident: str):
+def drop_user(ident: str):
     """根据 name / openid 删除 gambler"""
-    gambler = find_gambler_by_name(ident) or find_gambler_by_openid(ident)
-    if not gambler:
+    user = find_user_by_name(ident) or find_user_by_openid(ident)
+    if not user:
         return
-    # gambler
-    logindb.gambler.delete_one({'name': gambler.name, 'openid': gambler.openid})
+    # user
+    logindb.gambler.delete_one({'name': user.name, 'openid': user.openid})
     # TODO: drop should be done in all tournament dbs
     # match
-    # tournamentdb.match.update_many({}, {'$pull': {'a.gamblers': gambler.name, 'b.gamblers': gambler.name}})
+    # tournamentdb.match.update_many({}, {'$pull': {'a.gamblers': user.name, 'b.gamblers': user.name}})
     # auction
     # 不删除 auction 以免丢失交易记录
 
 
-def update_gambler_name(current: str, new: str):
-    """重命名 gambler"""
+def update_user_name(current: str, new: str):
+    """重命名 user"""
     # gambler
-    logindb.gambler.update_one({'name': current}, {'$set': {'name': new}})
+    logindb.user.update_one({'name': current}, {'$set': {'name': new}})
     # TODO: update all tournament dbs' match and auction with new gambler name
     #for tournament_str in config.REQUIRED_GAMBLERS.keys():
     #    tournamentdb=MongoClient(config['MONGO_URI'])[tournament_str]
@@ -54,25 +54,25 @@ def update_gambler_name(current: str, new: str):
     #    tournamentdb.match.update_many({'b.gamblers': current}, {'$set': {'b.gamblers.$': new}})
     #    tournamentdb.auction.update_many({'gambler': current}, {'$set': {'gambler': new}})
 
-def find_gambler_by_name(name: str) -> Optional[Gambler]:
-    """根据 name 获取 gambler"""
-    d = logindb.gambler.find_one({'name': name})
+def find_user_by_name(name: str) -> Optional[User]:
+    """根据 name 获取 user"""
+    d = logindb.user.find_one({'name': name})
     if not d:
         return
-    return Gambler(name=d['name'], openid=d['openid'])
+    return User(name=d['name'], openid=d['openid'])
 
 
-def find_gambler_by_openid(openid: str) -> Optional[Gambler]:
-    """根据 openid 获取 gambler"""
-    d = logindb.gambler.find_one({'openid': openid})
+def find_user_by_openid(openid: str) -> Optional[User]:
+    """根据 openid 获取 user"""
+    d = logindb.user.find_one({'openid': openid})
     if not d:
         return
-    return Gambler(name=d['name'], openid=d['openid'])
+    return User(name=d['name'], openid=d['openid'])
 
 
-def find_gamblers() -> List[Gambler]:
+def find_gamblers() -> List[User]:
     """获取全部 gambler"""
-    return [find_gambler_by_name(gambler['name']) for gambler in tournamentdb.gambler.find()]
+    return [find_user_by_name(gambler['name']) for gambler in tournamentdb.gambler.find()]
 
 
 # class Auction:
@@ -239,7 +239,7 @@ class Match:
                 return team == self.a['team']
         return False
 
-    def update_profit_and_loss_result(self, required_gamblers: List[Gambler]) -> dict:
+    def update_profit_and_loss_result(self, required_gamblers: List[User]) -> dict:
         if not self.is_completed():
             return
         asc, bsc = self.a['score'], self.b['score']
@@ -399,13 +399,13 @@ def find_match_by_id(match_id: str) -> Optional[Match]:
 
 class Series:
 
-    def __init__(self, cup: str, gambler: str, matches: list, required_gamblers: List[Gambler]):
+    def __init__(self, cup: str, gambler: str, matches: list, required_gamblers: List[User]):
         self.cup = cup
         self.gambler = gambler
         self.points = OrderedDict()
         self._add_matches(matches, required_gamblers)
 
-    def _add_matches(self, matches: list, required_gamblers: List[Gambler]):
+    def _add_matches(self, matches: list, required_gamblers: List[User]):
         latest = 0
         for match in sorted(matches, key=lambda m: m.match_time):
             if not match.is_completed():

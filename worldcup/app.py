@@ -5,7 +5,6 @@ import functools
 import requests
 
 from urllib.parse import urlencode
-from werkzeug.local import LocalProxy
 from flask import Flask, session, render_template, request, redirect, url_for, g, abort
 from pymongo import MongoClient
 from . import config
@@ -65,7 +64,7 @@ def authenticated(f):
 @app.before_request
 def before_request():
     openid = session.get('openid')
-    g.me = model.find_gambler_by_openid(openid)
+    g.me = model.find_user_by_openid(openid)
     # will support dbname switch in future
     g.dbname = list(DB_MAP.keys())[-1]
 
@@ -99,7 +98,7 @@ def auth_complete():
 
     session['openid'] = openid
 
-    me = model.find_gambler_by_openid(openid)
+    me = model.find_user_by_openid(openid)
     if not me:
         return render_template('signup.html')
 
