@@ -18,10 +18,11 @@ dbclient = app.dbclient = MongoClient(app.config['MONGO_URI'])
 logindb = app.logindb = dbclient[app.config['MONGO_LOGINDB']]
 
 def get_tournamentdb(dbname=None):
-    dbname = dbname or g.dbname or config.REQUIRED_GAMBLERS.keys()[-1]
+    dbname = dbname or (g.dbname if 'dbname' in g else list(config.REQUIRED_GAMBLERS.keys())[-1])
     return dbclient[dbname]
 
-tournamentdb = LocalProxy(get_tournamentdb())
+with app.app_context():
+    tournamentdb = app.tournamentdb = LocalProxy(get_tournamentdb())
 
 from . import model
 
@@ -64,8 +65,8 @@ def authenticated(f):
 def before_request():
     openid = session.get('openid')
     g.me = model.find_gambler_by_openid(openid)
-    print(config.REQUIRED_GAMBLERS.keys()[-1])
-    g.dbname = config.REQUIRED_GAMBLERS.keys()[-1]
+    # will support dbname switch in future
+    g.dbname = list(config.REQUIRED_GAMBLERS.keys())[-1]
 
 
 @app.route('/auth/complete', methods=['GET'])
