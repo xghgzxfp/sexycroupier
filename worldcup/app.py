@@ -9,7 +9,6 @@ from flask import Flask, session, render_template, request, redirect, url_for, g
 from pymongo import MongoClient
 from . import config
 from werkzeug.local import LocalProxy
-from .constant import DB_MAP
 
 
 app = Flask(__name__)
@@ -19,7 +18,7 @@ dbclient = app.dbclient = MongoClient(app.config['MONGO_URI'])
 logindb = app.logindb = dbclient[app.config['MONGO_LOGINDB']]
 
 def get_tournamentdb(dbname=None):
-    dbname = dbname or (g.dbname if 'dbname' in g else app.config['MONGO_DEFAULTDB'])
+    dbname = dbname or (g.dbname if 'dbname' in g else app.config['DEFAULT_TOURNAMENT'].dbname)
     g.tournamentdb = dbclient[dbname]
     return g.tournamentdb
 
@@ -68,7 +67,7 @@ def before_request():
     openid = session.get('openid')
     g.me = model.find_user_by_openid(openid)
     # will support dbname switch in future
-    g.dbname = app.config['MONGO_DEFAULTDB']
+    g.dbname = app.config['DEFAULT_TOURNAMENT'].dbname
 
 
 @app.route('/auth/complete', methods=['GET'])
