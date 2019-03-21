@@ -67,7 +67,7 @@ def before_request():
     openid = session.get('openid')
     g.me = model.find_user_by_openid(openid)
     # will support dbname switch in future
-    g.dbname = app.config['DEFAULT_TOURNAMENT'].dbname
+    g.dbname = session.get('dbname', app.config['DEFAULT_TOURNAMENT'].dbname)
 
 
 @app.route('/auth/complete', methods=['GET'])

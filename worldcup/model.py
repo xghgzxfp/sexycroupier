@@ -22,7 +22,7 @@ User = namedtuple('User', ['name', 'openid'])
 
 
 def insert_user(name: str, openid: str) -> User:
-    """根据 openid 创建 gambler"""
+    """根据 openid 创建 user"""
     user = User(name=name, openid=openid)
     # 用 replace_one(upsert=True) 避免插入重复记录
     logindb.user.replace_one({'openid': openid}, user._asdict(), upsert=True)
