@@ -6,7 +6,7 @@ import pymongo
 
 from collections import namedtuple, OrderedDict
 from typing import List, Optional
-from .app import logindb, tournamentdb
+from .app import logindb, tournamentdb, dbclient
 from .constant import HANDICAP_DICT
 
 
@@ -83,8 +83,10 @@ def find_gamblers() -> List[User]:
 Auction = namedtuple('Auction', ['team', 'gambler', 'price'])
 
 
-def insert_auction(team: str, gambler: str, price: int) -> Auction:
+def insert_auction(team: str, gambler: str, price: int, dbname='') -> Auction:
     """插入拍卖记录"""
+    if dbname:
+        tournamentdb = dbclient[dbname]
     auction = Auction(team=team, gambler=gambler, price=price)
     tournamentdb.auction.replace_one({'team': team}, auction._asdict(), upsert=True)
     return auction

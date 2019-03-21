@@ -26,4 +26,5 @@ HANDICAP_DICT = {
 DB_MAP = {
     'eurocup2016'  : '欧国杯',
     'worldcup2018' : '世界杯',
+    'championsleague20182019' : '欧联',
 }
