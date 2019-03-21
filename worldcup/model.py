@@ -8,7 +8,7 @@ from collections import namedtuple, OrderedDict
 from typing import List, Optional
 from .app import logindb, tournamentdb, dbclient
 from .constant import HANDICAP_DICT
-
+from .config import TOURNAMENTS
 
 def utc_to_beijing(utc_time: datetime.datetime) -> datetime.datetime:
     return utc_time + datetime.timedelta(hours=8)
@@ -36,23 +36,26 @@ def drop_user(ident: str):
         return
     # user
     logindb.gambler.delete_one({'name': user.name, 'openid': user.openid})
-    # TODO: drop should be done in all tournament dbs
-    # match
-    # tournamentdb.match.update_many({}, {'$pull': {'a.gamblers': user.name, 'b.gamblers': user.name}})
-    # auction
-    # 不删除 auction 以免丢失交易记录
-
+    for tournament in TOURNAMENTS:
+        # match
+        dbclient[tournament.dbname].match.update_many({}, {'$pull': {'a.gamblers': user.name, 'b.gamblers': user.name}})
+        # auction
+        # 不删除 auction 以免丢失交易记录
+        # gambler
+        dbclient[tournament.dbname].gambler.remove({'name': user.name })
 
 def update_user_name(current: str, new: str):
     """重命名 user"""
     # gambler
     logindb.user.update_one({'name': current}, {'$set': {'name': new}})
-    # TODO: update all tournament dbs' match and auction with new gambler name
-    #for tournament_str in config.REQUIRED_GAMBLERS.keys():
-    #    tournamentdb=MongoClient(config['MONGO_URI'])[tournament_str]
-    #    tournamentdb.match.update_many({'a.gamblers': current}, {'$set': {'a.gamblers.$': new}})
-    #    tournamentdb.match.update_many({'b.gamblers': current}, {'$set': {'b.gamblers.$': new}})
-    #    tournamentdb.auction.update_many({'gambler': current}, {'$set': {'gambler': new}})
+    for tournament in TOURNAMENTS:
+        # match
+        dbclient[tournament.dbname].match.update_many({'a.gamblers': current}, {'$set': {'a.gamblers.$': new}})
+        dbclient[tournament.dbname].match.update_many({'b.gamblers': current}, {'$set': {'b.gamblers.$': new}})
+        # auction
+        dbclient[tournament.dbname].auction.update_many({'gambler': current}, {'$set': {'gambler': new}})
+        # gambler
+        dbclient[tournament.dbname].gambler.update_many({'name': current}, {'$set': {'name': new}})
 
 def find_user_by_name(name: str) -> Optional[User]:
     """根据 name 获取 user"""
