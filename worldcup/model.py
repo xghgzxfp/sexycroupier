@@ -349,12 +349,12 @@ def update_match_handicap(match_id: str, handicap_display: str, cutoff_check=Tru
 def update_match_gamblers(match_id, team, gambler, cutoff_check=True):
     """更新投注结果"""
     match = find_match_by_id(match_id)
-    # 若比赛不存在或当前非投注时间则直接返回
-    if not match or (cutoff_check and not match.can_bet()):
+    # 若比赛不存在或当前非投注时间则直接返回或当前用户未注册
+    if not match or (cutoff_check and not match.can_bet()) or gambler not in find_gamblers():
         return
     list_out = ("a" if team == "b" else "b") + ".gamblers"
     list_in = team + '.gamblers'
-    return tournamentdb.match.update_one({"id": match_id}, {"$pull": {list_out: gambler}, "$addToSet": {list_in: gambler}})
+    return tournamentdb.match.update_one({"id": match_id}, {"$pull": {list_out: gambler.name}, "$addToSet": {list_in: gambler.name}})
 
 
 def update_match_weight(match_id, weight):
