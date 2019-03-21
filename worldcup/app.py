@@ -118,7 +118,7 @@ def auth_signup():
     if not name or not openid:
         return abort(401)
 
-    model.insert_gambler(name, openid)
+    model.insert_user(name, openid)
 
     return redirect(url_for('index'))
 

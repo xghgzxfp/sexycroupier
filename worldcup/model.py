@@ -21,7 +21,7 @@ def utc_to_beijing(utc_time: datetime.datetime) -> datetime.datetime:
 User = namedtuple('User', ['name', 'openid'])
 
 
-def insert_gambler(name: str, openid: str) -> User:
+def insert_user(name: str, openid: str) -> User:
     """根据 openid 创建 gambler"""
     user = User(name=name, openid=openid)
     # 用 replace_one(upsert=True) 避免插入重复记录
