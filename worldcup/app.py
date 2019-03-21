@@ -17,9 +17,9 @@ app.config.from_object(config)
 dbclient = app.dbclient = MongoClient(app.config['MONGO_URI'])
 logindb = app.logindb = dbclient[app.config['MONGO_LOGINDB']]
 
-def get_tournamentdb(dbname=None):
-    dbname = dbname or (g.dbname if 'dbname' in g else app.config['DEFAULT_TOURNAMENT'].dbname)
-    g.tournamentdb = dbclient[dbname]
+def get_tournamentdb(tournament=None):
+    g.tournament = tournament or (g.tournament if 'tournament' in g else app.config['DEFAULT_TOURNAMENT'])
+    g.tournamentdb = dbclient[g.tournament.dbname]
     return g.tournamentdb
 
 with app.app_context():
@@ -67,7 +67,7 @@ def before_request():
     openid = session.get('openid')
     g.me = model.find_user_by_openid(openid)
     # will support dbname switch in future
-    g.dbname = session.get('dbname', app.config['DEFAULT_TOURNAMENT'].dbname)
+    g.tournament = session.get('tourna,ent', app.config['DEFAULT_TOURNAMENT'])
 
 
 @app.route('/auth/complete', methods=['GET'])
