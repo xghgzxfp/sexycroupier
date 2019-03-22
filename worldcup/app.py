@@ -66,8 +66,7 @@ def authenticated(f):
 def before_request():
     openid = session.get('openid')
     g.me = model.find_user_by_openid(openid)
-    g.tournament = next(t for t in config.TOURNAMENTS if t.dbname == session['dbname']) if 'dbname' in session \
-    else app.config['DEFAULT_TOURNAMENT']
+    g.tournament = next(t for t in config.TOURNAMENTS if t.dbname == session.get('dbname', app.config['DEFAULT_TOURNAMENT'].dbname))
 
 
 @app.route('/auth/complete', methods=['GET'])
