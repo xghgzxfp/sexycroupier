@@ -5,7 +5,6 @@ import logging
 import requests
 
 from bs4 import BeautifulSoup
-from flask import Flask
 from sys import argv
 from worldcup.config import TOURNAMENTS
 from worldcup.app import app, get_tournamentdb
