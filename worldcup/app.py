@@ -18,8 +18,6 @@ dbclient = app.dbclient = MongoClient(app.config['MONGO_URI'])
 logindb = app.logindb = dbclient[app.config['MONGO_LOGINDB']]
 
 def get_tournamentdb(tournament=None):
-    if not g:
-        return dbclient[app.config['DEFAULT_TOURNAMENT'].dbname]
     g.tournament = tournament or (g.tournament if 'tournament' in g else app.config['DEFAULT_TOURNAMENT'])
     g.tournamentdb = dbclient[g.tournament.dbname]
     return g.tournamentdb
@@ -28,8 +26,6 @@ with app.app_context():
     tournamentdb = app.tournamentdb = LocalProxy(get_tournamentdb)
 
 from . import model
-
-title = '2018 World Cup'
 
 @app.template_filter('_ts')
 def _ts(time: datetime.datetime) -> int:
