@@ -18,6 +18,8 @@ dbclient = app.dbclient = MongoClient(app.config['MONGO_URI'])
 logindb = app.logindb = dbclient[app.config['MONGO_LOGINDB']]
 
 def get_tournamentdb(tournament=None):
+    if not g:
+        return dbclient[app.config['DEFAULT_TOURNAMENT'].dbname]
     g.tournament = tournament or (g.tournament if 'tournament' in g else app.config['DEFAULT_TOURNAMENT'])
     g.tournamentdb = dbclient[g.tournament.dbname]
     return g.tournamentdb
