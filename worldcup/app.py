@@ -124,7 +124,7 @@ def auth_signup():
 def dbswitch(dbname):
     target_tournament = next(t for t in config.TOURNAMENTS if t.dbname == dbname)
     session['dbname'] = target_tournament.dbname
-    return redirect(url_for('index'))
+    return redirect(next_url())
 
 @app.route('/', methods=['GET', 'POST'])
 @authenticated
