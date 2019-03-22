@@ -143,7 +143,7 @@ if __name__ == "__main__":
         if tournament:
             with app.app_context():
                 get_tournamentdb(tournament)
-            populate_and_update(tournament.league)
+                populate_and_update(tournament.league)
         else:
             logging.info('no dbname found in config')
     except Exception as error:

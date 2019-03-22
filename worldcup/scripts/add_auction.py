@@ -18,6 +18,6 @@ if __name__ == '__main__':
     tournament = next((t for t in TOURNAMENTS if t.dbname == dbname), None)
     with app.app_context():
         get_tournamentdb(tournament)
-    insert_auction(args.team, args.gambler, args.price)
+        insert_auction(args.team, args.gambler, args.price)
     print('Done.')
 
