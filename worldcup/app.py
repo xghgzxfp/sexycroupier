@@ -134,8 +134,8 @@ def index():
         new_choice = request.values.get('bet-choice')
         model.update_match_gamblers(match_id, new_choice, g.me)
 
-    matches = model.find_matches(reverse=True)
-    return render_template('index.html', matches=matches[:app.config['MAX_MATCH_DISPLAY']])
+    matches = model.find_matches(reverse=True, max_display=app.config['MAX_MATCH_DISPLAY'])
+    return render_template('index.html', matches=matches)
 
 
 @app.route('/board', methods=['GET'])

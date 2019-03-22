@@ -8,7 +8,7 @@ from collections import namedtuple, OrderedDict
 from typing import List, Optional
 from .app import logindb, tournamentdb, dbclient
 from .constant import HANDICAP_DICT
-from .config import TOURNAMENTS
+from .config import TOURNAMENTS, MAX_MATCH_DISPLAY
 
 def utc_to_beijing(utc_time: datetime.datetime) -> datetime.datetime:
     return utc_time + datetime.timedelta(hours=8)
@@ -380,10 +380,10 @@ def update_match_time(match_id: str, match_time: datetime.datetime):
     )
 
 
-def find_matches(reverse=False) -> List[Match]:
+def find_matches(reverse=False, max_display=0) -> List[Match]:
     """返回所有比赛 默认为 id 升序"""
     direction = pymongo.DESCENDING if reverse else pymongo.ASCENDING
-    return [Match.from_mongo(m) for m in tournamentdb.match.find().sort('id', direction=direction)]
+    return [Match.from_mongo(m) for m in tournamentdb.match.find().sort('id', direction=direction).limit(max_display)]
 
 
 def find_match_by_id(match_id: str) -> Optional[Match]:
