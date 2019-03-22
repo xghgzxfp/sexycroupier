@@ -14,7 +14,16 @@
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbar">
       <span class="navbar-toggler-icon"></span>
     </button>
-    <div class="navbar-brand">2018 World Cup</div>
+    <div class="dropdown">
+      <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        {{ g.tournament.display }}
+      </button>
+      <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+        {% for tournament in config['TOURNAMENTS'] %}
+        <a class="dropdown-item" href="{{ url_for('dbswitch', dbname=tournament.dbname)}}">{{ tournament.display }}</a>
+        {% endfor %}
+      </div>
+    </div>
     <div class="collapse navbar-collapse" id="navbar">
       <div class="navbar-nav">
         <a href="{{ url_for('index') }}" class="nav-item nav-link">Home</a>
