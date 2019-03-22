@@ -1,8 +1,7 @@
 import argparse
 from worldcup.model import insert_auction
 from worldcup.config import TOURNAMENTS
-from worldcup.app import get_tournamentdb
-from flask import Flask
+from worldcup.app import app, get_tournamentdb
 from sys import argv
 
 if __name__ == '__main__':
@@ -14,7 +13,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     dbname = argv[1]
-    app = Flask('add_auction_%s' % (dbname))
     tournament = next((t for t in TOURNAMENTS if t.dbname == dbname), None)
     with app.app_context():
         get_tournamentdb(tournament)

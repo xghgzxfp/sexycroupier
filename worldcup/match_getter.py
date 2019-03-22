@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from flask import Flask
 from sys import argv
 from worldcup.config import TOURNAMENTS
-from worldcup.app import get_tournamentdb
+from worldcup.app import app, get_tournamentdb
 from worldcup.model import insert_match, update_match_score, update_match_handicap, utc_to_beijing
 
 def get_match_page(league, date, url='http://odds.sports.sina.com.cn/odds/index.php'):
@@ -137,7 +137,6 @@ if __name__ == "__main__":
     """更新<dbname>的比赛"""
     try:
         dbname = argv[1]
-        app = Flask('match_getter_%s' % (dbname))
         tournament = next((t for t in TOURNAMENTS if t.dbname == dbname), None)
         # TODO: 这里应该把这个判断tournament是否存在的逻辑整合到try/catch上
         if tournament:
@@ -147,5 +146,4 @@ if __name__ == "__main__":
         else:
             logging.info('no dbname found in config')
     except Exception as error:
-        print(error)
         logging.info(error.args[0])
