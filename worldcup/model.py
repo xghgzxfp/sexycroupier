@@ -86,10 +86,8 @@ def find_gamblers() -> List[User]:
 Auction = namedtuple('Auction', ['team', 'gambler', 'price'])
 
 
-def insert_auction(team: str, gambler: str, price: int, dbname='') -> Auction:
+def insert_auction(team: str, gambler: str, price: int) -> Auction:
     """插入拍卖记录"""
-    if dbname:
-        tournamentdb = dbclient[dbname]
     auction = Auction(team=team, gambler=gambler, price=price)
     tournamentdb.auction.replace_one({'team': team}, auction._asdict(), upsert=True)
     return auction
