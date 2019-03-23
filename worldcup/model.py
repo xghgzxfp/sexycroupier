@@ -4,8 +4,8 @@ import datetime
 import logging
 import pymongo
 
-from collections import namedtuple, OrderedDict
-from typing import List, Optional
+from collections import namedtuple, OrderedDict, UserString
+from typing import List, Optional, Union
 
 from .app import logindb, tournamentdb, dbclient
 from .config import TOURNAMENTS
@@ -20,7 +20,15 @@ def utc_to_beijing(utc_time: datetime.datetime) -> datetime.datetime:
 #     name = "user's name"
 #     openid = 'wechat openid'
 
-User = namedtuple('User', ['name', 'openid'])
+class User(UserString):
+    """登录用户"""
+    def __init__(self, name, openid):
+        super(User, self).__init__(name)
+        self.name = name
+        self.openid = openid
+
+    def _asdict(self):
+        return dict(name=self.name, openid=self.openid)
 
 
 def insert_user(name: str, openid: str) -> User:
@@ -71,9 +79,32 @@ def find_user_by_openid(openid: str) -> Optional[User]:
     return User(name=d['name'], openid=d['openid'])
 
 
-def find_gamblers() -> List[User]:
+# class Gambler:
+#     name = "gambler's name"
+
+class Gambler(User):
+    """参与到 tournament 中的 user"""
+    def __init__(self, g: Union[UserString, str]):
+        super(Gambler, self).__init__(
+            name=str(g),
+            openid=getattr(g, 'openid', '<this-is-a-gambler>'),
+        )
+
+    def _asdict(self):
+        return dict(name=self.name)
+
+
+def insert_gambler(g: Union[UserString, str]) -> Gambler:
+    """插入若干个 gambler"""
+    gambler = Gambler(g)
+    # 用 replace_one(upsert=True) 避免插入重复记录
+    tournamentdb.gambler.replace_one({'name': gambler.name}, gambler._asdict(), upsert=True)
+    return gambler
+
+
+def find_gamblers() -> List[Gambler]:
     """获取本次 tournament 全部 gambler"""
-    return [find_user_by_name(gambler['name']) for gambler in tournamentdb.gambler.find()]
+    return [Gambler(d['name']) for d in tournamentdb.gambler.find()]
 
 
 # class Auction:
@@ -84,9 +115,9 @@ def find_gamblers() -> List[User]:
 Auction = namedtuple('Auction', ['team', 'gambler', 'price'])
 
 
-def insert_auction(team: str, gambler: str, price: int) -> Auction:
+def insert_auction(team: str, gambler: Gambler, price: int) -> Auction:
     """插入拍卖记录"""
-    auction = Auction(team=team, gambler=gambler, price=price)
+    auction = Auction(team=team, gambler=str(gambler), price=price)
     tournamentdb.auction.replace_one({'team': team}, auction._asdict(), upsert=True)
     return auction
 
@@ -99,10 +130,10 @@ def find_auction(team: str) -> Optional[Auction]:
     return Auction(team=a['team'], gambler=a['gambler'], price=a['price'])
 
 
-def find_team_owner(team: str) -> Optional[str]:
+def find_team_owner(team: str) -> Optional[Gambler]:
     """根据拍卖记录查找 team owner"""
     a = find_auction(team)
-    return a.gambler if a else None
+    return Gambler(a.gambler) if a else None
 
 
 # class Match
@@ -345,7 +376,7 @@ def update_match_handicap(match_id: str, handicap_display: str, cutoff_check=Tru
     logging.info('Handicap updated: match={} handicap="{}"'.format(match_id, handicap_display))
 
 
-def update_match_gamblers(match_id, team, gambler, cutoff_check=True):
+def update_match_gamblers(match_id: str, team: str, gambler: Gambler, cutoff_check=True):
     """更新投注结果"""
     match = find_match_by_id(match_id)
     # 若比赛不存在或当前非投注时间则直接返回或当前用户未注册
