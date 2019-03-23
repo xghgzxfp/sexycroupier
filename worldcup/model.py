@@ -6,16 +6,18 @@ import pymongo
 
 from collections import namedtuple, OrderedDict
 from typing import List, Optional
+
 from .app import logindb, tournamentdb, dbclient
+from .config import TOURNAMENTS
 from .constant import HANDICAP_DICT
-from .config import TOURNAMENTS, MAX_MATCH_DISPLAY
+
 
 def utc_to_beijing(utc_time: datetime.datetime) -> datetime.datetime:
     return utc_time + datetime.timedelta(hours=8)
 
 
-# class Gambler:
-#     name = "gambler's name"
+# class User:
+#     name = "user's name"
 #     openid = 'wechat openid'
 
 User = namedtuple('User', ['name', 'openid'])
@@ -30,23 +32,18 @@ def insert_user(name: str, openid: str) -> User:
 
 
 def drop_user(ident: str):
-    """根据 name / openid 删除 gambler"""
+    """根据 name / openid 删除 user"""
     user = find_user_by_name(ident) or find_user_by_openid(ident)
     if not user:
         return
-    # user
-    logindb.gambler.delete_one({'name': user.name, 'openid': user.openid})
-    for tournament in TOURNAMENTS:
-        # match
-        dbclient[tournament.dbname].match.update_many({}, {'$pull': {'a.gamblers': user.name, 'b.gamblers': user.name}})
-        # auction
-        # 不删除 auction 以免丢失交易记录
-        # gambler
-        dbclient[tournament.dbname].gambler.remove({'name': user.name })
+    # login
+    logindb.user.delete_one({'name': user.name, 'openid': user.openid})
+    # 不删除 match / auction / gambler 以免丢失历史数据
+
 
 def update_user_name(current: str, new: str):
     """重命名 user"""
-    # gambler
+    # login
     logindb.user.update_one({'name': current}, {'$set': {'name': new}})
     for tournament in TOURNAMENTS:
         # match
@@ -56,6 +53,7 @@ def update_user_name(current: str, new: str):
         dbclient[tournament.dbname].auction.update_many({'gambler': current}, {'$set': {'gambler': new}})
         # gambler
         dbclient[tournament.dbname].gambler.update_many({'name': current}, {'$set': {'name': new}})
+
 
 def find_user_by_name(name: str) -> Optional[User]:
     """根据 name 获取 user"""
@@ -74,7 +72,7 @@ def find_user_by_openid(openid: str) -> Optional[User]:
 
 
 def find_gamblers() -> List[User]:
-    """获取全部 gambler"""
+    """获取本次 tournament 全部 gambler"""
     return [find_user_by_name(gambler['name']) for gambler in tournamentdb.gambler.find()]
 
 
