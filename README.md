@@ -74,5 +74,5 @@ Loading .env environment variables…
 #### 进行单元测试
 
 ```
-$ MONGO_DBNAME=test pipenv run py.test -s -vv worldcup/test.py
+$ pipenv run py.test -s -vv worldcup/test.py
 ```
