@@ -15,9 +15,9 @@ WECHAT_APPSECRET = os.getenv('WECHAT_APPSECRET', '')
 
 
 TOURNAMENTS = [
-    Tournament('eurocup2016', '欧国杯', '2016 欧洲杯'),
-    Tournament('worldcup2018', '世界杯', '2018 世界杯'),
-    Tournament('championsleague20182019', '欧联', '18-19 欧冠'),
+    Tournament(dbname='eurocup2016', league='欧国杯', display='2016 欧洲杯'),
+    Tournament(dbname='worldcup2018', league='世界杯', display='2018 世界杯'),
+    Tournament(dbname='championsleague20182019', league='欧联', display='18-19 欧冠'),
 ]
 
 DEFAULT_TOURNAMENT = TOURNAMENTS[-2]
