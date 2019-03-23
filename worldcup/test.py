@@ -411,37 +411,40 @@ def load_data(cup, filename):
 @pytest.fixture
 def load_ecup():
     team = load_data('E_Cup', 'team.json')
-    for t, g in team.items():
-        model.insert_auction('E_cup', t, g, 1)
+    for t in team:
+        model.insert_auction(team=t['team'], gambler=model.Gambler(t['gambler']), price=t['price'])
 
     players = load_data('E_Cup', 'players.json')
     for g, tmp in players.items():
-        model.insert_gambler(g, g)
+        model.insert_gambler(g)
 
     for match_file in os.listdir(os.path.join(os.path.dirname(__file__), 'test_data', 'E_cup', 'match_data')):
         match_data = load_data('E_cup/match_data', match_file)
         match_date = datetime.datetime.strptime(str(match_data['date']), '%Y%m%d%H')
-        match_obj = model.insert_match('E_Cup', match_date, '平手', match_data['teamA'],
-                                       match_data['teamB'], 1, 1, match_data['scoreA'], match_data['scoreB'])
-        db.match.update(
+        match_obj = model.insert_match('E_Cup', match_date, '平手', match_data['teamA'], match_data['teamB'], 1, 1, match_data['scoreA'], match_data['scoreB'])
+        db.match.update_one(
             {"id": match_obj.id},
-            {"$set": {"handicap": (match_data['HandicapA'], match_data['HandicapB'])}, "$set": {
-                "id": match_date.strftime("%Y%m%d") + match_data['teamA'] + match_data['teamB']}}
-
+            {
+                "$set": {"handicap": (match_data['HandicapA'], match_data['HandicapB'])},
+                "$set": {"id": match_data['ID']},
+            }
         )
 
     for bet_file in os.listdir(os.path.join(os.path.dirname(__file__), 'test_data', 'E_cup', 'bet_data')):
         bet_data = load_data('E_cup/bet_data', bet_file)
-        match_obj = model.find_match_by_id(bet_data['ID'])
+        match_id = bet_data.pop('ID')
+        match_obj = model.find_match_by_id(match_id)
         for g, b in bet_data.items():
-            if g != 'ID':
-                if b == match_obj.a['team']:
-                    model.update_match_gamblers(match_obj.id, g, 'a', cutoff_check=False)
-                else:
-                    model.update_match_gamblers(match_obj.id, g, 'b', cutoff_check=False)
+            # 投注 A
+            if b == match_obj.a['team']:
+                model.update_match_gamblers(match_obj.id, 'a', model.Gambler(g), cutoff_check=False)
+            # 投注 B
+            elif b == match_obj.b['team']:
+                model.update_match_gamblers(match_obj.id, 'b', model.Gambler(g), cutoff_check=False)
+            # 未投注
 
 
 # def test_load_ecup(load_ecup):
 #     assert db.gambler.find().count() == 8
-#     assert len(model.find_matches('E_Cup')) == 51
+#     assert len(model.find_matches()) == 51
 #     assert db.auction.find().count() == 24
