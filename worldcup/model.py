@@ -429,12 +429,12 @@ def find_match_by_id(match_id: str) -> Optional[Match]:
 
 class Series:
 
-    def __init__(self, gambler: str, matches: list, required_gamblers: List[User]):
+    def __init__(self, gambler: str, matches: list, required_gamblers: List[Gambler]):
         self.gambler = gambler
         self.points = OrderedDict()
         self._add_matches(matches, required_gamblers)
 
-    def _add_matches(self, matches: list, required_gamblers: List[User]):
+    def _add_matches(self, matches: list, required_gamblers: List[Gambler]):
         latest = 0
         for match in sorted(matches, key=lambda m: m.match_time):
             if not match.has_score():
