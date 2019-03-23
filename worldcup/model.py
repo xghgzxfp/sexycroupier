@@ -4,10 +4,11 @@ import datetime
 import logging
 import pymongo
 
-from collections import namedtuple, OrderedDict
-from typing import List, Optional
+from collections import namedtuple, OrderedDict, UserString
+from typing import List, Optional, Union
 
-from .app import db
+from .app import logindb, tournamentdb, dbclient
+from .config import TOURNAMENTS
 from .constant import HANDICAP_DICT
 
 
@@ -15,94 +16,124 @@ def utc_to_beijing(utc_time: datetime.datetime) -> datetime.datetime:
     return utc_time + datetime.timedelta(hours=8)
 
 
-# class Gambler:
-#     name = "gambler's name"
+# class User:
+#     name = "user's name"
 #     openid = 'wechat openid'
 
-Gambler = namedtuple('Gambler', ['name', 'openid'])
+class User(UserString):
+    """登录用户"""
+    def __init__(self, name, openid):
+        super(User, self).__init__(name)
+        self.name = name
+        self.openid = openid
+
+    def _asdict(self):
+        return dict(name=self.name, openid=self.openid)
 
 
-def insert_gambler(name: str, openid: str) -> Gambler:
-    """根据 openid 创建 gambler"""
-    gambler = Gambler(name=name, openid=openid)
+def insert_user(name: str, openid: str) -> User:
+    """根据 openid 创建 user"""
+    user = User(name=name, openid=openid)
     # 用 replace_one(upsert=True) 避免插入重复记录
-    db.gambler.replace_one({'openid': openid}, gambler._asdict(), upsert=True)
+    logindb.user.replace_one({'openid': openid}, user._asdict(), upsert=True)
+    return user
+
+
+def drop_user(ident: str):
+    """根据 name / openid 删除 user"""
+    user = find_user_by_name(ident) or find_user_by_openid(ident)
+    if not user:
+        return
+    # login
+    logindb.user.delete_one({'name': user.name, 'openid': user.openid})
+    # 不删除 match / auction / gambler 以免丢失历史数据
+
+
+def update_user_name(current: str, new: str):
+    """重命名 user"""
+    # login
+    logindb.user.update_one({'name': current}, {'$set': {'name': new}})
+    for tournament in TOURNAMENTS:
+        # match
+        dbclient[tournament.dbname].match.update_many({'a.gamblers': current}, {'$set': {'a.gamblers.$': new}})
+        dbclient[tournament.dbname].match.update_many({'b.gamblers': current}, {'$set': {'b.gamblers.$': new}})
+        # auction
+        dbclient[tournament.dbname].auction.update_many({'gambler': current}, {'$set': {'gambler': new}})
+        # gambler
+        dbclient[tournament.dbname].gambler.update_many({'name': current}, {'$set': {'name': new}})
+
+
+def find_user_by_name(name: str) -> Optional[User]:
+    """根据 name 获取 user"""
+    d = logindb.user.find_one({'name': name})
+    if not d:
+        return
+    return User(name=d['name'], openid=d['openid'])
+
+
+def find_user_by_openid(openid: str) -> Optional[User]:
+    """根据 openid 获取 user"""
+    d = logindb.user.find_one({'openid': openid})
+    if not d:
+        return
+    return User(name=d['name'], openid=d['openid'])
+
+
+# class Gambler:
+#     name = "gambler's name"
+
+class Gambler(User):
+    """参与到 tournament 中的 user"""
+    def __init__(self, g: Union[UserString, str]):
+        super(Gambler, self).__init__(
+            name=str(g),
+            openid=getattr(g, 'openid', '<this-is-a-gambler>'),
+        )
+
+    def _asdict(self):
+        return dict(name=self.name)
+
+
+def insert_gambler(g: Union[UserString, str]) -> Gambler:
+    """插入若干个 gambler"""
+    gambler = Gambler(g)
+    # 用 replace_one(upsert=True) 避免插入重复记录
+    tournamentdb.gambler.replace_one({'name': gambler.name}, gambler._asdict(), upsert=True)
     return gambler
 
 
-def drop_gambler(ident: str):
-    """根据 name / openid 删除 gambler"""
-    gambler = find_gambler_by_name(ident) or find_gambler_by_openid(ident)
-    if not gambler:
-        return
-    # gambler
-    db.gambler.delete_one({'name': gambler.name, 'openid': gambler.openid})
-    # match
-    db.match.update_many({}, {'$pull': {'a.gamblers': gambler.name, 'b.gamblers': gambler.name}})
-    # auction
-    # 不删除 auction 以免丢失交易记录
-
-
-def update_gambler_name(current: str, new: str):
-    """重命名 gambler"""
-    # gambler
-    db.gambler.update_one({'name': current}, {'$set': {'name': new}})
-    # match
-    db.match.update_many({'a.gamblers': current}, {'$set': {'a.gamblers.$': new}})
-    db.match.update_many({'b.gamblers': current}, {'$set': {'b.gamblers.$': new}})
-    # auction
-    db.auction.update_many({'gambler': current}, {'$set': {'gambler': new}})
-
-
-def find_gambler_by_name(name: str) -> Optional[Gambler]:
-    """根据 name 获取 gambler"""
-    d = db.gambler.find_one({'name': name})
-    if not d:
-        return
-    return Gambler(name=d['name'], openid=d['openid'])
-
-
-def find_gambler_by_openid(openid: str) -> Optional[Gambler]:
-    """根据 openid 获取 gambler"""
-    d = db.gambler.find_one({'openid': openid})
-    if not d:
-        return
-    return Gambler(name=d['name'], openid=d['openid'])
-
-
 def find_gamblers() -> List[Gambler]:
-    """获取全部 gambler"""
-    return [Gambler(name=d['name'], openid=d['openid']) for d in db.gambler.find().sort('name') if d]
+    """获取本次 tournament 全部 gambler"""
+    return [Gambler(d['name']) for d in tournamentdb.gambler.find()]
 
 
 # class Auction:
-#     cup = '2018-world-cup'
 #     team = 'england'
 #     gambler = "gambler's name"
 #     price = 23
 
-Auction = namedtuple('Auction', ['cup', 'team', 'gambler', 'price'])
+Auction = namedtuple('Auction', ['team', 'gambler', 'price'])
 
 
-def insert_auction(cup: str, team: str, gambler: str, price: int) -> Auction:
+def insert_auction(team: str, gambler: Gambler, price: int) -> Auction:
     """插入拍卖记录"""
-    auction = Auction(cup=cup, team=team, gambler=gambler, price=price)
-    db.auction.replace_one({'cup': cup, 'team': team}, auction._asdict(), upsert=True)
+    auction = Auction(team=team, gambler=str(gambler), price=price)
+    tournamentdb.auction.replace_one({'team': team}, auction._asdict(), upsert=True)
     return auction
 
 
-def find_auction(cup: str, team: str) -> Optional[Auction]:
+def find_auction(team: str) -> Optional[Auction]:
     """根据 team 查找拍卖记录"""
-    a = db.auction.find_one({'cup': cup, 'team': team})
+    a = tournamentdb.auction.find_one({'team': team})
     if not a:
         return None
-    return Auction(cup=a['cup'], team=a['team'], gambler=a['gambler'], price=a['price'])
+    return Auction(team=a['team'], gambler=a['gambler'], price=a['price'])
 
 
-def find_team_owner(cup: str, team: str) -> Optional[str]:
+def find_team_owner(team: str) -> Optional[Gambler]:
     """根据拍卖记录查找 team owner"""
-    a = find_auction(cup, team)
-    return a.gambler if a else None
+    a = find_auction(team)
+    return Gambler(a.gambler) if a else None
 
 
 # class Match
@@ -148,14 +179,14 @@ class Match:
             premium=float(premium_a),
             score=score_a,
             gamblers=[],
-            owner=find_team_owner(cup=self.league, team=team_a),
+            owner=find_team_owner(team=team_a),
         )
         self.b = dict(
             team=team_b,
             premium=float(premium_b),
             score=score_b,
             gamblers=[],
-            owner=find_team_owner(cup=self.league, team=team_b),
+            owner=find_team_owner(team=team_b),
         )
 
         self.weight = weight
@@ -223,14 +254,14 @@ class Match:
         """比赛是否可更新盘口"""
         return utc_to_beijing(datetime.datetime.utcnow()) < self.handicap_cutoff_time
 
-    def is_completed(self) -> bool:
-        """比赛是否已结束"""
+    def has_score(self) -> bool:
+        """比赛是否有比分"""
         if self.a['score'] is None or self.b['score'] is None:
             return False
         return True
 
     def is_loser(self, team) -> bool:
-        if not self.is_completed():
+        if not self.has_score():
             return False
         for handicap in self.handicap:
             if self.a['score'] > self.b['score'] + handicap:
@@ -240,41 +271,57 @@ class Match:
         return False
 
     def update_profit_and_loss_result(self, required_gamblers: List[Gambler]) -> dict:
-        if not self.is_completed():
+        # 比赛无比分则不计算损益
+        if not self.has_score():
             return
-        asc, bsc = self.a['score'], self.b['score']
+
+        # 参与结算的玩家名单
+        # 不指定则只在已投注玩家间结算
         if required_gamblers is None:
             required_gamblers = []
-        else:
-            required_gamblers = list(map(lambda x: x.name, required_gamblers))
-        self._result = dict([(gambler, 0)
-            for gambler in self.a['gamblers'] + self.b['gamblers'] + required_gamblers])
+
+        self._result = dict(
+            [(gambler, 0) for gambler in (self.a['gamblers'] + self.b['gamblers'] + required_gamblers)])
+
+        # 按 handicap 数切分本场赌注
+        # 相当于将本场比赛拆成 n 个小比赛进行结算
+        stack = self.weight / len(self.handicap)
+
         for handicap in self.handicap:
+            # 找出未投注玩家
             punish_gamblers = []
             for gambler in required_gamblers:
                 if gambler not in self.a['gamblers'] and gambler not in self.b['gamblers']:
                     punish_gamblers.append(gambler)
-            stack = self.weight / len(self.handicap)
+
+            # 未投注直接扣分
             for gambler in punish_gamblers:
                 self._result[gambler] -= stack
 
+            # 根据 score + handicap 计算输家赢家
+            asc, bsc = self.a['score'], self.b['score']
             if asc > bsc + handicap:
                 winner, loser = self.a, self.b
             elif asc < bsc + handicap:
                 winner, loser = self.b, self.a
             else:
                 continue
-            reward_sum = stack * (len(loser['gamblers']) + len(punish_gamblers))
-            if len(winner['gamblers']) > 0:
-                winner_reward = reward_sum / len(winner['gamblers'])
-            else:
-                winner_reward = 0
+
+            # 输家扣分
             for gambler in loser['gamblers']:
                 self._result[gambler] -= stack
+
+            # 给赢家的总奖励是输家的赌注和
+            reward_sum = stack * (len(loser['gamblers']) + len(punish_gamblers))
+
+            # 赢家加分
             for gambler in winner['gamblers']:
+                winner_reward = reward_sum / len(winner['gamblers'])
                 self._result[gambler] += winner_reward
-            winner_team_owner = find_team_owner(self.league, winner['team'])
-            loser_team_owner = find_team_owner(self.league, loser['team'])
+
+            # 主队奖励
+            winner_team_owner = find_team_owner(winner['team'])
+            loser_team_owner = find_team_owner(loser['team'])
             if winner_team_owner in winner['gamblers']:
                 self._result[winner_team_owner] += winner_reward
             if winner_team_owner != loser_team_owner and loser_team_owner in winner['gamblers']:
@@ -313,7 +360,7 @@ def insert_match(league, match_time, handicap_display, team_a, team_b, premium_a
         return match
     # 否则插入新 match
     match = Match(league, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b, weight)
-    db.match.insert_one(match._asdict())
+    tournamentdb.match.insert_one(match._asdict())
     logging.info('New match: match={}'.format(match.id))
     return match
 
@@ -325,7 +372,7 @@ def update_match_score(match_id: str, score_a: str, score_b: str):
         score_b = int(score_b)
     except Exception:
         return
-    db.match.update_one(
+    tournamentdb.match.update_one(
         {"id": match_id},
         {"$set": {"a.score": score_a, "b.score": score_b}}
     )
@@ -338,27 +385,27 @@ def update_match_handicap(match_id: str, handicap_display: str, cutoff_check=Tru
     # 若比赛不存在或当前盘口已定则直接返回
     if not match or (cutoff_check and not match.can_update_handicap()):
         return
-    db.match.update_one(
+    tournamentdb.match.update_one(
         {"id": match_id},
         {"$set": {"handicap": _generate_handicap_pair(handicap_display), "handicap_display": handicap_display}}
     )
     logging.info('Handicap updated: match={} handicap="{}"'.format(match_id, handicap_display))
 
 
-def update_match_gamblers(match_id, team, gambler, cutoff_check=True):
+def update_match_gamblers(match_id: str, team: str, gambler: Gambler, cutoff_check=True):
     """更新投注结果"""
     match = find_match_by_id(match_id)
-    # 若比赛不存在或当前非投注时间则直接返回
-    if not match or (cutoff_check and not match.can_bet()):
+    # 若比赛不存在或当前非投注时间则直接返回或当前用户未注册
+    if not match or (cutoff_check and not match.can_bet()) or gambler not in find_gamblers():
         return
     list_out = ("a" if team == "b" else "b") + ".gamblers"
     list_in = team + '.gamblers'
-    return db.match.update_one({"id": match_id}, {"$pull": {list_out: gambler}, "$addToSet": {list_in: gambler}})
+    return tournamentdb.match.update_one({"id": match_id}, {"$pull": {list_out: gambler.name}, "$addToSet": {list_in: gambler.name}})
 
 
-def update_match_weight(match_id, weight):
+def update_match_weight(match_id: str, weight: Union[float, int]):
     """更新本场赌注"""
-    db.match.update_one(
+    tournamentdb.match.update_one(
         {"id": match_id},
         {"$set": {"weight": float(weight)}}
     )
@@ -372,25 +419,24 @@ def update_match_time(match_id: str, match_time: datetime.datetime):
     match = find_match_by_id(match_id)
     if not match:
         return
-    db.match.update_one(
+    tournamentdb.match.update_one(
         {"id": match_id},
         {"$set": {"id": _generate_match_id(match_time, match.a['team'], match.b['team']), "match_time": match_time}}
     )
 
 
-def find_matches(cup: str, reverse=False) -> List[Match]:
+def find_matches(reverse=False, limit=0) -> List[Match]:
     """返回所有比赛 默认为 id 升序"""
     direction = pymongo.DESCENDING if reverse else pymongo.ASCENDING
-    return [Match.from_mongo(m) for m in db.match.find({'league': cup}).sort('id', direction=direction)]
+    return [Match.from_mongo(m) for m in tournamentdb.match.find().sort('id', direction=direction).limit(limit)]
 
 
 def find_match_by_id(match_id: str) -> Optional[Match]:
     """根据 ID 返回比赛 找不到时返回 None"""
-    return Match.from_mongo(db.match.find_one({'id': match_id}))
+    return Match.from_mongo(tournamentdb.match.find_one({'id': match_id}))
 
 
 # class Series:
-#     cup = '2018-world-cup'
 #     gambler = 'name1'
 #     points = OrderedDict([
 #         ('201806010100-法国-西班牙', 17),
@@ -399,8 +445,7 @@ def find_match_by_id(match_id: str) -> Optional[Match]:
 
 class Series:
 
-    def __init__(self, cup: str, gambler: str, matches: list, required_gamblers: List[Gambler]):
-        self.cup = cup
+    def __init__(self, gambler: str, matches: list, required_gamblers: List[Gambler]):
         self.gambler = gambler
         self.points = OrderedDict()
         self._add_matches(matches, required_gamblers)
@@ -408,14 +453,14 @@ class Series:
     def _add_matches(self, matches: list, required_gamblers: List[Gambler]):
         latest = 0
         for match in sorted(matches, key=lambda m: m.match_time):
-            if not match.is_completed():
+            if not match.has_score():
                 continue
             result = match.update_profit_and_loss_result(required_gamblers=required_gamblers)
             latest += result and result.get(self.gambler) or 0
             self.points[match.id] = latest
 
 
-def generate_series(cup: str) -> List[Series]:
+def generate_series() -> List[Series]:
     gamblers = find_gamblers()
-    matches = find_matches(cup)
-    return [Series(cup, gambler.name, matches, gamblers) for gambler in gamblers]
+    matches = find_matches()
+    return [Series(gambler.name, matches, gamblers) for gambler in gamblers]

@@ -6,11 +6,19 @@ import pytest
 from collections import OrderedDict
 from freezegun import freeze_time
 
-from worldcup.app import db
+# setup a test tournament
+from worldcup import config
+config.TOURNAMENTS.append(config.Tournament(dbname='veryhard', league='欧联', display='硬糙'))
+config.DEFAULT_TOURNAMENT = config.TOURNAMENTS[-1]
+
+from worldcup.app import app, logindb, tournamentdb as db
 from worldcup import model
 
 
 def drop_all():
+    # login
+    logindb.user.drop()
+    # tournament
     db.gambler.drop()
     db.match.drop()
     db.auction.drop()
@@ -18,29 +26,52 @@ def drop_all():
 
 @pytest.fixture(autouse=True)
 def setupforall():
+    ctx = app.app_context()
+    ctx.push()
+
     drop_all()
     yield
-    drop_all()
+    # drop_all()
 
 
 @pytest.fixture
-def g1():
-    return model.insert_gambler('g1', 'openid-g1')
+def g1u():
+    return model.insert_user(name='g1', openid='openid-g1')
 
 
 @pytest.fixture
-def g2():
-    return model.insert_gambler('g2', 'openid-g2')
+def g2u():
+    return model.insert_user(name='g2', openid='openid-g2')
+
+
+@pytest.fixture
+def g3u():
+    return model.insert_user(name='g3', openid='openid-g3')
+
+
+@pytest.fixture
+def g4u():
+    return model.insert_user(name='g4', openid='openid-g4')
+
+
+@pytest.fixture
+def g1(g1u):
+    return model.insert_gambler(g1u)
+
+
+@pytest.fixture
+def g2(g2u):
+    return model.insert_gambler(g2u)
 
 
 @pytest.fixture
 def g3():
-    return model.insert_gambler('g3', 'openid-g3')
+    return model.insert_gambler('g3')
 
 
 @pytest.fixture
-def g4():
-    return model.insert_gambler('g4', 'openid-g4')
+def g4(g4u):
+    return model.insert_gambler('g4')
 
 
 @pytest.fixture
@@ -58,17 +89,17 @@ def match2():
 @pytest.fixture
 def auction2():
     test_auctions = [
-        ('硬糙', '水宫', 'g4', 12),
-        ('硬糙', '利浦', 'g3', 21),
-        ('硬糙', '白顿', 'g2', 32),
-        ('硬糙', '莱特城', 'g1', 1),
-        ('硬糙', '曼特联', 'g2', 3),
-        ('硬糙', '斯西', 'g3', 4),
-        ('硬糙', '纽尔联', 'g4', 6),
-        ('硬糙', '哈尔德', 'g1', 123),
+        dict(team='水宫', gambler='g4', price=12),
+        dict(team='利浦', gambler='g3', price=21),
+        dict(team='白顿', gambler='g2', price=32),
+        dict(team='莱特城', gambler='g1', price=1),
+        dict(team='曼特联', gambler='g2', price=3),
+        dict(team='斯西', gambler='g3', price=4),
+        dict(team='纽尔联', gambler='g4', price=6),
+        dict(team='哈尔德', gambler='g1', price=123),
     ]
     for auc in test_auctions:
-        model.insert_auction(*auc)
+        model.insert_auction(**auc)
 
 
 ##########
@@ -76,29 +107,30 @@ def auction2():
 ##########
 
 
-def test_find_one_gambler(g1):
-    found = model.find_gambler_by_openid(g1.openid)
-    assert found is not None and found.name == g1.name and found.openid == g1.openid
-    assert model.find_gambler_by_openid('non-existent') is None
+def test_find_one_user(g1u):
+    found = model.find_user_by_openid(g1u.openid)
+    assert found is not None and found.name == g1u.name and found.openid == g1u.openid
+    assert model.find_user_by_openid('non-existent') is None
 
-    found = model.find_gambler_by_name(g1.name)
-    assert found is not None and found.name == g1.name and found.openid == g1.openid
-    assert model.find_gambler_by_name('non-existent') is None
+    found = model.find_user_by_name(g1u.name)
+    assert found is not None and found.name == g1u.name and found.openid == g1u.openid
+    assert model.find_user_by_name('non-existent') is None
 
 
 def test_model_find_gamblers(g1, g2, g3, g4):
     gamblers_found = model.find_gamblers()
     assert gamblers_found == [g1, g2, g3, g4]
+    assert gamblers_found == [g1.name, g2.name, g3.name, g4.name]
 
 
 def test_model_find_auction(auction2):
-    auction_found = model.find_auction('硬糙', '纽尔联')
-    assert auction_found is not None and auction_found.cup == '硬糙' and auction_found.team == '纽尔联'
+    auction_found = model.find_auction(team='纽尔联')
+    assert auction_found is not None and auction_found.team == '纽尔联'
 
 
-def test_model_find_team_owner(auction2):
-    team_owner = model.find_team_owner('硬糙', '纽尔联')
-    assert team_owner == 'g4'
+def test_model_find_team_owner(auction2, g4):
+    team_owner = model.find_team_owner(team='纽尔联')
+    assert team_owner == g4
 
 
 def test_model_find_match_by_id(match1):
@@ -107,11 +139,11 @@ def test_model_find_match_by_id(match1):
 
 
 def test_model_find_matches(match1, match2):
-    matches_found = model.find_matches(cup=match1.league, reverse=False)
+    matches_found = model.find_matches(reverse=False)
     assert matches_found == [match1, match2]
 
-    matches_found = model.find_matches(cup=match1.league, reverse=True)
-    assert matches_found == [match2, match1]
+    matches_found = model.find_matches(reverse=True, limit=1)
+    assert matches_found == [match2]
 
 
 ##########
@@ -119,31 +151,30 @@ def test_model_find_matches(match1, match2):
 ##########
 
 
-@pytest.mark.parametrize('p', ['name', 'openid'])
-def test_model_drop_gambler(auction2, match1, match2, g1, g2, p):
-    model.update_match_gamblers(match1.id, 'a', g1.name, cutoff_check=False)
-    model.update_match_gamblers(match2.id, 'b', g1.name, cutoff_check=False)
+def test_model_drop_user(auction2, match1, match2, g1):
+    model.update_match_gamblers(match1.id, 'a', g1, cutoff_check=False)
+    model.update_match_gamblers(match2.id, 'b', g1, cutoff_check=False)
 
-    # drop by name
-    model.drop_gambler(getattr(g1, p))
-    # gambler
-    assert not model.find_gambler_by_openid(g1.openid)
-    # match
-    assert db.match.find({'a.gamblers': g1.name}).count() == 0
-    assert db.match.find({'b.gamblers': g1.name}).count() == 0
-    # auction
+    # drop user by name
+    model.drop_user(g1.name)
+    # user dropped successfully
+    assert not model.find_user_by_name(g1.name)
+
+    # match / auction remains untouched
+    assert db.match.find({'a.gamblers': g1.name}).count() == 1
+    assert db.match.find({'b.gamblers': g1.name}).count() == 1
     assert db.auction.find({'gambler': g1.name}).count() == 2
 
 
-def test_model_update_gambler_name(auction2, match1, match2, g1, g2):
+def test_model_update_user_name(auction2, match1, match2, g1, g2):
     G1_NEW = '巨型钻'
 
-    model.update_match_gamblers(match1.id, 'a', g1.name, cutoff_check=False)
-    model.update_match_gamblers(match2.id, 'b', g1.name, cutoff_check=False)
+    model.update_match_gamblers(match1.id, 'a', g1, cutoff_check=False)
+    model.update_match_gamblers(match2.id, 'b', g1, cutoff_check=False)
 
-    model.update_gambler_name(current=g1.name, new=G1_NEW)
+    model.update_user_name(current=g1.name, new=G1_NEW)
     # gambler
-    assert model.find_gambler_by_name(G1_NEW)
+    assert model.find_user_by_name(G1_NEW)
     # match
     assert db.match.find({'a.gamblers': G1_NEW}).count() == 1
     assert db.match.find({'b.gamblers': G1_NEW}).count() == 1
@@ -152,12 +183,12 @@ def test_model_update_gambler_name(auction2, match1, match2, g1, g2):
 
     G2_NEW = '小型钻'
 
-    model.update_match_gamblers(match1.id, 'b', g2.name, cutoff_check=False)
-    model.update_match_gamblers(match2.id, 'b', g2.name, cutoff_check=False)
+    model.update_match_gamblers(match1.id, 'b', g2, cutoff_check=False)
+    model.update_match_gamblers(match2.id, 'b', g2, cutoff_check=False)
 
-    model.update_gambler_name(current=g2.name, new=G2_NEW)
+    model.update_user_name(current=g2.name, new=G2_NEW)
     # gambler
-    assert model.find_gambler_by_name(G2_NEW)
+    assert model.find_user_by_name(G2_NEW)
     # match
     assert db.match.find({'a.gamblers': G2_NEW}).count() == 0
     assert db.match.find({'b.gamblers': G2_NEW}).count() == 2
@@ -189,30 +220,30 @@ def test_model_update_match_handicap(match1):
         assert match_found.handicap_display == '半球/一球' and match_found.handicap == (0.5, 1)
 
 
-def test_model_update_match_gamblers(match1):
+def test_model_update_match_gamblers(match1, g1):
     # freeze_time() 须为 utc 时间
 
-    # 盘口未定
+    # 盘口未定 不能投注
     with freeze_time('2018-03-31 03:59:59'):
-        model.update_match_gamblers(match1.id, 'a', 'g1')
+        model.update_match_gamblers(match1.id, 'a', g1)
         match_found = model.find_match_by_id(match1.id)
         assert 'g1' not in match_found.a['gamblers'] and 'g1' not in match_found.b['gamblers']
 
     # 盘口已定 开赛前 第一次投注
     with freeze_time('2018-03-31 04:00:01'):
-        model.update_match_gamblers(match1.id, 'a', 'g1')
+        model.update_match_gamblers(match1.id, 'a', g1)
         match_found = model.find_match_by_id(match1.id)
         assert 'g1' in match_found.a['gamblers'] and 'g1' not in match_found.b['gamblers']
 
     # 盘口已定 开赛前 改注
     with freeze_time('2018-03-31 04:00:03'):
-        model.update_match_gamblers(match1.id, 'b', 'g1')
+        model.update_match_gamblers(match1.id, 'b', g1)
         match_found = model.find_match_by_id(match1.id)
         assert 'g1' not in match_found.a['gamblers'] and 'g1' in match_found.b['gamblers']
 
-    # 开赛后
+    # 开赛后 投注结果不再改变
     with freeze_time('2018-03-31 11:30:01'):
-        model.update_match_gamblers(match1.id, 'a', 'g1')
+        model.update_match_gamblers(match1.id, 'a', g1)
         match_found = model.find_match_by_id(match1.id)
         assert 'g1' not in match_found.a['gamblers'] and 'g1' in match_found.b['gamblers']
 
@@ -251,8 +282,9 @@ def test_model_update_match_time(match1):
 ])
 def test_Match_update_profit_and_loss_no_auction(choice_a, choice_b, no_choice, handicap, score_a, score_b, expected):
     # prepare gamblers
-    for g in choice_a + choice_b + no_choice:
-        model.insert_gambler(name=g, openid=g)
+    choice_a = [model.insert_gambler(g) for g in choice_a]
+    choice_b = [model.insert_gambler(g) for g in choice_b]
+    no_choice = [model.insert_gambler(g) for g in no_choice]
 
     # prepare match
     match = model.insert_match('硬糙', datetime.datetime(2018, 3, 31, 19, 30), '受一球', '水宫', '利浦', 2.08, 1.78, 2, 4)
@@ -288,8 +320,9 @@ def test_Match_update_profit_and_loss_no_auction(choice_a, choice_b, no_choice, 
 ])
 def test_Match_update_profit_and_loss_with_auction(choice_a, choice_b, no_choice, handicap, score_a, score_b, expected, auction2):
     # prepare gamblers
-    for g in choice_a + choice_b + no_choice:
-        model.insert_gambler(name=g, openid=g)
+    choice_a = [model.insert_gambler(g) for g in choice_a]
+    choice_b = [model.insert_gambler(g) for g in choice_b]
+    no_choice = [model.insert_gambler(g) for g in no_choice]
 
     # prepare match
     match = model.insert_match('硬糙', datetime.datetime(2018, 3, 31, 19, 30), '受一球', '水宫', '利浦', 2.08, 1.78, 2, 4)
@@ -325,8 +358,9 @@ def test_Match_update_profit_and_loss_with_auction(choice_a, choice_b, no_choice
 ])
 def test_Match_update_profit_and_loss_with_self_auction(choice_a, choice_b, no_choice, handicap, score_a, score_b, expected, auction2):
     # prepare gamblers
-    for g in choice_a + choice_b + no_choice:
-        model.insert_gambler(name=g, openid=g)
+    choice_a = [model.insert_gambler(g) for g in choice_a]
+    choice_b = [model.insert_gambler(g) for g in choice_b]
+    no_choice = [model.insert_gambler(g) for g in no_choice]
 
     # prepare match
     match = model.insert_match('硬糙', datetime.datetime(2018, 4, 1, 20, 30), '平手', '水宫', '纽尔联', 1.01, 1.39, 0, 1)
@@ -353,15 +387,14 @@ def test_Match_update_profit_and_loss_with_self_auction(choice_a, choice_b, no_c
 
 
 def test_model_generate_series(g1, g2, g3, g4, match1, match2):
-    results = model.generate_series('硬糙')
-    json_results = [series.__dict__ for series in results]
+    results = [series.__dict__ for series in model.generate_series()]
     expected = [
-        {'cup': '硬糙', 'gambler': 'g1', 'points': OrderedDict([('201803311930-水宫-利浦', -2.0), ('201803312210-纽尔联-哈尔德', -4.0)])},
-        {'cup': '硬糙', 'gambler': 'g2', 'points': OrderedDict([('201803311930-水宫-利浦', -2.0), ('201803312210-纽尔联-哈尔德', -4.0)])},
-        {'cup': '硬糙', 'gambler': 'g3', 'points': OrderedDict([('201803311930-水宫-利浦', -2.0), ('201803312210-纽尔联-哈尔德', -4.0)])},
-        {'cup': '硬糙', 'gambler': 'g4', 'points': OrderedDict([('201803311930-水宫-利浦', -2.0), ('201803312210-纽尔联-哈尔德', -4.0)])}
+        {'gambler': 'g1', 'points': OrderedDict([('201803311930-水宫-利浦', -2.0), ('201803312210-纽尔联-哈尔德', -4.0)])},
+        {'gambler': 'g2', 'points': OrderedDict([('201803311930-水宫-利浦', -2.0), ('201803312210-纽尔联-哈尔德', -4.0)])},
+        {'gambler': 'g3', 'points': OrderedDict([('201803311930-水宫-利浦', -2.0), ('201803312210-纽尔联-哈尔德', -4.0)])},
+        {'gambler': 'g4', 'points': OrderedDict([('201803311930-水宫-利浦', -2.0), ('201803312210-纽尔联-哈尔德', -4.0)])}
     ]
-    assert json_results == expected
+    assert results == expected
 
 
 ##########
@@ -375,40 +408,78 @@ def load_data(cup, filename):
         return json.load(f)
 
 
+def _handicap_display(a, b):
+    p = ''
+    if a < 0 or b < 0:
+        p = '受'
+    a = next(k for k, v in model.HANDICAP_DICT.items() if v == abs(a))
+    b = next(k for k, v in model.HANDICAP_DICT.items() if v == abs(b))
+    if a == b:
+        return p + a
+    return p + '/'.join([a, b])
+
+
 @pytest.fixture
 def load_ecup():
     team = load_data('E_Cup', 'team.json')
-    for t, g in team.items():
-        model.insert_auction('E_cup', t, g, 1)
+    for t in team:
+        model.insert_auction(team=t['team'], gambler=model.Gambler(t['gambler']), price=t['price'])
 
     players = load_data('E_Cup', 'players.json')
     for g, tmp in players.items():
-        model.insert_gambler(g, g)
+        model.insert_gambler(g)
 
     for match_file in os.listdir(os.path.join(os.path.dirname(__file__), 'test_data', 'E_cup', 'match_data')):
         match_data = load_data('E_cup/match_data', match_file)
-        match_date = datetime.datetime.strptime(str(match_data['date']), '%Y%m%d%H')
-        match_obj = model.insert_match('E_Cup', match_date, '平手', match_data['teamA'],
-                                       match_data['teamB'], 1, 1, match_data['scoreA'], match_data['scoreB'])
-        db.match.update(
-            {"id": match_obj.id},
-            {"$set": {"handicap": (match_data['HandicapA'], match_data['HandicapB'])}, "$set": {
-                "id": match_date.strftime("%Y%m%d") + match_data['teamA'] + match_data['teamB']}}
+        match_time = datetime.datetime.strptime(str(match_data['date']), '%Y%m%d%H')
 
+        match = model.insert_match(
+            league='E_Cup', match_time=match_time,
+            handicap_display=_handicap_display(0 - match_data['HandicapA'], 0 - match_data['HandicapB']),
+            team_a=match_data['teamA'], team_b=match_data['teamB'],
+            premium_a=1, premium_b=1,
+            score_a=match_data['scoreA'], score_b=match_data['scoreB'],
+            weight=match_data['weight'])
+
+        db.match.update_one(
+            {"id": match.id},
+            {"$set": {"id": match_data['ID']}},
         )
 
     for bet_file in os.listdir(os.path.join(os.path.dirname(__file__), 'test_data', 'E_cup', 'bet_data')):
         bet_data = load_data('E_cup/bet_data', bet_file)
-        match_obj = model.find_match_by_id(bet_data['ID'])
+        match_id = bet_data.pop('ID')
+        match = model.find_match_by_id(match_id)
         for g, b in bet_data.items():
-            if g != 'ID':
-                if b == match_obj.a['team']:
-                    model.update_match_gamblers(match_obj.id, g, 'a', cutoff_check=False)
-                else:
-                    model.update_match_gamblers(match_obj.id, g, 'b', cutoff_check=False)
+            # 投注 A
+            if b == match.a['team']:
+                model.update_match_gamblers(match.id, 'a', model.Gambler(g), cutoff_check=False)
+            # 投注 B
+            elif b == match.b['team']:
+                model.update_match_gamblers(match.id, 'b', model.Gambler(g), cutoff_check=False)
+            # 未投注
 
 
-# def test_load_ecup(load_ecup):
-#     assert db.gambler.find().count() == 8
-#     assert len(model.find_matches('E_Cup')) == 51
-#     assert db.auction.find().count() == 24
+def test_ecup(load_ecup):
+    assert db.gambler.find().count() == 8
+    assert len(model.find_matches()) == 51
+    assert db.auction.find().count() == 24
+
+    results = []
+    for s in [series.__dict__ for series in model.generate_series()]:
+        points = [(k, '{:.2f}'.format(v)) for k, v in s['points'].items()]
+        result = dict(gambler=s['gambler'], points=OrderedDict([points[0], points[-1]]))
+        results.append(result)
+
+    expected = [
+        {'gambler': 'wan', 'points': OrderedDict([('20160611FranceRomania', '-2.00'), ('20160711FrancePortugal', '-17.33')])},
+        {'gambler': 'lc', 'points': OrderedDict([('20160611FranceRomania', '-2.00'), ('20160711FrancePortugal', '-17.40')])},
+        {'gambler': 'laoda', 'points': OrderedDict([('20160611FranceRomania', '3.33'), ('20160711FrancePortugal', '39.53')])},
+        {'gambler': 'xiaobai', 'points': OrderedDict([('20160611FranceRomania', '-2.00'), ('20160711FrancePortugal', '74.27')])},
+        {'gambler': 'mother', 'points': OrderedDict([('20160611FranceRomania', '3.33'), ('20160711FrancePortugal', '-20.60')])},
+        {'gambler': 'laopai', 'points': OrderedDict([('20160611FranceRomania', '6.67'), ('20160711FrancePortugal', '29.07')])},
+        {'gambler': 'dazuan', 'points': OrderedDict([('20160611FranceRomania', '-2.00'), ('20160711FrancePortugal', '30.60')])},
+        {'gambler': 'laotao', 'points': OrderedDict([('20160611FranceRomania', '-2.00'), ('20160711FrancePortugal', '14.67')])},
+    ]
+
+    assert results == expected

@@ -5,18 +5,27 @@ import functools
 import requests
 
 from urllib.parse import urlencode
-
 from flask import Flask, session, render_template, request, redirect, url_for, g, abort
 from pymongo import MongoClient
 from . import config
+from werkzeug.local import LocalProxy
 
 
 app = Flask(__name__)
 app.config.from_object(config)
-db = app.db = MongoClient(app.config['MONGO_URI'])[app.config['MONGO_DBNAME']]
-from . import model
 
-title = '2018 World Cup'
+dbclient = app.dbclient = MongoClient(app.config['MONGO_URI'])
+logindb = app.logindb = dbclient[app.config['MONGO_LOGINDB']]
+
+def get_tournamentdb(tournament=None):
+    g.tournament = tournament or (g.tournament if 'tournament' in g else app.config['DEFAULT_TOURNAMENT'])
+    g.tournamentdb = dbclient[g.tournament.dbname]
+    return g.tournamentdb
+
+with app.app_context():
+    tournamentdb = app.tournamentdb = LocalProxy(get_tournamentdb)
+
+from . import model
 
 
 @app.template_filter('_ts')
@@ -55,7 +64,8 @@ def authenticated(f):
 @app.before_request
 def before_request():
     openid = session.get('openid')
-    g.me = model.find_gambler_by_openid(openid)
+    g.me = model.find_user_by_openid(openid)
+    g.tournament = next(t for t in app.config['TOURNAMENTS'] if t.dbname == session.get('dbname', app.config['DEFAULT_TOURNAMENT'].dbname))
 
 
 @app.route('/auth/complete', methods=['GET'])
@@ -87,7 +97,7 @@ def auth_complete():
 
     session['openid'] = openid
 
-    me = model.find_gambler_by_openid(openid)
+    me = model.find_user_by_openid(openid)
     if not me:
         return render_template('signup.html')
 
@@ -106,9 +116,17 @@ def auth_signup():
     if not name or not openid:
         return abort(401)
 
-    model.insert_gambler(name, openid)
+    model.insert_user(name, openid)
 
     return redirect(url_for('index'))
+
+
+@app.route('/dbswitch/<dbname>', methods=['GET', 'POST'])
+@authenticated
+def dbswitch(dbname):
+    target_tournament = next(t for t in app.config['TOURNAMENTS'] if t.dbname == dbname)
+    session['dbname'] = target_tournament.dbname
+    return redirect(next_url())
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -117,16 +135,16 @@ def index():
     if request.method == 'POST':
         match_id = request.values.get('match-id')
         new_choice = request.values.get('bet-choice')
-        model.update_match_gamblers(match_id, new_choice, g.me.name)
+        model.update_match_gamblers(match_id, new_choice, g.me)
 
-    matches = model.find_matches(cup=app.config['LEAGUE_NAME'], reverse=True)
+    matches = model.find_matches(reverse=True, limit=app.config['MAX_MATCH_DISPLAY'])
     return render_template('index.html', matches=matches)
 
 
 @app.route('/board', methods=['GET'])
 @authenticated
 def board():
-    many_series = model.generate_series(cup=app.config['LEAGUE_NAME'])
+    many_series = model.generate_series()
 
     match_ids = many_series and many_series[0].points.keys() or []
     labels = ['{1} vs {2}'.format(*match_id.split('-')) for match_id in sorted(match_ids)]  # 用 sorted() 确保 match_ids 有序
