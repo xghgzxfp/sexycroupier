@@ -64,7 +64,7 @@ def authenticated(f):
 def before_request():
     openid = session.get('openid')
     g.me = model.find_user_by_openid(openid)
-    g.tournament = next(t for t in config.TOURNAMENTS if t.dbname == session.get('dbname', app.config['DEFAULT_TOURNAMENT'].dbname))
+    g.tournament = next(t for t in app.config['TOURNAMENTS'] if t.dbname == session.get('dbname', app.config['DEFAULT_TOURNAMENT'].dbname))
 
 
 @app.route('/auth/complete', methods=['GET'])
@@ -122,7 +122,7 @@ def auth_signup():
 @app.route('/dbswitch/<dbname>', methods=['GET', 'POST'])
 @authenticated
 def dbswitch(dbname):
-    target_tournament = next(t for t in config.TOURNAMENTS if t.dbname == dbname)
+    target_tournament = next(t for t in app.config['TOURNAMENTS'] if t.dbname == dbname)
     session['dbname'] = target_tournament.dbname
     return redirect(next_url())
 

@@ -6,7 +6,6 @@ import requests
 
 from bs4 import BeautifulSoup
 from sys import argv
-from worldcup.config import TOURNAMENTS
 from worldcup.app import app, get_tournamentdb
 from worldcup.model import insert_match, update_match_score, update_match_handicap, utc_to_beijing
 
@@ -136,7 +135,7 @@ if __name__ == "__main__":
     """更新<dbname>的比赛"""
     try:
         dbname = argv[1]
-        tournament = next((t for t in TOURNAMENTS if t.dbname == dbname), None)
+        tournament = next((t for t in app.config['TOURNAMENTS'] if t.dbname == dbname), None)
         # TODO: 这里应该把这个判断tournament是否存在的逻辑整合到try/catch上
         if tournament:
             with app.app_context():

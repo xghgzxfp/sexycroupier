@@ -1,6 +1,5 @@
 import argparse
 from worldcup.model import insert_auction
-from worldcup.config import TOURNAMENTS
 from worldcup.app import app, get_tournamentdb
 from sys import argv
 
@@ -13,7 +12,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     dbname = argv[1]
-    tournament = next((t for t in TOURNAMENTS if t.dbname == dbname), None)
+    tournament = next((t for t in app.config['TOURNAMENTS'] if t.dbname == dbname), None)
     with app.app_context():
         get_tournamentdb(tournament)
         insert_auction(args.team, args.gambler, args.price)
