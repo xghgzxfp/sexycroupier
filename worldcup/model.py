@@ -254,14 +254,14 @@ class Match:
         """比赛是否可更新盘口"""
         return utc_to_beijing(datetime.datetime.utcnow()) < self.handicap_cutoff_time
 
-    def is_completed(self) -> bool:
-        """比赛是否已结束"""
+    def has_score(self) -> bool:
+        """比赛是否有比分"""
         if self.a['score'] is None or self.b['score'] is None:
             return False
         return True
 
     def is_loser(self, team) -> bool:
-        if not self.is_completed():
+        if not self.has_score():
             return False
         for handicap in self.handicap:
             if self.a['score'] > self.b['score'] + handicap:
@@ -437,7 +437,7 @@ class Series:
     def _add_matches(self, matches: list, required_gamblers: List[User]):
         latest = 0
         for match in sorted(matches, key=lambda m: m.match_time):
-            if not match.is_completed():
+            if not match.has_score():
                 continue
             result = match.update_profit_and_loss_result(required_gamblers=required_gamblers)
             latest += result and result.get(self.gambler) or 0
