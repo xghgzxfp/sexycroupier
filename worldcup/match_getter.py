@@ -1,12 +1,8 @@
-# -*- coding: utf-8 -*-
-
 import datetime
 import logging
 import requests
 
 from bs4 import BeautifulSoup
-from sys import argv
-from worldcup.app import app, get_tournamentdb
 from worldcup.model import insert_match, update_match_score, update_match_handicap, utc_to_beijing
 
 
@@ -92,20 +88,21 @@ def get_match_data(league, date):
 
 
 def populate_match(league, date):
-    current_time = datetime.datetime.utcnow()
-    log_file_name = current_time.strftime('/tmp/bet_web/%y-%m-%d-MatchGetter.log')
+    utcnow = datetime.datetime.utcnow()
+    log_file_name = utcnow.strftime('/tmp/bet_web/%y-%m-%d-MatchGetter.log')
     logging.basicConfig(filename=log_file_name, level=logging.INFO, format='%(asctime)s %(message)s')
     matches = get_match_data(league, date)
 
-    logging.info('Matches collected: date="{}" cup={} count={}'.format(date, league, len(matches)))
+    logging.info('Matches collected: date="{}" league={} count={}'.format(date, league, len(matches)))
 
     weight = 2
 
-    worldcup_weights = [ (datetime.datetime(2018, 6, 30), datetime.datetime(2018, 7,  5) ,  2),  # 1/8 final
-                         (datetime.datetime(2018, 7,  6), datetime.datetime(2018, 7,  9) ,  4),  # 1/4 final
-                         (datetime.datetime(2018, 7, 11), datetime.datetime(2018, 7, 13) ,  8),  # semi final
-                         (datetime.datetime(2018, 7, 14), datetime.datetime(2018, 7, 16) , 16), # final and 3rd 4th final
-                        ]
+    worldcup_weights = [
+        (datetime.datetime(2018, 6, 30), datetime.datetime(2018, 7,  5),  2),  # 1/8 final
+        (datetime.datetime(2018, 7,  6), datetime.datetime(2018, 7,  9),  4),  # 1/4 final
+        (datetime.datetime(2018, 7, 11), datetime.datetime(2018, 7, 13),  8),  # semi final
+        (datetime.datetime(2018, 7, 14), datetime.datetime(2018, 7, 16), 16),  # final and 3rd 4th final
+    ]
 
     for league, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b in matches:
 
@@ -120,29 +117,14 @@ def populate_match(league, date):
     return
 
 
-def populate_and_update(league, k=1, current_date=utc_to_beijing(datetime.datetime.utcnow())):
+def populate_and_update(league, k=1, current_date=None):
     """
     :param league: league filter
     :param current_date: the date from which getter starts
     :param k: get match data within k days
     :return:
     """
+    current_date = current_date or utc_to_beijing(datetime.datetime.utcnow())
     for day_diff in range(-1, k + 1):
         populate_match(league, current_date + datetime.timedelta(days=day_diff))
     return
-
-
-if __name__ == "__main__":
-    """更新<dbname>的比赛"""
-    try:
-        dbname = argv[1]
-        tournament = next((t for t in app.config['TOURNAMENTS'] if t.dbname == dbname), None)
-        # TODO: 这里应该把这个判断tournament是否存在的逻辑整合到try/catch上
-        if tournament:
-            with app.app_context():
-                get_tournamentdb(tournament)
-                populate_and_update(tournament.league)
-        else:
-            logging.info('no dbname found in config')
-    except Exception as error:
-        logging.info(error.args[0])
