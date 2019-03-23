@@ -17,4 +17,3 @@ if __name__ == '__main__':
         get_tournamentdb(tournament)
         insert_auction(args.team, args.gambler, args.price)
     print('Done.')
-
