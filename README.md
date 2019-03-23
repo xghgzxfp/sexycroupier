@@ -47,7 +47,7 @@ Options:
 $ cat .env
 FLASK_APP=worldcup/app.py
 FLASK_DEBUG=1
-MONGO_URI=mongodb://1.2.3.4:1234
+MONGO_URI=mongodb://127.0.0.1:27017
 $ pipenv run flask run
 Loading .env environment variables…
  * Serving Flask app "worldcup.app"
