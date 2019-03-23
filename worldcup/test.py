@@ -408,6 +408,17 @@ def load_data(cup, filename):
         return json.load(f)
 
 
+def _handicap_display(a, b):
+    p = ''
+    if a < 0 or b < 0:
+        p = '受'
+    a = next(k for k, v in model.HANDICAP_DICT.items() if v == abs(a))
+    b = next(k for k, v in model.HANDICAP_DICT.items() if v == abs(b))
+    if a == b:
+        return p + a
+    return p + '/'.join([a, b])
+
+
 @pytest.fixture
 def load_ecup():
     team = load_data('E_Cup', 'team.json')
@@ -420,31 +431,55 @@ def load_ecup():
 
     for match_file in os.listdir(os.path.join(os.path.dirname(__file__), 'test_data', 'E_cup', 'match_data')):
         match_data = load_data('E_cup/match_data', match_file)
-        match_date = datetime.datetime.strptime(str(match_data['date']), '%Y%m%d%H')
-        match_obj = model.insert_match('E_Cup', match_date, '平手', match_data['teamA'], match_data['teamB'], 1, 1, match_data['scoreA'], match_data['scoreB'])
+        match_time = datetime.datetime.strptime(str(match_data['date']), '%Y%m%d%H')
+
+        match = model.insert_match(
+            league='E_Cup', match_time=match_time,
+            handicap_display=_handicap_display(0 - match_data['HandicapA'], 0 - match_data['HandicapB']),
+            team_a=match_data['teamA'], team_b=match_data['teamB'],
+            premium_a=1, premium_b=1,
+            score_a=match_data['scoreA'], score_b=match_data['scoreB'],
+            weight=match_data['weight'])
+
         db.match.update_one(
-            {"id": match_obj.id},
-            {
-                "$set": {"handicap": (match_data['HandicapA'], match_data['HandicapB'])},
-                "$set": {"id": match_data['ID']},
-            }
+            {"id": match.id},
+            {"$set": {"id": match_data['ID']}},
         )
 
     for bet_file in os.listdir(os.path.join(os.path.dirname(__file__), 'test_data', 'E_cup', 'bet_data')):
         bet_data = load_data('E_cup/bet_data', bet_file)
         match_id = bet_data.pop('ID')
-        match_obj = model.find_match_by_id(match_id)
+        match = model.find_match_by_id(match_id)
         for g, b in bet_data.items():
             # 投注 A
-            if b == match_obj.a['team']:
-                model.update_match_gamblers(match_obj.id, 'a', model.Gambler(g), cutoff_check=False)
+            if b == match.a['team']:
+                model.update_match_gamblers(match.id, 'a', model.Gambler(g), cutoff_check=False)
             # 投注 B
-            elif b == match_obj.b['team']:
-                model.update_match_gamblers(match_obj.id, 'b', model.Gambler(g), cutoff_check=False)
+            elif b == match.b['team']:
+                model.update_match_gamblers(match.id, 'b', model.Gambler(g), cutoff_check=False)
             # 未投注
 
 
-# def test_load_ecup(load_ecup):
-#     assert db.gambler.find().count() == 8
-#     assert len(model.find_matches()) == 51
-#     assert db.auction.find().count() == 24
+def test_ecup(load_ecup):
+    assert db.gambler.find().count() == 8
+    assert len(model.find_matches()) == 51
+    assert db.auction.find().count() == 24
+
+    results = []
+    for s in [series.__dict__ for series in model.generate_series()]:
+        points = [(k, '{:.2f}'.format(v)) for k, v in s['points'].items()]
+        result = dict(gambler=s['gambler'], points=OrderedDict([points[0], points[-1]]))
+        results.append(result)
+
+    expected = [
+        {'gambler': 'wan', 'points': OrderedDict([('20160611FranceRomania', '-2.00'), ('20160711FrancePortugal', '-17.33')])},
+        {'gambler': 'lc', 'points': OrderedDict([('20160611FranceRomania', '-2.00'), ('20160711FrancePortugal', '-17.40')])},
+        {'gambler': 'laoda', 'points': OrderedDict([('20160611FranceRomania', '3.33'), ('20160711FrancePortugal', '39.53')])},
+        {'gambler': 'xiaobai', 'points': OrderedDict([('20160611FranceRomania', '-2.00'), ('20160711FrancePortugal', '74.27')])},
+        {'gambler': 'mother', 'points': OrderedDict([('20160611FranceRomania', '3.33'), ('20160711FrancePortugal', '-20.60')])},
+        {'gambler': 'laopai', 'points': OrderedDict([('20160611FranceRomania', '6.67'), ('20160711FrancePortugal', '29.07')])},
+        {'gambler': 'dazuan', 'points': OrderedDict([('20160611FranceRomania', '-2.00'), ('20160711FrancePortugal', '30.60')])},
+        {'gambler': 'laotao', 'points': OrderedDict([('20160611FranceRomania', '-2.00'), ('20160711FrancePortugal', '14.67')])},
+    ]
+
+    assert results == expected
