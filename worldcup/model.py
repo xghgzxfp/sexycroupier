@@ -356,7 +356,7 @@ def update_match_gamblers(match_id, team, gambler, cutoff_check=True):
     return tournamentdb.match.update_one({"id": match_id}, {"$pull": {list_out: gambler.name}, "$addToSet": {list_in: gambler.name}})
 
 
-def update_match_weight(match_id, weight):
+def update_match_weight(match_id: str, weight: Union[float, int]):
     """更新本场赌注"""
     tournamentdb.match.update_one(
         {"id": match_id},
@@ -378,10 +378,10 @@ def update_match_time(match_id: str, match_time: datetime.datetime):
     )
 
 
-def find_matches(reverse=False, max_display=0) -> List[Match]:
+def find_matches(reverse=False, limit=0) -> List[Match]:
     """返回所有比赛 默认为 id 升序"""
     direction = pymongo.DESCENDING if reverse else pymongo.ASCENDING
-    return [Match.from_mongo(m) for m in tournamentdb.match.find().sort('id', direction=direction).limit(max_display)]
+    return [Match.from_mongo(m) for m in tournamentdb.match.find().sort('id', direction=direction).limit(limit)]
 
 
 def find_match_by_id(match_id: str) -> Optional[Match]:
