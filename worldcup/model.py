@@ -270,40 +270,56 @@ class Match:
                 return team == self.a['team']
         return False
 
-    def update_profit_and_loss_result(self, required_gamblers: List[User]) -> dict:
-        if not self.is_completed():
+    def update_profit_and_loss_result(self, required_gamblers: List[Gambler]) -> dict:
+        # 比赛无比分则不计算损益
+        if not self.has_score():
             return
-        asc, bsc = self.a['score'], self.b['score']
+
+        # 参与结算的玩家名单
+        # 不指定则只在已投注玩家间结算
         if required_gamblers is None:
             required_gamblers = []
-        else:
-            required_gamblers = list(map(lambda x: x.name, required_gamblers))
-        self._result = dict([(gambler, 0)
-            for gambler in self.a['gamblers'] + self.b['gamblers'] + required_gamblers])
+
+        self._result = dict(
+            [(gambler, 0) for gambler in (self.a['gamblers'] + self.b['gamblers'] + required_gamblers)])
+
+        # 按 handicap 数切分本场赌注
+        # 相当于将本场比赛拆成 n 个小比赛进行结算
+        stack = self.weight / len(self.handicap)
+
         for handicap in self.handicap:
+            # 找出未投注玩家
             punish_gamblers = []
             for gambler in required_gamblers:
                 if gambler not in self.a['gamblers'] and gambler not in self.b['gamblers']:
                     punish_gamblers.append(gambler)
-            stack = self.weight / len(self.handicap)
+
+            # 未投注直接扣分
             for gambler in punish_gamblers:
                 self._result[gambler] -= stack
 
+            # 根据 score + handicap 计算输家赢家
+            asc, bsc = self.a['score'], self.b['score']
             if asc > bsc + handicap:
                 winner, loser = self.a, self.b
             elif asc < bsc + handicap:
                 winner, loser = self.b, self.a
             else:
                 continue
-            reward_sum = stack * (len(loser['gamblers']) + len(punish_gamblers))
-            if len(winner['gamblers']) > 0:
-                winner_reward = reward_sum / len(winner['gamblers'])
-            else:
-                winner_reward = 0
+
+            # 输家扣分
             for gambler in loser['gamblers']:
                 self._result[gambler] -= stack
+
+            # 给赢家的总奖励是输家的赌注和
+            reward_sum = stack * (len(loser['gamblers']) + len(punish_gamblers))
+
+            # 赢家加分
             for gambler in winner['gamblers']:
+                winner_reward = reward_sum / len(winner['gamblers'])
                 self._result[gambler] += winner_reward
+
+            # 主队奖励
             winner_team_owner = find_team_owner(winner['team'])
             loser_team_owner = find_team_owner(loser['team'])
             if winner_team_owner in winner['gamblers']:
