@@ -47,6 +47,7 @@ Options:
 $ cat .env
 FLASK_APP=worldcup/app.py
 FLASK_DEBUG=1
+FLASK_SKIP_DOTENV=1
 MONGO_URI=mongodb://127.0.0.1:27017
 $ pipenv run flask run
 Loading .env environment variables…
@@ -56,6 +57,22 @@ Loading .env environment variables…
  * Restarting with stat
  * Debugger is active!
  * Debugger PIN: 123-456-789
+```
+
+
+#### 常用命令
+
+基于 Flask CLI 实现常用命令，具体实现见 `cli.py`
+
+```
+# 插入拍卖记录
+$ pipenv run flask add_auction
+
+# 抓取比赛记录
+$ pipenv run flask fetch_match
+
+# 导入数据
+$ pipenv run flask import_collection
 ```
 
 
