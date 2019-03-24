@@ -20,6 +20,6 @@ def add_auction(db, gambler, team, price):
 @app.cli.command('fetch_match')
 @click.argument('db')
 @click.option('--days', default=1, type=int, help='Fetch incoming matches in days.')
-def fetch_match(db, k):
+def fetch_match(db, days):
     g.tournament = get_tournament(db)
-    populate_and_update(g.tournament.league, k=k)
+    populate_and_update(g.tournament.league, k=days)

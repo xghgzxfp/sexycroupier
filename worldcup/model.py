@@ -22,6 +22,7 @@ def utc_to_beijing(utc_time: datetime.datetime) -> datetime.datetime:
 
 class User(UserString):
     """登录用户"""
+
     def __init__(self, name, openid):
         super(User, self).__init__(name)
         self.name = name
@@ -84,6 +85,7 @@ def find_user_by_openid(openid: str) -> Optional[User]:
 
 class Gambler(User):
     """参与到 tournament 中的 user"""
+
     def __init__(self, g: Union[UserString, str]):
         super(Gambler, self).__init__(
             name=str(g),
@@ -198,7 +200,7 @@ class Match:
         return self._asdict() == other._asdict()
 
     @classmethod
-    def from_mongo(cls, m: dict): # -> Optional[Match]
+    def from_mongo(cls, m: dict):  # -> Optional[Match]
         """根据 mongo 返回的 record 构造 Match 对象"""
         if not m:
             return
