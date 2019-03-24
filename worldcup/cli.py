@@ -1,8 +1,9 @@
+import bson.json_util
 import click
 from flask import g
 
 from worldcup import model
-from worldcup.app import app, get_tournament
+from worldcup.app import app, dbclient, get_tournament
 from worldcup.match_getter import populate_and_update
 
 
@@ -23,3 +24,18 @@ def add_auction(db, gambler, team, price):
 def fetch_match(db, days):
     g.tournament = get_tournament(db)
     populate_and_update(g.tournament.league, k=days)
+
+
+@app.cli.command('import_collection')
+@click.argument('db')
+@click.argument('collection')
+@click.argument('json', type=click.Path(exists=True, dir_okay=False, resolve_path=True))
+@click.option('--drop', default=True, type=bool, help='Drop existing collection before import.')
+def import_collection(db, collection, json, drop):
+    with open(json) as f:
+        data = [bson.json_util.loads(l) for l in f]
+    ctl = dbclient[db][collection]
+    if drop:
+        ctl.drop()
+    ctl.insert_many(data)
+    print(f'✅ import_collection: {ctl.full_name} ({ctl.find().count()} records)')
