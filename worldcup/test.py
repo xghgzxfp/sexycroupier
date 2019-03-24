@@ -35,6 +35,11 @@ def setupforall():
 
 
 @pytest.fixture
+def u0():
+    return model.insert_user(name='u0', openid='openid-u0')
+
+
+@pytest.fixture
 def g1u():
     return model.insert_user(name='g1', openid='openid-g1')
 
@@ -248,6 +253,12 @@ def test_model_update_match_gamblers(match1, g1):
         assert 'g1' not in match_found.a['gamblers'] and 'g1' in match_found.b['gamblers']
 
 
+def test_model_update_match_gamblers_signup(match1, u0):
+    assert model.find_gamblers() == []
+    model.update_match_gamblers(match1.id, 'a', u0, cutoff_check=False)
+    assert model.find_gamblers() == [u0]
+
+
 def test_model_update_match_weight(match1):
     model.update_match_weight(match1.id, 4)
     match_found = model.find_match_by_id(match1.id)
@@ -413,7 +424,7 @@ def load_history(tournament):
     db.match.insert_many(_load_json('match.json'))
 
 
-def test_eurocup2016():
+def test_history_eurocup2016():
     load_history('eurocup2016')
 
     # sanity check
@@ -443,7 +454,7 @@ def test_eurocup2016():
     assert results == expected
 
 
-def test_worldcup2018():
+def test_history_worldcup2018():
     load_history('worldcup2018')
 
     # sanity check

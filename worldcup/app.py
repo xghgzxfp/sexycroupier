@@ -11,12 +11,12 @@ from werkzeug.local import LocalProxy
 
 from . import config
 
-
 app = Flask(__name__)
 app.config.from_object(config)
 
 dbclient = app.dbclient = MongoClient(app.config['MONGO_URI'])
 logindb = app.logindb = dbclient[app.config['MONGO_LOGINDB']]
+
 
 def get_tournamentdb():
     t = app.config['DEFAULT_TOURNAMENT']
@@ -25,14 +25,17 @@ def get_tournamentdb():
     g.tournamentdb = dbclient[t.dbname]
     return g.tournamentdb
 
+
 with app.app_context():
     tournamentdb = app.tournamentdb = LocalProxy(get_tournamentdb)
+
 
 def get_tournament(dbname, default=None):
     tournament = next((t for t in app.config['TOURNAMENTS'] if t.dbname == dbname), default)
     if tournament is None:
         raise Exception('Unknown tournament dbname: {}'.format(dbname))
     return tournament
+
 
 from . import model, cli    # noqa
 

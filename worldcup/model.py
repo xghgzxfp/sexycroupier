@@ -394,15 +394,26 @@ def update_match_handicap(match_id: str, handicap_display: str, cutoff_check=Tru
     logging.info('Handicap updated: match={} handicap="{}"'.format(match_id, handicap_display))
 
 
-def update_match_gamblers(match_id: str, team: str, gambler: Gambler, cutoff_check=True):
+def update_match_gamblers(match_id: str, team: str, gambler: Union[Gambler, User], cutoff_check=True):
     """更新投注结果"""
     match = find_match_by_id(match_id)
-    # 若比赛不存在或当前非投注时间则直接返回或当前用户未注册
-    if not match or (cutoff_check and not match.can_bet()) or gambler not in find_gamblers():
+    # 若比赛不存在或当前非投注时间则直接返回
+    if not match or (cutoff_check and not match.can_bet()):
         return
-    list_out = ("a" if team == "b" else "b") + ".gamblers"
-    list_in = team + '.gamblers'
-    return tournamentdb.match.update_one({"id": match_id}, {"$pull": {list_out: gambler.name}, "$addToSet": {list_in: gambler.name}})
+    # 判断投注情况
+    if team == 'a':
+        # 投 a 队
+        in_, out = 'a.gamblers', 'b.gamblers'
+    elif team == 'b':
+        # 投 b 队
+        in_, out = 'b.gamblers', 'a.gamblers'
+    else:
+        # 除 a / b 以外则报错
+        raise ValueError(f'Expect team to be: a or b, but got: {team}')
+    # 更新 a / b 的 gamblers 列表
+    tournamentdb.match.update_one({"id": match_id}, {"$pull": {out: gambler.name}, "$addToSet": {in_: gambler.name}})
+    # 投注成功视作报名本次赛事
+    insert_gambler(gambler)
 
 
 def update_match_weight(match_id: str, weight: Union[float, int]):
