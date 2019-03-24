@@ -3,12 +3,13 @@
 import datetime
 import functools
 import requests
-
 from urllib.parse import urlencode
+
 from flask import Flask, session, render_template, request, redirect, url_for, g, abort
 from pymongo import MongoClient
-from . import config
 from werkzeug.local import LocalProxy
+
+from . import config
 
 
 app = Flask(__name__)
@@ -17,15 +18,23 @@ app.config.from_object(config)
 dbclient = app.dbclient = MongoClient(app.config['MONGO_URI'])
 logindb = app.logindb = dbclient[app.config['MONGO_LOGINDB']]
 
-def get_tournamentdb(tournament=None):
-    g.tournament = tournament or (g.tournament if 'tournament' in g else app.config['DEFAULT_TOURNAMENT'])
-    g.tournamentdb = dbclient[g.tournament.dbname]
+def get_tournamentdb():
+    t = app.config['DEFAULT_TOURNAMENT']
+    if 'tournament' in g:
+        t = g.tournament
+    g.tournamentdb = dbclient[t.dbname]
     return g.tournamentdb
 
 with app.app_context():
     tournamentdb = app.tournamentdb = LocalProxy(get_tournamentdb)
 
-from . import model
+def get_tournament(dbname, default=None):
+    tournament = next((t for t in app.config['TOURNAMENTS'] if t.dbname == dbname), default)
+    if tournament is None:
+        raise Exception('Unknown tournament dbname: {}'.format(dbname))
+    return tournament
+
+from . import model, cli    # noqa
 
 
 @app.template_filter('_ts')
@@ -63,9 +72,8 @@ def authenticated(f):
 
 @app.before_request
 def before_request():
-    openid = session.get('openid')
-    g.me = model.find_user_by_openid(openid)
-    g.tournament = next(t for t in app.config['TOURNAMENTS'] if t.dbname == session.get('dbname', app.config['DEFAULT_TOURNAMENT'].dbname))
+    g.me = model.find_user_by_openid(session.get('openid'))
+    g.tournament = get_tournament(session.get('dbname'), default=app.config['DEFAULT_TOURNAMENT'])
 
 
 @app.route('/auth/complete', methods=['GET'])
@@ -124,7 +132,7 @@ def auth_signup():
 @app.route('/dbswitch/<dbname>', methods=['GET', 'POST'])
 @authenticated
 def dbswitch(dbname):
-    target_tournament = next(t for t in app.config['TOURNAMENTS'] if t.dbname == dbname)
+    target_tournament = get_tournament(dbname)
     session['dbname'] = target_tournament.dbname
     return redirect(next_url())
 
