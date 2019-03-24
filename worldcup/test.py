@@ -1,5 +1,5 @@
 import datetime
-import json
+import bson.json_util
 import os
 import pytest
 
@@ -402,144 +402,23 @@ def test_model_generate_series(g1, g2, g3, g4, match1, match2):
 ##########
 
 
-def load_data(cup, filename):
-    file_path = os.path.join(os.path.dirname(__file__), 'test_data', cup, filename)
-    with open(file_path) as f:
-        return json.load(f)
+def load_history(tournament):
+
+    def _load_json(filename):
+        with open(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'history', tournament, filename)) as f:
+            return [bson.json_util.loads(line) for line in f]
+
+    db.gambler.insert_many(_load_json('gambler.json'))
+    db.auction.insert_many(_load_json('auction.json'))
+    db.match.insert_many(_load_json('match.json'))
 
 
-def _handicap_display(a, b):
-    p = ''
-    if a < 0 or b < 0:
-        p = '受'
-    a = next(k for k, v in model.HANDICAP_DICT.items() if v == abs(a))
-    b = next(k for k, v in model.HANDICAP_DICT.items() if v == abs(b))
-    if a == b:
-        return p + a
-    return p + '/'.join([a, b])
+def test_eurocup2016():
+    load_history('eurocup2016')
 
-
-@pytest.fixture
-def load_ecup():
-    team = load_data('E_Cup', 'team.json')
-    for t in team:
-        model.insert_auction(team=t['team'], gambler=model.Gambler(t['gambler']), price=t['price'])
-
-    players = load_data('E_Cup', 'players.json')
-    for g, tmp in players.items():
-        model.insert_gambler(g)
-
-    for match_file in os.listdir(os.path.join(os.path.dirname(__file__), 'test_data', 'E_cup', 'match_data')):
-        match_data = load_data('E_cup/match_data', match_file)
-        match_time = datetime.datetime.strptime(str(match_data['date']), '%Y%m%d%H')
-
-        match = model.insert_match(
-            league='E_Cup', match_time=match_time,
-            handicap_display=_handicap_display(0 - match_data['HandicapA'], 0 - match_data['HandicapB']),
-            team_a=match_data['teamA'], team_b=match_data['teamB'],
-            premium_a=1, premium_b=1,
-            score_a=match_data['scoreA'], score_b=match_data['scoreB'],
-            weight=match_data['weight'])
-
-        db.match.update_one(
-            {"id": match.id},
-            {"$set": {"id": match_data['ID']}},
-        )
-
-    for bet_file in os.listdir(os.path.join(os.path.dirname(__file__), 'test_data', 'E_cup', 'bet_data')):
-        bet_data = load_data('E_cup/bet_data', bet_file)
-        match_id = bet_data.pop('ID')
-        match = model.find_match_by_id(match_id)
-        for g, b in bet_data.items():
-            # 投注 A
-            if b == match.a['team']:
-                model.update_match_gamblers(match.id, 'a', model.Gambler(g), cutoff_check=False)
-            # 投注 B
-            elif b == match.b['team']:
-                model.update_match_gamblers(match.id, 'b', model.Gambler(g), cutoff_check=False)
-            # 未投注
-
-
-def test_ecup(load_ecup):
     assert db.gambler.find().count() == 8
-    assert len(model.find_matches()) == 51
     assert db.auction.find().count() == 24
-
-    results = []
-    for s in [series.__dict__ for series in model.generate_series()]:
-        points = [(k, '{:.2f}'.format(v)) for k, v in s['points'].items()]
-        result = dict(gambler=s['gambler'], points=OrderedDict([points[0], points[-1]]))
-        results.append(result)
-
-    expected = [
-        {'gambler': 'wan', 'points': OrderedDict([('20160611FranceRomania', '-2.00'), ('20160711FrancePortugal', '-17.33')])},
-        {'gambler': 'lc', 'points': OrderedDict([('20160611FranceRomania', '-2.00'), ('20160711FrancePortugal', '-17.40')])},
-        {'gambler': 'laoda', 'points': OrderedDict([('20160611FranceRomania', '3.33'), ('20160711FrancePortugal', '39.53')])},
-        {'gambler': 'xiaobai', 'points': OrderedDict([('20160611FranceRomania', '-2.00'), ('20160711FrancePortugal', '74.27')])},
-        {'gambler': 'mother', 'points': OrderedDict([('20160611FranceRomania', '3.33'), ('20160711FrancePortugal', '-20.60')])},
-        {'gambler': 'laopai', 'points': OrderedDict([('20160611FranceRomania', '6.67'), ('20160711FrancePortugal', '29.07')])},
-        {'gambler': 'dazuan', 'points': OrderedDict([('20160611FranceRomania', '-2.00'), ('20160711FrancePortugal', '30.60')])},
-        {'gambler': 'laotao', 'points': OrderedDict([('20160611FranceRomania', '-2.00'), ('20160711FrancePortugal', '14.67')])},
-    ]
-
-    assert results == expected
-
-    # remap id / team / gambler
-
-    TEAM_MAP = {
-        "France": "法国",
-        "Romania": "罗马尼亚",
-        "Albania": "阿尔巴尼亚",
-        "Switzerland": "瑞士",
-        "England": "英格兰",
-        "Russia": "俄罗斯",
-        "Slovakia": "斯洛伐克",
-        "Welsh": "威尔斯",
-        "Germany": "德国",
-        "Ukraine": "乌克兰",
-        "Poland": "波兰",
-        "NorthernIreland": "北爱尔兰",
-        "Spain": "西班牙",
-        "Czech": "捷克",
-        "Turkey": "土耳其",
-        "Croatia": "克罗地亚",
-        "Belgium": "比利时",
-        "Italy": "意大利",
-        "Ireland": "爱尔兰",
-        "Sweden": "瑞典",
-        "Portugal": "葡萄牙",
-        "Iceland": "冰岛",
-        "Austria": "奥地利",
-        "Hungary": "匈牙利",
-    }
-
-    # team 重命名
-    for k, v in TEAM_MAP.items():
-        db.match.update_many({'a.team': k}, {'$set': {'a.team': v}})
-        db.match.update_many({'b.team': k}, {'$set': {'b.team': v}})
-        db.auction.update_many({'team': k}, {'$set': {'team': v}})
-
-    # id 重生成
-    for match in model.find_matches():
-        db.match.update_one(
-            {"id": match.id},
-            {"$set": {"id": model._generate_match_id(match_time=match.match_time, team_a=match.a['team'], team_b=match.b['team'])}},
-        )
-
-    GAMBLER_MAP = {
-        'wan': '大B',
-        'lc': '李琛',
-        'laoda': '老大',
-        'xiaobai': '小白',
-        'mother': '老娘',
-        'laopai': '老排',
-        'dazuan': '大钻',
-        'laotao': '老套',
-    }
-
-    # gambler 重命名
-    for k, v in GAMBLER_MAP.items():
-        model.update_user_name(current=k, new=v)
+    assert db.match.find().count() == 51
 
     results = []
     for s in [series.__dict__ for series in model.generate_series()]:
