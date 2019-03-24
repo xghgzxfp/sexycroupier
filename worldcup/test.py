@@ -483,3 +483,79 @@ def test_ecup(load_ecup):
     ]
 
     assert results == expected
+
+    # remap id / team / gambler
+
+    TEAM_MAP = {
+        "France": "法国",
+        "Romania": "罗马尼亚",
+        "Albania": "阿尔巴尼亚",
+        "Switzerland": "瑞士",
+        "England": "英格兰",
+        "Russia": "俄罗斯",
+        "Slovakia": "斯洛伐克",
+        "Welsh": "威尔斯",
+        "Germany": "德国",
+        "Ukraine": "乌克兰",
+        "Poland": "波兰",
+        "NorthernIreland": "北爱尔兰",
+        "Spain": "西班牙",
+        "Czech": "捷克",
+        "Turkey": "土耳其",
+        "Croatia": "克罗地亚",
+        "Belgium": "比利时",
+        "Italy": "意大利",
+        "Ireland": "爱尔兰",
+        "Sweden": "瑞典",
+        "Portugal": "葡萄牙",
+        "Iceland": "冰岛",
+        "Austria": "奥地利",
+        "Hungary": "匈牙利",
+    }
+
+    # team 重命名
+    for k, v in TEAM_MAP.items():
+        db.match.update_many({'a.team': k}, {'$set': {'a.team': v}})
+        db.match.update_many({'b.team': k}, {'$set': {'b.team': v}})
+        db.auction.update_many({'team': k}, {'$set': {'team': v}})
+
+    # id 重生成
+    for match in model.find_matches():
+        db.match.update_one(
+            {"id": match.id},
+            {"$set": {"id": model._generate_match_id(match_time=match.match_time, team_a=match.a['team'], team_b=match.b['team'])}},
+        )
+
+    GAMBLER_MAP = {
+        'wan': '大B',
+        'lc': '李琛',
+        'laoda': '老大',
+        'xiaobai': '小白',
+        'mother': '老娘',
+        'laopai': '老排',
+        'dazuan': '大钻',
+        'laotao': '老套',
+    }
+
+    # gambler 重命名
+    for k, v in GAMBLER_MAP.items():
+        model.update_user_name(current=k, new=v)
+
+    results = []
+    for s in [series.__dict__ for series in model.generate_series()]:
+        points = [(k, '{:.2f}'.format(v)) for k, v in s['points'].items()]
+        result = dict(gambler=s['gambler'], points=OrderedDict([points[0], points[-1]]))
+        results.append(result)
+
+    expected = [
+        {'gambler': '大B', 'points': OrderedDict([('201606110300-法国-罗马尼亚', '-2.00'), ('201607110300-法国-葡萄牙', '-17.33')])},
+        {'gambler': '李琛', 'points': OrderedDict([('201606110300-法国-罗马尼亚', '-2.00'), ('201607110300-法国-葡萄牙', '-17.40')])},
+        {'gambler': '老大', 'points': OrderedDict([('201606110300-法国-罗马尼亚', '3.33'), ('201607110300-法国-葡萄牙', '39.53')])},
+        {'gambler': '小白', 'points': OrderedDict([('201606110300-法国-罗马尼亚', '-2.00'), ('201607110300-法国-葡萄牙', '74.27')])},
+        {'gambler': '老娘', 'points': OrderedDict([('201606110300-法国-罗马尼亚', '3.33'), ('201607110300-法国-葡萄牙', '-20.60')])},
+        {'gambler': '老排', 'points': OrderedDict([('201606110300-法国-罗马尼亚', '6.67'), ('201607110300-法国-葡萄牙', '29.07')])},
+        {'gambler': '大钻', 'points': OrderedDict([('201606110300-法国-罗马尼亚', '-2.00'), ('201607110300-法国-葡萄牙', '30.60')])},
+        {'gambler': '老套', 'points': OrderedDict([('201606110300-法国-罗马尼亚', '-2.00'), ('201607110300-法国-葡萄牙', '14.67')])},
+    ]
+
+    assert results == expected
