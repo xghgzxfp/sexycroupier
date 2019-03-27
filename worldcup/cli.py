@@ -23,7 +23,7 @@ def add_auction(db, gambler, team, price):
 @click.option('--days', default=1, type=int, help='Fetch incoming matches in days.')
 def fetch_match(db, days):
     g.tournament = get_tournament(db)
-    populate_and_update(g.tournament.league, g.tournament.weight_schedule, days)
+    populate_and_update(g.tournament.league, g.tournament.weight_schedule, k=days)
 
 
 @app.cli.command('import_collection')
