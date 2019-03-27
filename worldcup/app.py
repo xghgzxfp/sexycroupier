@@ -54,16 +54,19 @@ def authenticated(f):
     @functools.wraps(f)
     def _(*args, **kwargs):
         if not g.me:
-            # 非微信或未设置微信 credentials 则以“迷你钻”身份登录 仅供 DEBUG
+            # 非微信或未设置微信 credentials 则以“迷你钻”身份登录
             if ('MicroMessenger' not in request.user_agent.string
                     or not (app.config['WECHAT_APPID'] and app.config['WECHAT_APPSECRET'])):
+                # 仅供 DEBUG 模式使用
+                if not app.config['DEBUG']:
+                    return abort(401)
                 session['openid'] = 'wechat-openid-minizuan'
                 return render_template('signup.html', gambler='迷你钻')
             # 重定向至微信获取授权
             wx_auth_base = 'https://open.weixin.qq.com/connect/oauth2/authorize?'
             wx_auth_params = dict(                          # 参数需按字典序 Python 3.6+ dict 确保有序
                 appid=app.config['WECHAT_APPID'],
-                redirect_uri=url_for('auth_complete', next=request.full_path, _external=True,),
+                redirect_uri=url_for('auth_complete', next=request.full_path, _external=True),
                 response_type='code',
                 scope='snsapi_base',
                 state=request.endpoint,
@@ -127,7 +130,7 @@ def auth_signup():
     if not name or not openid:
         return abort(401)
 
-    model.insert_user(name, openid)
+    model.insert_user(name=name, openid=openid)
 
     return redirect(url_for('index'))
 
@@ -145,8 +148,8 @@ def dbswitch(dbname):
 def index():
     if request.method == 'POST':
         match_id = request.values.get('match-id')
-        new_choice = request.values.get('bet-choice')
-        model.update_match_gamblers(match_id, new_choice, g.me)
+        bet_choice = request.values.get('bet-choice')
+        model.update_match_gamblers(match_id=match_id, team=bet_choice, gambler=g.me)
 
     matches = model.find_matches(reverse=True, limit=app.config['MAX_MATCH_DISPLAY'])
     return render_template('index.html', matches=matches)
