@@ -3,7 +3,7 @@ import logging
 import requests
 
 from bs4 import BeautifulSoup
-from worldcup.model import insert_match, update_match_score, update_match_handicap, utc_to_beijing, find_matches
+from worldcup.model import insert_match, update_match_score, update_match_handicap, utc_to_beijing
 
 
 def get_match_page(league, date, url='http://odds.sports.sina.com.cn/odds/index.php'):
