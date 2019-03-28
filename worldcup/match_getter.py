@@ -96,9 +96,14 @@ def populate_match(league, weight_schedule, date):
     logging.info('Matches collected: date="{}" league={} count={}'.format(date, league, len(matches)))
 
     for league, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b in matches:
-        # 现有的比赛数作为weight_schedule的index
-        idx = len(find_matches())
-        match = insert_match(league, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b, weight_schedule[idx])
+        # 从tournament的weight_schedule里取得对应权重
+        weight=2
+        for (t, w) in weight_schedule:
+            if match_time < t:
+                weight=w
+                break
+
+        match = insert_match(league, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b, weight)
         update_match_handicap(match_id=match.id, handicap_display=handicap_display)
         update_match_score(match_id=match.id, score_a=score_a, score_b=score_b)
     return
