@@ -97,10 +97,10 @@ def populate_match(league, weight_schedule, date):
 
     for league, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b in matches:
         # 从tournament的weight_schedule里取得对应权重
-        weight=2
+        weight = 2
         for (t, w) in weight_schedule:
             if match_time < t:
-                weight=w
+                weight = w
                 break
 
         match = insert_match(league, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b, weight)
@@ -118,5 +118,5 @@ def populate_and_update(league, weight_schedule, k=1, current_date=None):
     """
     current_date = current_date or utc_to_beijing(datetime.datetime.utcnow())
     for day_diff in range(-1, k + 1):
-        populate_match(league, weight_schedule, current_date + datetime.timedelta(days=day_diff))
+        populate_match(league, weight_schedule, date=current_date + datetime.timedelta(days=day_diff))
     return
