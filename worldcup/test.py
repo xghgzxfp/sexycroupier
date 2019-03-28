@@ -8,7 +8,7 @@ from freezegun import freeze_time
 
 # setup a test tournament
 from worldcup import config
-config.TOURNAMENTS.append(config.Tournament(dbname='veryhard', league='欧联', display='硬糙'))
+config.TOURNAMENTS.append(config.Tournament(dbname='veryhard', league='欧联', display='硬糙', weight_schedule=[]))
 config.DEFAULT_TOURNAMENT = config.TOURNAMENTS[-1]
 
 from worldcup.app import app, logindb, tournamentdb as db

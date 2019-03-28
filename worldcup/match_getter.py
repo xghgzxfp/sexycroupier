@@ -87,7 +87,7 @@ def get_match_data(league, date):
     return result
 
 
-def populate_match(league, date):
+def populate_match(league, weight_schedule, date):
     utcnow = datetime.datetime.utcnow()
     log_file_name = utcnow.strftime('/tmp/bet_web/%y-%m-%d-MatchGetter.log')
     logging.basicConfig(filename=log_file_name, level=logging.INFO, format='%(asctime)s %(message)s')
@@ -95,19 +95,11 @@ def populate_match(league, date):
 
     logging.info('Matches collected: date="{}" league={} count={}'.format(date, league, len(matches)))
 
-    weight = 2
-
-    worldcup_weights = [
-        (datetime.datetime(2018, 6, 30), datetime.datetime(2018, 7,  5),  2),  # 1/8 final
-        (datetime.datetime(2018, 7,  6), datetime.datetime(2018, 7,  9),  4),  # 1/4 final
-        (datetime.datetime(2018, 7, 11), datetime.datetime(2018, 7, 13),  8),  # semi final
-        (datetime.datetime(2018, 7, 14), datetime.datetime(2018, 7, 16), 16),  # final and 3rd 4th final
-    ]
-
     for league, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b in matches:
-
-        for (r1, r2, w) in worldcup_weights:
-            if r1 <= match_time < r2:
+        # 从tournament的weight_schedule里取得对应权重
+        weight = 2
+        for (t, w) in weight_schedule:
+            if match_time < t:
                 weight = w
                 break
 
@@ -117,7 +109,7 @@ def populate_match(league, date):
     return
 
 
-def populate_and_update(league, k=1, current_date=None):
+def populate_and_update(league, weight_schedule, k=1, current_date=None):
     """
     :param league: league filter
     :param current_date: the date from which getter starts
@@ -126,5 +118,5 @@ def populate_and_update(league, k=1, current_date=None):
     """
     current_date = current_date or utc_to_beijing(datetime.datetime.utcnow())
     for day_diff in range(-1, k + 1):
-        populate_match(league, current_date + datetime.timedelta(days=day_diff))
+        populate_match(league, weight_schedule, date=current_date + datetime.timedelta(days=day_diff))
     return
