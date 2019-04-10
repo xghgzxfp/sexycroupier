@@ -26,7 +26,7 @@
         <div class="col text-nowrap">
           <div>{{ match.match_time.strftime('%Y-%m-%d') }}</div>
           <div>{{ match.match_time.strftime('%H:%M') }}</div>
-          <small>盘口</small>
+          <small>盘口 ({{ match.weight }})</small>
           <div>{{ match.handicap_display or "-" }}</div>
         </div>
         <div class="col" {% if match.is_loser(match.b["team"]) %} style="color:gray" {% endif %}>
