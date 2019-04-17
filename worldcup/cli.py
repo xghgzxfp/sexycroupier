@@ -25,7 +25,7 @@ def add_auction(db, gambler, team, price):
 def update_weight(db, match_id, new_weight):
     g.tournament = get_tournament(db)
     match = model.update_match_weight(match_id=match_id, weight=new_weight)
-    print(f'✅ update_weight: {match}')
+    print(f'✅ update_weight: {match_id} now with weight as {new_weight}')
 
 
 @app.cli.command('fetch_match')
