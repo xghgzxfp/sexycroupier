@@ -39,9 +39,9 @@ TOURNAMENTS = [
     Tournament(dbname='championsleague20182019',
                league='欧联',
                display='18-19 欧冠',
-               weight_schedule=[(datetime.datetime(2019, 4, 18), 4),    # 1/4 final
-                                (datetime.datetime(2019, 5, 8), 8),     # semi final
-                                (datetime.datetime(2019, 6, 2), 16),    # final and 3rd 4th final
+               weight_schedule=[(datetime.datetime(2019, 4, 19), 4),    # 1/4 final
+                                (datetime.datetime(2019, 5, 9), 8),     # semi final
+                                (datetime.datetime(2019, 6, 3), 16),    # final and 3rd 4th final
                                 ],
                ),
 ]
