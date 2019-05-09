@@ -16,6 +16,7 @@ MONGO_LOGINDB = os.getenv('MONGO_LOGINDB', 'logins')
 WECHAT_APPID = os.getenv('WECHAT_APPID', '')
 WECHAT_APPSECRET = os.getenv('WECHAT_APPSECRET', '')
 
+#weight_schedule应为比赛日(北京时区)+1
 TOURNAMENTS = [
     Tournament(dbname='eurocup2016',
                league='欧国杯',
@@ -40,7 +41,7 @@ TOURNAMENTS = [
                league='欧联',
                display='18-19 欧冠',
                weight_schedule=[(datetime.datetime(2019, 4, 19), 4),    # 1/4 final
-                                (datetime.datetime(2019, 5, 9), 8),     # semi final
+                                (datetime.datetime(2019, 5, 10), 8),     # semi final
                                 (datetime.datetime(2019, 6, 3), 16),    # final and 3rd 4th final
                                 ],
                ),
