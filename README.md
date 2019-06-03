@@ -93,3 +93,7 @@ $ pipenv run flask import_collection
 ```
 $ pipenv run py.test -s -vv worldcup/test.py
 ```
+
+#### Usecase Diagram
+
+![UseCaseDiagram](https://github.com/xghgzxfp/bet_web/blob/master/Blueprints/UseCase%20Diagram.png "UseCase Diagram")
