@@ -110,7 +110,8 @@ def populate_match(league, weight_schedule, date):
 
 
 def populate_and_update(league, weight_schedule, k=1, current_date=None):
-    """
+    """Populate and update matches in the given league.
+
     :param league: league filter
     :param current_date: the date from which getter starts
     :param k: get match data within k days
