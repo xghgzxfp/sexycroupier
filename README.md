@@ -2,18 +2,12 @@
 
 #### 准备
 
-建议用 `pipenv` (https://docs.pipenv.org/) 管理依赖
-
-    $ brew install pipenv
-
-或
-
-    $ pip install pipenv
-
 安装依赖
 
     $ cd /path/to/bet_web
-    $ pipenv install
+    $ pip install -r requirements.in
+
+增加新的依赖请修改 `requirements.in`
 
 
 #### 启动 app
@@ -21,7 +15,7 @@
 指定 `FLASK_APP` 以启动 app，指定 `FLASK_DEBUG` 以 debug 模式启动
 
 ```
-$ FLASK_APP=worldcup/app.py FLASK_DEBUG=1 pipenv run flask run
+$ FLASK_APP=worldcup/app.py FLASK_DEBUG=1 flask run
  * Serving Flask app "worldcup.app"
  * Running on http://127.0.0.1:5000/ (Press CTRL+C to quit)
 ```
@@ -31,7 +25,7 @@ $ FLASK_APP=worldcup/app.py FLASK_DEBUG=1 pipenv run flask run
 ```
 $ export FLASK_APP=worldcup/app.py
 $ export FLASK_DEBUG=1
-$ pipenv run flask run --help
+$ flask run --help
 ...
 Options:
   -h, --host TEXT                 The interface to bind to.
@@ -41,7 +35,7 @@ Options:
 ...
 ```
 
-可以将常用环境变量写入 `.env` 文件以方便使用，`pipenv run` 会自动读取 `.env`
+可以将常用环境变量写入 `.env` 文件以方便使用
 
 ```
 $ cat .env
@@ -49,7 +43,7 @@ FLASK_APP=worldcup/app.py
 FLASK_DEBUG=1
 FLASK_SKIP_DOTENV=1
 MONGO_URI=mongodb://127.0.0.1:27017
-$ pipenv run flask run
+$ flask run
 Loading .env environment variables…
  * Serving Flask app "worldcup.app"
  * Forcing debug mode on
@@ -66,32 +60,20 @@ Loading .env environment variables…
 
 ```
 # 插入拍卖记录
-$ pipenv run flask add_auction
+$ flask add_auction
 
 # 抓取比赛记录
-$ pipenv run flask fetch_match
+$ flask fetch_match
 
 # 导入数据
-$ pipenv run flask import_collection
+$ flask import_collection
 ```
-
-
-#### 增加新依赖
-
-使用 `pipenv` 来安装新依赖，语法接近 `pip`，`pipenv` 会同时更新 `Pipfile` `Pipfile.lock`
-
-    $ pipenv install xxx
-    $ pipenv install xxx==1.2.3
-
-如果需要增加只在开发时使用的依赖，如测试或调试相关的依赖，请安装至 `[dev-packages]`
-
-    $ pipenv install --dev xxx
 
 
 #### 进行单元测试
 
 ```
-$ pipenv run py.test -s -vv worldcup/test.py
+$ py.test -s -vv worldcup/test.py
 ```
 
 #### Usecase Diagram
