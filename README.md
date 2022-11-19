@@ -67,6 +67,9 @@ $ flask fetch_match
 
 # 导入数据
 $ flask import_collection
+
+# 归档数据
+$ mongoexport --db $DB --collection $CO | tr -d ' ' > history/$DB/$CO.json
 ```
 
 
