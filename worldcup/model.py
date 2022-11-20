@@ -132,6 +132,13 @@ def find_auction(team: str) -> Optional[Auction]:
     return Auction(team=a['team'], gambler=a['gambler'], price=a['price'])
 
 
+def find_auctions() -> List[Auction]:
+    return [
+        Auction(team=a['team'], gambler=a['gambler'], price=a['price'])
+        for a in tournamentdb.match.find().sort('id', direction=pymongo.ASCENDING)
+    ]
+
+
 def find_team_owner(team: str) -> Optional[Gambler]:
     """根据拍卖记录查找 team owner"""
     a = find_auction(team)
