@@ -9,8 +9,8 @@
 
 {% block content %}
 <div class="container">
-  <h2 class="mt-2">世界杯竞猜游戏规则</h2>
-
+  <h2 class="mt-2">游戏规则</h2>
+{#
   <br><h3>一、球队拍卖</h3>
   <h6>入围球队一览</h6>
   <table class="table table-striped table-bordered">
@@ -82,7 +82,7 @@
       </tr>
     </tbody>
   </table>
-
+#}
   <h6>拍卖流程及规则</h6>
   <ul>
     <li>拍卖在微信群上进行</li>
@@ -104,166 +104,13 @@
       </tr>
     </thead>
     <tbody>
+    {% for auction in auctions %}
       <tr>
-        <td>俄罗斯</td>
-        <td>老套</td>
-        <td>27</td>
+        <td>{{ auction.team }}</td>
+        <td>{{ auction.gambler }}</td>
+        <td>{{ auction.price }}</td>
       </tr>
-      <tr>
-        <td>沙地阿拉伯</td>
-        <td>大钻</td>
-        <td>14</td>
-      </tr>
-      <tr>
-        <td>埃及</td>
-        <td>老大</td>
-        <td>28</td>
-      </tr>
-      <tr>
-        <td>乌拉圭</td>
-        <td>大钻</td>
-        <td>30</td>
-      </tr>
-      <tr>
-        <td>葡萄牙</td>
-        <td>金帝</td>
-        <td>48</td>
-      </tr>
-      <tr>
-        <td>西班牙</td>
-        <td>大钻</td>
-        <td>70</td>
-      </tr>
-      <tr>
-        <td>摩洛哥</td>
-        <td>李琛</td>
-        <td>18</td>
-      </tr>
-      <tr>
-        <td>伊朗</td>
-        <td>老排</td>
-        <td>18</td>
-      </tr>
-      <tr>
-        <td>法国</td>
-        <td>老娘</td>
-        <td>86</td>
-      </tr>
-      <tr>
-        <td>澳洲</td>
-        <td>李琛</td>
-        <td>20</td>
-      </tr>
-      <tr>
-        <td>秘鲁</td>
-        <td>老排</td>
-        <td>25</td>
-      </tr>
-      <tr>
-        <td>丹麦</td>
-        <td>金帝</td>
-        <td>35</td>
-      </tr>
-      <tr>
-        <td>阿根廷</td>
-        <td>老套</td>
-        <td>70</td>
-      </tr>
-      <tr>
-        <td>冰岛</td>
-        <td>小白</td>
-        <td>26</td>
-      </tr>
-      <tr>
-        <td>克罗地亚</td>
-        <td>小白</td>
-        <td>42</td>
-      </tr>
-      <tr>
-        <td>尼日利亚</td>
-        <td>金帝</td>
-        <td>21</td>
-      </tr>
-      <tr>
-        <td>巴西</td>
-        <td>老大</td>
-        <td>69</td>
-      </tr>
-      <tr>
-        <td>瑞士</td>
-        <td>大B</td>
-        <td>40</td>
-      </tr>
-      <tr>
-        <td>哥斯达黎加</td>
-        <td>李琛</td>
-        <td>18</td>
-      </tr>
-      <tr>
-        <td>塞尔维亚</td>
-        <td>小白</td>
-        <td>20</td>
-      </tr>
-      <tr>
-        <td>德国</td>
-        <td>李琛</td>
-        <td>116</td>
-      </tr>
-      <tr>
-        <td>墨西哥</td>
-        <td>大钻</td>
-        <td>44</td>
-      </tr>
-      <tr>
-        <td>瑞典</td>
-        <td>金帝</td>
-        <td>26</td>
-      </tr>
-      <tr>
-        <td>南韩</td>
-        <td>大钻</td>
-        <td>18</td>
-      </tr>
-      <tr>
-        <td>比利时</td>
-        <td>老排</td>
-        <td>78</td>
-      </tr>
-      <tr>
-        <td>巴拿马</td>
-        <td>老套</td>
-        <td>18</td>
-      </tr>
-      <tr>
-        <td>突尼西亚</td>
-        <td>老排</td>
-        <td>22</td>
-      </tr>
-      <tr>
-        <td>英格兰</td>
-        <td>老套</td>
-        <td>58</td>
-      </tr>
-      <tr>
-        <td>波兰</td>
-        <td>老排</td>
-        <td>35</td>
-      </tr>
-      <tr>
-        <td>塞内加尔</td>
-        <td>老大</td>
-        <td>30</td>
-      </tr>
-      <tr>
-        <td>哥伦比亚</td>
-        <td>李琛</td>
-        <td>34</td>
-      </tr>
-      <tr>
-        <td>日本</td>
-        <td>金帝</td>
-        <td>20</td>
-      </tr>
+    {% endfor %}
     </tbody>
   </table>
 
@@ -286,7 +133,7 @@
     <li>
       在所有比赛结束后对所有玩家的积分进行排名，由奖池为前三名将提供以下奖品：
       <ul>
-        <li>第一名：任意平台 FIFA 19 一份（约$60）</li>
+        <li>第一名：任意平台 FIFA 游戏一份（约$60）</li>
         <li>第二名：任意球队周边一件（不高于$15）</li>
         <li>第三名：新英体育会员一年（¥29/年）</li>
       </ul>
@@ -298,8 +145,7 @@
   <ul>
     <li>主队通过拍卖来获得，每人可以获得多至10支的主队，每支球队只能有一个拥有者</li>
     <li>当某场比赛有主队参赛，拥有者为胜方时（不一定要投自己的主队）即可获得额外奖励，具体见“六、单场计分”</li>
-    <li>主队可以交易，成交额的10%流入奖池</li>
-    <li>主队交易的成交价不得跌破发行价，即一档球队15元，二档球队10元，三、四档球队2元</li>
+    <li>主队可以交易，成交额的10%流入奖池，成交价不得跌破发行价</li>
   </ul>
 
   <br><h3>五、个人积分</h3>

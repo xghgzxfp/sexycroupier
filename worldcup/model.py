@@ -135,7 +135,7 @@ def find_auction(team: str) -> Optional[Auction]:
 def find_auctions() -> List[Auction]:
     return [
         Auction(team=a['team'], gambler=a['gambler'], price=a['price'])
-        for a in tournamentdb.match.find().sort('id', direction=pymongo.ASCENDING)
+        for a in tournamentdb.auction.find()
     ]
 
 

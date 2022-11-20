@@ -167,8 +167,9 @@ def board():
     for i, series in enumerate(many_series):
         s, l = (50, 50) if (i % 2) else (100, 70)
         color = 'hsl({h}, {s}%, {l}%)'.format(h=int(360 / len(many_series) * i), s=s, l=l)
-        datasets.append(dict(label=series.gambler, data=list(series.points.values()),
-                             borderColor=color, backgroundColor=color))
+        datasets.append(dict(
+            label=series.gambler, data=list(series.points.values()),
+            borderColor=color, backgroundColor=color))
 
     # 插入初始 0 值
     labels.insert(0, '')
@@ -185,4 +186,5 @@ def board():
 @app.route('/rule', methods=['GET'])
 @authenticated
 def rule():
-    return render_template('rule.html')
+    auctions = model.find_auctions()
+    return render_template('rule.html', auctions=auctions)
