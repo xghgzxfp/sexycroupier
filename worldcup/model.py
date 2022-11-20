@@ -340,17 +340,16 @@ def _generate_match_id(match_time, team_a, team_b):
 
 
 def _generate_handicap_pair(handicap_display):
-    if handicap_display.startswith('受'):
-        sign = -1
-        handicap_display = handicap_display[1:]
-    else:
+    handicaps = []
+    for handicap in handicap_display.split('/'):
         sign = 1
-
-    handicaps = handicap_display.split('/')
+        if handicap.startswith('受'):
+            sign = -1
+            handicap = handicap[1:]
+        handicaps.append(sign * HANDICAP_DICT[handicap])
     if len(handicaps) == 1:
-        return sign * HANDICAP_DICT[handicaps[0]], sign * HANDICAP_DICT[handicaps[0]]
-    else:
-        return sign * HANDICAP_DICT[handicaps[0]], sign * HANDICAP_DICT[handicaps[1]]
+        handicaps *= 2
+    return tuple(handicaps)
 
 
 def insert_match(league, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b, weight=2):
