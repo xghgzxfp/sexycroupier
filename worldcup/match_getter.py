@@ -4,7 +4,7 @@ import requests
 import html
 
 from worldcup import config, constant
-from worldcup.model import insert_match, update_match_score, update_match_handicap
+from worldcup.model import insert_match, update_match_score, update_match_handicap, utc_to_beijing
 
 
 def get_json_data_from_url(url, method):
@@ -126,12 +126,12 @@ def map_handicap_in_num_to_display(handicap_in_num):
         return constant.HANDICAP_DICT[handicap_in_num]
 
 
-def populate_and_update(league, weight_schedule):
-    utcnow = datetime.datetime.utcnow()
+def populate_match(league, weight_schedule, date):
+    # utcnow = datetime.datetime.utcnow()
     # log_file_name = utcnow.strftime('/tmp/bet_web/%y-%m-%d-MatchGetter.log')
     # logging.basicConfig(filename=log_file_name, level=logging.INFO, format='%(asctime)s %(message)s')
     matches = get_match_data(league)
-    print(f'Matches collected: date="{utcnow}" league={league} count={len(matches)}')
+    print(f'Matches collected: date="{date}" league={league} count={len(matches)}')
 
     for (
         league,
@@ -144,8 +144,11 @@ def populate_and_update(league, weight_schedule):
         score_a,
         score_b,
     ) in matches:
-        # 从tournament的weight_schedule里取得对应权重
-        weight = 1
+        # 跳过尚早比赛
+        if match_time > date:
+            continue
+        # 根据 weight schedule 取得对应权重
+        weight = 2
         for (t, w) in weight_schedule:
             if match_time < t:
                 weight = w
@@ -166,6 +169,14 @@ def populate_and_update(league, weight_schedule):
     return
 
 
-if __name__ == "__main__":
-    populate_and_update(config.DEFAULT_TOURNAMENT.league, config.DEFAULT_TOURNAMENT.weight_schedule)
-    print("ok")
+def populate_and_update(league, weight_schedule, k=1, current_date=None):
+    """Populate and update matches in the given league.
+
+    :param league: league filter
+    :param k: get match data within k days
+    :param current_date: the date from which getter starts
+    :return:
+    """
+    current_date = current_date or utc_to_beijing(datetime.datetime.utcnow())
+    populate_match(league, weight_schedule, date=current_date + datetime.timedelta(days=k))
+    return
