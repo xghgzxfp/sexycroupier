@@ -30,10 +30,10 @@ with app.app_context():
     tournamentdb = app.tournamentdb = LocalProxy(get_tournamentdb)
 
 
-def get_tournament(dbname, default=None):
+def get_tournament(dbname, default=None) -> config.Tournament:
     tournament = next((t for t in app.config['TOURNAMENTS'] if t.dbname == dbname), default)
     if tournament is None:
-        raise Exception('Unknown tournament dbname: {}'.format(dbname))
+        raise Exception(f'Unknown tournament dbname: {dbname}')
     return tournament
 
 
