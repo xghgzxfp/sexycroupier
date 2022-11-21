@@ -167,9 +167,13 @@ def find_team_owner(team: str) -> Optional[Gambler]:
 
 class Match:
 
-    def __init__(self, league, match_time, handicap_display,
-                 team_a, team_b, premium_a, premium_b, score_a, score_b,
-                 weight=2, id=None):
+    def __init__(
+            self,
+            league: str,
+            match_time: datetime.datetime,
+            handicap_display: str,
+            team_a, team_b, premium_a, premium_b, score_a, score_b,
+            weight: int = 2, id=None):
         self.league = league
 
         self.match_time = match_time
@@ -342,7 +346,7 @@ class Match:
         return 'Match(id={}, score_a={}, score_b={})'.format(self.id, self.a['score'], self.b['score'])
 
 
-def _generate_match_id(match_time, team_a, team_b):
+def _generate_match_id(match_time: datetime.datetime, team_a, team_b):
     return match_time.strftime('%Y%m%d%H%M') + '-' + team_a + '-' + team_b
 
 
@@ -359,7 +363,10 @@ def _generate_handicap_pair(handicap_display):
     return tuple(handicaps)
 
 
-def insert_match(league, match_time, handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b, weight=2):
+def insert_match(
+        league: str,
+        match_time: datetime.datetime,
+        handicap_display, team_a, team_b, premium_a, premium_b, score_a, score_b, weight=2):
     """创建新比赛或返回已存在比赛"""
     # 如果 match 已存在则直接返回
     match = find_match_by_id(_generate_match_id(match_time, team_a, team_b))
