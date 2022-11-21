@@ -59,7 +59,7 @@ TOURNAMENTS = [
     ),
     Tournament(
         dbname='worldcup2022',
-        league='世界杯',
+        league='世界盃',
         display='2022 世界杯',
         weight_schedule=[
             (datetime.datetime(2022, 12, 8), 1),  # group games and 1/8 final
