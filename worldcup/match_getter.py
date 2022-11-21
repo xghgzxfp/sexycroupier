@@ -58,7 +58,9 @@ def get_match_data(league, current_date):
         team_a = ev["hometeamNameZh"]
         team_b = ev["awayteamNameZh"]
         handicap = ev.get("hcap", dict()).get("ftHandicap", "")
-        handicap = handicap or odds[evid]
+        handicap = handicap or odds.get("evid")
+        # 无法取得 handicap 则跳过
+        if not handicap: continue
         handicap_display = _handicap_display(handicap)
         score = ev.get("score", dict()).get("current")
         score_a, score_b = score.split(":") if score else (None, None)
