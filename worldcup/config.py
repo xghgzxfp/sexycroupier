@@ -31,6 +31,12 @@ TOURNAMENTS = [
         ],
     ),
     Tournament(
+        dbname='2018-international-friendlies',
+        league='国友赛',
+        display='2018 国友赛',
+        weight_schedule=[ ],
+    ),
+    Tournament(
         dbname='worldcup2018',
         league='世界杯',
         display='2018 世界杯',
