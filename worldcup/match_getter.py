@@ -1,9 +1,8 @@
-import functools
 import datetime
 import logging
 import requests
 
-from worldcup import config, constant
+from worldcup import constant
 from worldcup.model import insert_match, update_match_score, update_match_handicap, utc_to_beijing
 
 
@@ -35,10 +34,17 @@ def get_match_data(league, current_date):
     logging.info(f"request: {url_event}")
     events = []
 
+    # 昨天
     date = str((current_date - datetime.timedelta(days=1)).date())
     r = retry(requests.post)(url_event, json=dict(date=date))
     events += r.json()["data"]["list"]
 
+    # 今天
+    date = str(current_date.date())
+    r = retry(requests.post)(url_event, json=dict(date=date))
+    events += r.json()["data"]["list"]
+
+    # from now
     r = retry(requests.post)(url_event)
     events += r.json()["data"]["list"]
 
@@ -51,6 +57,7 @@ def get_match_data(league, current_date):
         evid = ev["evId"]
         # 忽略已处理场次
         if evid in seen:
+            print(f'skip seen: {evid}')
             continue
         seen.add(evid)
         # 构造 match
