@@ -62,9 +62,9 @@ TOURNAMENTS = [
         league='世界盃',
         display='2022 世界杯',
         weight_schedule=[
-            (datetime.datetime(2022, 12, 8), 2),  # group games and 1/8 final
-            (datetime.datetime(2022, 12, 13), 4),  # 1/4 final
-            (datetime.datetime(2022, 12, 16), 8),  # semi final
+            (datetime.datetime(2022, 12, 8), 2),    # group games and 1/8 final
+            (datetime.datetime(2022, 12, 13), 4),   # 1/4 final
+            (datetime.datetime(2022, 12, 16), 8),   # semi final
             (datetime.datetime(2022, 12, 19), 16),  # final and 3rd 4th final
         ],
     ),
