@@ -75,7 +75,7 @@ def get_match_data(league, current_date):
             handicap_display = match.handicap_display
         else:
             handicap_display = _handicap_display(handicap)
-        score = ev.get("score", dict()).get("current")
+        score = ev.get("score", dict()).get("ft")
         score_a, score_b = score.split(":") if score else (None, None)
         # 完成构造
         matches.append((
