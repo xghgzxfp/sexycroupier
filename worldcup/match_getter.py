@@ -3,7 +3,7 @@ import logging
 import requests
 
 from worldcup import constant
-from worldcup.model import insert_match, update_match_score, update_match_handicap, utc_to_beijing
+from worldcup.model import insert_match, update_match_score, update_match_handicap, utc_to_beijing, find_match_by_id, _generate_match_id
 
 
 def retry(func):
@@ -68,9 +68,13 @@ def get_match_data(league, current_date):
         handicap = handicap or odds.get(evid)
         # 无法取得 handicap 则跳过
         if not handicap:
-            print(f'skip no handicap: {team_a} vs {team_b}')
-            continue
-        handicap_display = _handicap_display(handicap)
+            match = find_match_by_id(_generate_match_id(match_time, team_a, team_b))
+            if not match:
+                print(f'skip no handicap: {team_a} vs {team_b}')
+                continue
+            handicap_display = match.handicap_display
+        else:
+            handicap_display = _handicap_display(handicap)
         score = ev.get("score", dict()).get("current")
         score_a, score_b = score.split(":") if score else (None, None)
         # 完成构造
