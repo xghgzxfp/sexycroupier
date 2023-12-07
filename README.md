@@ -5,7 +5,7 @@
 安装依赖
 
     $ cd /path/to/bet_web
-    $ pip install -r requirements.in
+    $ pip install -r requirements.txt
 
 增加新的依赖请修改 `requirements.in`
 
