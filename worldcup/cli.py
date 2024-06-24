@@ -31,9 +31,10 @@ def update_weight(db, match_id, new_weight):
 @app.cli.command('fetch_match')
 @click.argument('db')
 @click.option('--days', default=1, type=int, help='Fetch incoming matches in days.')
-def fetch_match(db, days):
+@click.option('--dry-run', default=False, type=bool, help='Dry run without writing to database.')
+def fetch_match(db, days, dry_run):
     g.tournament = get_tournament(db)
-    populate_and_update(g.tournament.league, g.tournament.weight_schedule, k=days)
+    populate_and_update(g.tournament.league, g.tournament.weight_schedule, k=days, dry_run=dry_run)
 
 
 @app.cli.command('import_collection')

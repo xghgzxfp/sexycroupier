@@ -103,7 +103,7 @@ def _handicap_display(handicap_in_num):
     return "/".join(handicaps)
 
 
-def populate_and_update(league, weight_schedule, k=1, current_date=None):
+def populate_and_update(league, weight_schedule, k=1, current_date=None, dry_run=False):
     """Populate and update matches in the given league.
 
     :param league: league filter
@@ -118,7 +118,7 @@ def populate_and_update(league, weight_schedule, k=1, current_date=None):
     # log_file_name = utcnow.strftime('/tmp/bet_web/%y-%m-%d-MatchGetter.log')
     # logging.basicConfig(filename=log_file_name, level=logging.INFO, format='%(asctime)s %(message)s')
     matches = get_match_data(league, current_date=current_date)
-    print(f'Matches collected: date="{date}" league={league} count={len(matches)}')
+    print(f'matches fetched: date="{date}" league={league} count={len(matches)} dry_run={dry_run}')
 
     for (
         league,
@@ -141,6 +141,7 @@ def populate_and_update(league, weight_schedule, k=1, current_date=None):
                 weight = w
                 break
         print(league, match_time, handicap_display, team_a, team_b, score_a, score_b, weight)
+        if dry_run: continue
         match = insert_match(
             league=league,
             match_time=match_time,
