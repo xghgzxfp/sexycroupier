@@ -78,7 +78,3 @@ $ mongoexport --db $DB --collection $CO | tr -d ' ' > history/$DB/$CO.json
 ```
 $ py.test -s -vv worldcup/test.py
 ```
-
-#### Usecase Diagram
-
-![UseCaseDiagram](https://github.com/xghgzxfp/bet_web/blob/master/Blueprints/UseCase%20Diagram.png "UseCase Diagram")
