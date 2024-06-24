@@ -1,9 +1,13 @@
+import time
 import datetime
 import logging
 import requests
 
 from worldcup import constant
 from worldcup.model import insert_match, update_match_score, update_match_handicap, utc_to_beijing, find_match_by_id, _generate_match_id
+
+
+UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0'
 
 
 def retry(func):
@@ -21,31 +25,32 @@ def retry(func):
 
 
 def get_match_data(league, current_date):
-    url_odds = "https://www.macauslot.com/gate/gb/big5.macauslot.com/soccer/json/realtime/threeinone_odds_sc_fb.json"
+    url_odds = f"https://www.macauslot.com/soccer/json/realtime/threeinone_odds_sc_fb.json?nocache={int(time.time() * 1000)}"
     url_event = "https://www.macauslot.com/infoApi/cn/D/FB/matchs/list"
 
-    logging.info(f"request: {url_odds}")
-    r = retry(requests.get)(url_odds)
+    r = retry(requests.get)(url_odds, headers={"User-Agent": UA})
     odds = dict()
     for od in r.json()["data"]:
-        market = od["markets"][1]
+        market = [m for m in od["markets"] if m["name"] == "让球盘"][0]
         odds[od["ev_id"]] = market["hcap_disp"]
 
-    logging.info(f"request: {url_event}")
     events = []
+    session = requests.Session()
+    session.headers.update({"User-Agent": UA})
 
     # 昨天
     date = str((current_date - datetime.timedelta(days=1)).date())
-    r = retry(requests.post)(url_event, json=dict(date=date))
-    events += r.json()["data"]["list"]
+    r = retry(session.post)(url_event, json=dict(date=date))
+    try: events += r.json()["data"]["list"]
+    except Exception: print(r.content, r.request.headers)
 
     # 今天
     date = str(current_date.date())
-    r = retry(requests.post)(url_event, json=dict(date=date))
+    r = retry(session.post)(url_event, json=dict(date=date))
     events += r.json()["data"]["list"]
 
     # from now
-    r = retry(requests.post)(url_event)
+    r = retry(session.post)(url_event)
     events += r.json()["data"]["list"]
 
     seen = set()
