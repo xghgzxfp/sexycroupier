@@ -4,7 +4,7 @@
 
 安装依赖
 
-    $ cd /path/to/bet_web
+    $ cd /path/to/sexycroupier
     $ pip install -r requirements.txt
 
 增加新的依赖请修改 `requirements.in`
