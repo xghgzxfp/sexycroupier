@@ -351,13 +351,16 @@ def _generate_match_id(match_time: datetime.datetime, team_a, team_b):
 
 
 def _generate_handicap_pair(handicap_display):
+    # 确定 handicap 的正负号 受让为负数 让球为正数
+    sign = 1
+    if '受' in handicap_display:
+        sign = -1
+        handicap_display = handicap_display.replace('受', '')
+    # 根据 handicap_display 解析出 handicap pair
     handicaps = []
     for handicap in handicap_display.split('/'):
-        sign = 1
-        if handicap.startswith('受'):
-            sign = -1
-            handicap = handicap[1:]
         handicaps.append(sign * HANDICAP_DICT[handicap])
+    # 将单一 handicap 扩充成 pair 统一逻辑
     if len(handicaps) == 1:
         handicaps *= 2
     return tuple(handicaps)
