@@ -79,6 +79,17 @@ TOURNAMENTS = [
             (datetime.datetime(2024, 7, 16), 16),   # final + 3rd playoff
         ],
     ),
+    Tournament(
+        dbname='worldcup2026',
+        league='世界盃',
+        display='2026 世界杯',
+        weight_schedule=[
+            (datetime.datetime(2026, 7, 9), 2),     # group games + 1/8 final
+            (datetime.datetime(2026, 7, 13), 4),    # 1/4 final
+            (datetime.datetime(2026, 7, 17), 8),    # semi final
+            (datetime.datetime(2026, 7, 21), 16),   # final + 3rd playoff
+        ],
+    ),
 ]
 
 DEFAULT_TOURNAMENT = TOURNAMENTS[-1]
