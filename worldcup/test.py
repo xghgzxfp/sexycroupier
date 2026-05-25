@@ -419,9 +419,9 @@ def load_history(tournament):
         with open(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'history', tournament, filename)) as f:
             return [bson.json_util.loads(line) for line in f]
 
-    db.gambler.insert_many(_load_json('gambler.json'))
-    db.auction.insert_many(_load_json('auction.json'))
-    db.match.insert_many(_load_json('match.json'))
+    (docs := _load_json('gambler.json')) and db.gambler.insert_many(docs)
+    (docs := _load_json('auction.json')) and db.auction.insert_many(docs)
+    (docs := _load_json('match.json')) and db.match.insert_many(docs)
 
 
 def test_history_eurocup2016():
@@ -481,6 +481,35 @@ def test_history_worldcup2018():
         {'gambler': '老大', 'points': OrderedDict([('201806142300-俄罗斯-沙地阿拉伯', '-2.00'), ('201807152300-法国-克罗地亚', '-57.81')])},
         {'gambler': '老娘', 'points': OrderedDict([('201806142300-俄罗斯-沙地阿拉伯', '3.00'), ('201807152300-法国-克罗地亚', '57.24')])},
         {'gambler': '汉姆', 'points': OrderedDict([('201806142300-俄罗斯-沙地阿拉伯', '-2.00'), ('201807152300-法国-克罗地亚', '31.00')])},
+    ]
+
+    assert results == expected
+
+
+def test_history_eurocup2024():
+    load_history('eurocup2024')
+
+    # sanity check
+    assert db.gambler.find().count() == 7
+    assert db.auction.find().count() == 0
+    assert db.match.find().count() == 25
+
+    # 用第一场和最后一场积分做校验
+    # 积分保留两位小数转为字符串做比较
+    results = []
+    for s in [series.__dict__ for series in model.generate_series()]:
+        points = [(k, '{:.2f}'.format(v)) for k, v in s['points'].items()]
+        result = dict(gambler=s['gambler'], points=OrderedDict([points[0], points[-1]]))
+        results.append(result)
+
+    expected = [
+        {'gambler': '金帝', 'points': OrderedDict([('202406250300-克罗地亚-意大利', '0.75'), ('202407150300-西班牙-英格兰', '9.28')])},
+        {'gambler': '老套', 'points': OrderedDict([('202406250300-克罗地亚-意大利', '-1.00'), ('202407150300-西班牙-英格兰', '18.03')])},
+        {'gambler': '大B', 'points': OrderedDict([('202406250300-克罗地亚-意大利', '0.75'), ('202407150300-西班牙-英格兰', '7.62')])},
+        {'gambler': '老娘', 'points': OrderedDict([('202406250300-克罗地亚-意大利', '0.75'), ('202407150300-西班牙-英格兰', '-32.25')])},
+        {'gambler': '老排', 'points': OrderedDict([('202406250300-克罗地亚-意大利', '0.75'), ('202407150300-西班牙-英格兰', '4.62')])},
+        {'gambler': '老大', 'points': OrderedDict([('202406250300-克罗地亚-意大利', '-1.00'), ('202407150300-西班牙-英格兰', '-18.83')])},
+        {'gambler': '李琛', 'points': OrderedDict([('202406250300-克罗地亚-意大利', '-2.00'), ('202407150300-西班牙-英格兰', '5.53')])},
     ]
 
     assert results == expected
