@@ -486,6 +486,37 @@ def test_history_worldcup2018():
     assert results == expected
 
 
+def test_history_worldcup2022():
+    load_history('worldcup2022')
+
+    # sanity check
+    assert db.gambler.find().count() == 9
+    assert db.auction.find().count() == 32
+    assert db.match.find().count() == 64
+
+    # 用第一场和最后一场积分做校验
+    # 积分保留两位小数转为字符串做比较
+    results = []
+    for s in [series.__dict__ for series in model.generate_series()]:
+        points = [(k, '{:.2f}'.format(v)) for k, v in s['points'].items()]
+        result = dict(gambler=s['gambler'], points=OrderedDict([points[0], points[-1]]))
+        results.append(result)
+
+    expected = [
+        {'gambler': '金帝', 'points': OrderedDict([('202211202359-卡塔尔-厄瓜多尔', '-2.00'), ('202212182300-阿根廷-法国', '-20.33')])},
+        {'gambler': '大B', 'points': OrderedDict([('202211202359-卡塔尔-厄瓜多尔', '-2.00'), ('202212182300-阿根廷-法国', '-32.88')])},
+        {'gambler': '老大', 'points': OrderedDict([('202211202359-卡塔尔-厄瓜多尔', '-2.00'), ('202212182300-阿根廷-法国', '88.29')])},
+        {'gambler': '老娘', 'points': OrderedDict([('202211202359-卡塔尔-厄瓜多尔', '5.00'), ('202212182300-阿根廷-法国', '78.91')])},
+        {'gambler': '大钻', 'points': OrderedDict([('202211202359-卡塔尔-厄瓜多尔', '-2.00'), ('202212182300-阿根廷-法国', '-34.13')])},
+        {'gambler': '老套', 'points': OrderedDict([('202211202359-卡塔尔-厄瓜多尔', '2.50'), ('202212182300-阿根廷-法国', '41.17')])},
+        {'gambler': '老排', 'points': OrderedDict([('202211202359-卡塔尔-厄瓜多尔', '2.50'), ('202212182300-阿根廷-法国', '71.46')])},
+        {'gambler': '李琛', 'points': OrderedDict([('202211202359-卡塔尔-厄瓜多尔', '-2.00'), ('202212182300-阿根廷-法国', '-45.61')])},
+        {'gambler': '汉姆', 'points': OrderedDict([('202211202359-卡塔尔-厄瓜多尔', '2.50'), ('202212182300-阿根廷-法国', '16.49')])},
+    ]
+
+    assert results == expected
+
+
 def test_history_eurocup2024():
     load_history('eurocup2024')
 
