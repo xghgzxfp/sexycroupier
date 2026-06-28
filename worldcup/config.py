@@ -84,10 +84,12 @@ TOURNAMENTS = [
         league='世界盃',
         display='2026 世界杯',
         weight_schedule=[
-            (datetime.datetime(2026, 7, 9), 2),     # group games + 1/8 final
-            (datetime.datetime(2026, 7, 13), 4),    # 1/4 final
-            (datetime.datetime(2026, 7, 17), 8),    # semi final
-            (datetime.datetime(2026, 7, 21), 16),   # final + 3rd playoff
+            (datetime.datetime(2026, 6, 29), 2),    # group games
+            (datetime.datetime(2026, 7, 5), 4),     # round of 32
+            (datetime.datetime(2026, 7, 10), 8),    # round of 16
+            (datetime.datetime(2026, 7, 13), 16),   # 1/4 final
+            (datetime.datetime(2026, 7, 17), 32),   # semi final
+            (datetime.datetime(2026, 7, 21), 64),   # final + 3rd playoff
         ],
     ),
 ]
