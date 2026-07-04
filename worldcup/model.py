@@ -432,11 +432,11 @@ def update_match_gamblers(match_id: str, team: str, gambler: Union[Gambler, User
     insert_gambler(gambler)
 
 
-def update_match_weight(match_id: str, weight: Union[float, int]):
+def update_match_weight(match_id: str, weight: int):
     """更新本场赌注"""
     tournamentdb.match.update_one(
         {"id": match_id},
-        {"$set": {"weight": float(weight)}}
+        {"$set": {"weight": weight}}
     )
 
 
