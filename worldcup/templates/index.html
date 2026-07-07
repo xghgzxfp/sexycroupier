@@ -23,9 +23,9 @@
             {% if match.a["score"] is none %} - {% else %} {{ match.a["score"] }} {% endif %}
           </div>
         </div>
-        <div class="col text-nowrap">
-          <div>{{ match.match_time.strftime('%Y-%m-%d') }}</div>
-          <div>{{ match.match_time.strftime('%H:%M') }}</div>
+        <div class="col text-nowrap match-time" data-match-time="{{ match.match_time | _ts }}">
+          <div class="match-date"></div>
+          <div><span class="match-clock"></span><sup class="match-utc-offset"><small></small></sup></div>
           <small>盘口 ({{ match.weight }})</small>
           <div>{{ match.handicap_display or "-" }}</div>
         </div>
@@ -126,8 +126,39 @@ function setupCountdown(match) {
   }, 1000)
 }
 
+function formatLocalMatchTime(matchTime) {
+  var timestamp = Number(matchTime.getAttribute("data-match-time")) * 1000
+  var date = new Date(timestamp)
+  var pad = function (number) {
+    return number >= 10 ? String(number) : "0" + number
+  }
+  var formatOffset = function (timezoneOffset) {
+    var offset = -timezoneOffset
+    var sign = offset >= 0 ? "+" : "-"
+    var absoluteOffset = Math.abs(offset)
+    var hours = Math.floor(absoluteOffset / 60)
+    var minutes = absoluteOffset % 60
+    var formattedOffset = " UTC" + sign + hours + (minutes ? ":" + pad(minutes) : "")
+    return formattedOffset === " UTC+8" ? "" : formattedOffset
+  }
+  var year = date.getFullYear()
+  var month = pad(date.getMonth() + 1)
+  var day = pad(date.getDate())
+  var hour = pad(date.getHours())
+  var minute = pad(date.getMinutes())
+
+  matchTime.getElementsByClassName("match-date")[0].innerHTML = year + "-" + month + "-" + day
+  matchTime.getElementsByClassName("match-clock")[0].innerHTML = hour + ":" + minute
+  matchTime.getElementsByClassName("match-utc-offset")[0].getElementsByTagName("small")[0].innerHTML = formatOffset(date.getTimezoneOffset())
+}
+
+function setupMatchContainer(match) {
+  Array.from(match.getElementsByClassName("match-time")).forEach(formatLocalMatchTime)
+  setupCountdown(match)
+}
+
 // setup countdown for each match container
-Array.from(document.getElementsByClassName("match-container")).forEach(setupCountdown)
+Array.from(document.getElementsByClassName("match-container")).forEach(setupMatchContainer)
 
 // ajax submit
 $(document).on('submit', 'form.bet-form', function (e) {
@@ -151,7 +182,7 @@ $(document).on('submit', 'form.bet-form', function (e) {
     }
     if ($updatedMatch) {
       $(matchSelector).parent().html($updatedMatch)
-      setupCountdown($updatedMatch.get(0))
+      setupMatchContainer($updatedMatch.get(0))
     }
   }).fail(function (e) {
     alert('投注失败：' + (e.message || "未知原因"))
