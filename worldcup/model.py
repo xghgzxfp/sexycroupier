@@ -5,7 +5,7 @@ import logging
 import pymongo
 
 from collections import namedtuple, OrderedDict, UserString
-from typing import List, Optional, Union
+from typing import List, Literal, Optional, Union
 
 from .app import logindb, tournamentdb, dbclient
 from .config import TOURNAMENTS
@@ -410,7 +410,7 @@ def update_match_handicap(match_id: str, handicap_display: str, cutoff_check=Tru
     logging.info('Handicap updated: match={} handicap="{}"'.format(match_id, handicap_display))
 
 
-def update_match_gamblers(match_id: str, team: str, gambler: Union[Gambler, User], cutoff_check=True):
+def update_match_gamblers(match_id: str, team: Literal["a", "b"], gambler: Union[Gambler, User], cutoff_check=True):
     """更新投注结果"""
     match = find_match_by_id(match_id)
     # 若比赛不存在或当前非投注时间则直接返回
