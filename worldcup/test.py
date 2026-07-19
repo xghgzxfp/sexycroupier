@@ -434,21 +434,23 @@ def test_history_eurocup2016():
 
     # 用第一场和最后一场积分做校验
     # 积分保留两位小数转为字符串做比较
+    # 按最终积分降序排列
     results = []
     for s in [series.__dict__ for series in model.generate_series()]:
         points = [(k, '{:.2f}'.format(v)) for k, v in s['points'].items()]
         result = dict(gambler=s['gambler'], points=OrderedDict([points[0], points[-1]]))
         results.append(result)
+    results.sort(key=lambda r: float(list(r['points'].values())[-1]), reverse=True)
 
     expected = [
+        {'gambler': '小白', 'points': OrderedDict([('201606110300-法国-罗马尼亚', '-2.00'), ('201607110300-法国-葡萄牙', '74.27')])},
+        {'gambler': '老大', 'points': OrderedDict([('201606110300-法国-罗马尼亚', '3.33'), ('201607110300-法国-葡萄牙', '39.53')])},
+        {'gambler': '大钻', 'points': OrderedDict([('201606110300-法国-罗马尼亚', '-2.00'), ('201607110300-法国-葡萄牙', '30.60')])},
+        {'gambler': '老排', 'points': OrderedDict([('201606110300-法国-罗马尼亚', '6.67'), ('201607110300-法国-葡萄牙', '29.07')])},
+        {'gambler': '老套', 'points': OrderedDict([('201606110300-法国-罗马尼亚', '-2.00'), ('201607110300-法国-葡萄牙', '14.67')])},
         {'gambler': '大B', 'points': OrderedDict([('201606110300-法国-罗马尼亚', '-2.00'), ('201607110300-法国-葡萄牙', '-17.33')])},
         {'gambler': '李琛', 'points': OrderedDict([('201606110300-法国-罗马尼亚', '-2.00'), ('201607110300-法国-葡萄牙', '-17.40')])},
-        {'gambler': '老大', 'points': OrderedDict([('201606110300-法国-罗马尼亚', '3.33'), ('201607110300-法国-葡萄牙', '39.53')])},
-        {'gambler': '小白', 'points': OrderedDict([('201606110300-法国-罗马尼亚', '-2.00'), ('201607110300-法国-葡萄牙', '74.27')])},
         {'gambler': '老娘', 'points': OrderedDict([('201606110300-法国-罗马尼亚', '3.33'), ('201607110300-法国-葡萄牙', '-20.60')])},
-        {'gambler': '老排', 'points': OrderedDict([('201606110300-法国-罗马尼亚', '6.67'), ('201607110300-法国-葡萄牙', '29.07')])},
-        {'gambler': '大钻', 'points': OrderedDict([('201606110300-法国-罗马尼亚', '-2.00'), ('201607110300-法国-葡萄牙', '30.60')])},
-        {'gambler': '老套', 'points': OrderedDict([('201606110300-法国-罗马尼亚', '-2.00'), ('201607110300-法国-葡萄牙', '14.67')])},
     ]
 
     assert results == expected
@@ -464,23 +466,25 @@ def test_history_worldcup2018():
 
     # 用第一场和最后一场积分做校验
     # 积分保留两位小数转为字符串做比较
+    # 按最终积分降序排列
     results = []
     for s in [series.__dict__ for series in model.generate_series()]:
         points = [(k, '{:.2f}'.format(v)) for k, v in s['points'].items()]
         result = dict(gambler=s['gambler'], points=OrderedDict([points[0], points[-1]]))
         results.append(result)
+    results.sort(key=lambda r: float(list(r['points'].values())[-1]), reverse=True)
 
     expected = [
-        {'gambler': '大B', 'points': OrderedDict([('201806142300-俄罗斯-沙地阿拉伯', '-2.00'), ('201807152300-法国-克罗地亚', '42.67')])},
-        {'gambler': '金帝', 'points': OrderedDict([('201806142300-俄罗斯-沙地阿拉伯', '3.00'), ('201807152300-法国-克罗地亚', '-21.67')])},
-        {'gambler': '老套', 'points': OrderedDict([('201806142300-俄罗斯-沙地阿拉伯', '6.00'), ('201807152300-法国-克罗地亚', '-21.10')])},
-        {'gambler': '小白', 'points': OrderedDict([('201806142300-俄罗斯-沙地阿拉伯', '-2.00'), ('201807152300-法国-克罗地亚', '28.81')])},
         {'gambler': '老排', 'points': OrderedDict([('201806142300-俄罗斯-沙地阿拉伯', '-2.00'), ('201807152300-法国-克罗地亚', '92.33')])},
         {'gambler': '大钻', 'points': OrderedDict([('201806142300-俄罗斯-沙地阿拉伯', '-2.00'), ('201807152300-法国-克罗地亚', '71.24')])},
+        {'gambler': '老娘', 'points': OrderedDict([('201806142300-俄罗斯-沙地阿拉伯', '3.00'), ('201807152300-法国-克罗地亚', '57.24')])},
+        {'gambler': '大B', 'points': OrderedDict([('201806142300-俄罗斯-沙地阿拉伯', '-2.00'), ('201807152300-法国-克罗地亚', '42.67')])},
+        {'gambler': '汉姆', 'points': OrderedDict([('201806142300-俄罗斯-沙地阿拉伯', '-2.00'), ('201807152300-法国-克罗地亚', '31.00')])},
+        {'gambler': '小白', 'points': OrderedDict([('201806142300-俄罗斯-沙地阿拉伯', '-2.00'), ('201807152300-法国-克罗地亚', '28.81')])},
+        {'gambler': '老套', 'points': OrderedDict([('201806142300-俄罗斯-沙地阿拉伯', '6.00'), ('201807152300-法国-克罗地亚', '-21.10')])},
+        {'gambler': '金帝', 'points': OrderedDict([('201806142300-俄罗斯-沙地阿拉伯', '3.00'), ('201807152300-法国-克罗地亚', '-21.67')])},
         {'gambler': '李琛', 'points': OrderedDict([('201806142300-俄罗斯-沙地阿拉伯', '3.00'), ('201807152300-法国-克罗地亚', '-40.76')])},
         {'gambler': '老大', 'points': OrderedDict([('201806142300-俄罗斯-沙地阿拉伯', '-2.00'), ('201807152300-法国-克罗地亚', '-57.81')])},
-        {'gambler': '老娘', 'points': OrderedDict([('201806142300-俄罗斯-沙地阿拉伯', '3.00'), ('201807152300-法国-克罗地亚', '57.24')])},
-        {'gambler': '汉姆', 'points': OrderedDict([('201806142300-俄罗斯-沙地阿拉伯', '-2.00'), ('201807152300-法国-克罗地亚', '31.00')])},
     ]
 
     assert results == expected
@@ -496,22 +500,24 @@ def test_history_worldcup2022():
 
     # 用第一场和最后一场积分做校验
     # 积分保留两位小数转为字符串做比较
+    # 按最终积分降序排列
     results = []
     for s in [series.__dict__ for series in model.generate_series()]:
         points = [(k, '{:.2f}'.format(v)) for k, v in s['points'].items()]
         result = dict(gambler=s['gambler'], points=OrderedDict([points[0], points[-1]]))
         results.append(result)
+    results.sort(key=lambda r: float(list(r['points'].values())[-1]), reverse=True)
 
     expected = [
-        {'gambler': '金帝', 'points': OrderedDict([('202211202359-卡塔尔-厄瓜多尔', '-2.00'), ('202212182300-阿根廷-法国', '-20.33')])},
-        {'gambler': '大B', 'points': OrderedDict([('202211202359-卡塔尔-厄瓜多尔', '-2.00'), ('202212182300-阿根廷-法国', '-32.88')])},
         {'gambler': '老大', 'points': OrderedDict([('202211202359-卡塔尔-厄瓜多尔', '-2.00'), ('202212182300-阿根廷-法国', '88.29')])},
         {'gambler': '老娘', 'points': OrderedDict([('202211202359-卡塔尔-厄瓜多尔', '5.00'), ('202212182300-阿根廷-法国', '78.91')])},
-        {'gambler': '大钻', 'points': OrderedDict([('202211202359-卡塔尔-厄瓜多尔', '-2.00'), ('202212182300-阿根廷-法国', '-34.13')])},
-        {'gambler': '老套', 'points': OrderedDict([('202211202359-卡塔尔-厄瓜多尔', '2.50'), ('202212182300-阿根廷-法国', '41.17')])},
         {'gambler': '老排', 'points': OrderedDict([('202211202359-卡塔尔-厄瓜多尔', '2.50'), ('202212182300-阿根廷-法国', '71.46')])},
-        {'gambler': '李琛', 'points': OrderedDict([('202211202359-卡塔尔-厄瓜多尔', '-2.00'), ('202212182300-阿根廷-法国', '-45.61')])},
+        {'gambler': '老套', 'points': OrderedDict([('202211202359-卡塔尔-厄瓜多尔', '2.50'), ('202212182300-阿根廷-法国', '41.17')])},
         {'gambler': '汉姆', 'points': OrderedDict([('202211202359-卡塔尔-厄瓜多尔', '2.50'), ('202212182300-阿根廷-法国', '16.49')])},
+        {'gambler': '金帝', 'points': OrderedDict([('202211202359-卡塔尔-厄瓜多尔', '-2.00'), ('202212182300-阿根廷-法国', '-20.33')])},
+        {'gambler': '大B', 'points': OrderedDict([('202211202359-卡塔尔-厄瓜多尔', '-2.00'), ('202212182300-阿根廷-法国', '-32.88')])},
+        {'gambler': '大钻', 'points': OrderedDict([('202211202359-卡塔尔-厄瓜多尔', '-2.00'), ('202212182300-阿根廷-法国', '-34.13')])},
+        {'gambler': '李琛', 'points': OrderedDict([('202211202359-卡塔尔-厄瓜多尔', '-2.00'), ('202212182300-阿根廷-法国', '-45.61')])},
     ]
 
     assert results == expected
@@ -527,20 +533,22 @@ def test_history_eurocup2024():
 
     # 用第一场和最后一场积分做校验
     # 积分保留两位小数转为字符串做比较
+    # 按最终积分降序排列
     results = []
     for s in [series.__dict__ for series in model.generate_series()]:
         points = [(k, '{:.2f}'.format(v)) for k, v in s['points'].items()]
         result = dict(gambler=s['gambler'], points=OrderedDict([points[0], points[-1]]))
         results.append(result)
+    results.sort(key=lambda r: float(list(r['points'].values())[-1]), reverse=True)
 
     expected = [
-        {'gambler': '金帝', 'points': OrderedDict([('202406250300-克罗地亚-意大利', '0.75'), ('202407150300-西班牙-英格兰', '9.28')])},
         {'gambler': '老套', 'points': OrderedDict([('202406250300-克罗地亚-意大利', '-1.00'), ('202407150300-西班牙-英格兰', '18.03')])},
+        {'gambler': '金帝', 'points': OrderedDict([('202406250300-克罗地亚-意大利', '0.75'), ('202407150300-西班牙-英格兰', '9.28')])},
         {'gambler': '大B', 'points': OrderedDict([('202406250300-克罗地亚-意大利', '0.75'), ('202407150300-西班牙-英格兰', '7.62')])},
-        {'gambler': '老娘', 'points': OrderedDict([('202406250300-克罗地亚-意大利', '0.75'), ('202407150300-西班牙-英格兰', '-32.25')])},
+        {'gambler': '李琛', 'points': OrderedDict([('202406250300-克罗地亚-意大利', '-2.00'), ('202407150300-西班牙-英格兰', '5.53')])},
         {'gambler': '老排', 'points': OrderedDict([('202406250300-克罗地亚-意大利', '0.75'), ('202407150300-西班牙-英格兰', '4.62')])},
         {'gambler': '老大', 'points': OrderedDict([('202406250300-克罗地亚-意大利', '-1.00'), ('202407150300-西班牙-英格兰', '-18.83')])},
-        {'gambler': '李琛', 'points': OrderedDict([('202406250300-克罗地亚-意大利', '-2.00'), ('202407150300-西班牙-英格兰', '5.53')])},
+        {'gambler': '老娘', 'points': OrderedDict([('202406250300-克罗地亚-意大利', '0.75'), ('202407150300-西班牙-英格兰', '-32.25')])},
     ]
 
     assert results == expected
@@ -556,17 +564,19 @@ def test_history_worldcup2026():
 
     # 用第一场和最后一场积分做校验
     # 积分保留两位小数转为字符串做比较
+    # 按最终积分降序排列
     results = []
     for s in [series.__dict__ for series in model.generate_series()]:
         points = [(k, '{:.2f}'.format(v)) for k, v in s['points'].items()]
         result = dict(gambler=s['gambler'], points=OrderedDict([points[0], points[-1]]))
         results.append(result)
+    results.sort(key=lambda r: float(list(r['points'].values())[-1]), reverse=True)
 
     expected = [
-        {'gambler': '大B', 'points': OrderedDict([('202606120300-墨西哥-南非', '1.33'), ('202607200300-西班牙-阿根廷', '-35.67')])},
         {'gambler': '老套', 'points': OrderedDict([('202606120300-墨西哥-南非', '1.33'), ('202607200300-西班牙-阿根廷', '128.92')])},
-        {'gambler': '老排', 'points': OrderedDict([('202606120300-墨西哥-南非', '-2.00'), ('202607200300-西班牙-阿根廷', '15.58')])},
         {'gambler': '老娘', 'points': OrderedDict([('202606120300-墨西哥-南非', '1.33'), ('202607200300-西班牙-阿根廷', '43.08')])},
+        {'gambler': '老排', 'points': OrderedDict([('202606120300-墨西哥-南非', '-2.00'), ('202607200300-西班牙-阿根廷', '15.58')])},
+        {'gambler': '大B', 'points': OrderedDict([('202606120300-墨西哥-南非', '1.33'), ('202607200300-西班牙-阿根廷', '-35.67')])},
         {'gambler': '老大', 'points': OrderedDict([('202606120300-墨西哥-南非', '-2.00'), ('202607200300-西班牙-阿根廷', '-151.92')])},
     ]
 
