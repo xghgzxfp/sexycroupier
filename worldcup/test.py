@@ -544,3 +544,30 @@ def test_history_eurocup2024():
     ]
 
     assert results == expected
+
+
+def test_history_worldcup2026():
+    load_history('worldcup2026')
+
+    # sanity check
+    assert db.gambler.find().count() == 5
+    assert db.auction.find().count() == 0
+    assert db.match.find().count() == 104
+
+    # 用第一场和最后一场积分做校验
+    # 积分保留两位小数转为字符串做比较
+    results = []
+    for s in [series.__dict__ for series in model.generate_series()]:
+        points = [(k, '{:.2f}'.format(v)) for k, v in s['points'].items()]
+        result = dict(gambler=s['gambler'], points=OrderedDict([points[0], points[-1]]))
+        results.append(result)
+
+    expected = [
+        {'gambler': '大B', 'points': OrderedDict([('202606120300-墨西哥-南非', '1.33'), ('202607200300-西班牙-阿根廷', '-35.67')])},
+        {'gambler': '老套', 'points': OrderedDict([('202606120300-墨西哥-南非', '1.33'), ('202607200300-西班牙-阿根廷', '128.92')])},
+        {'gambler': '老排', 'points': OrderedDict([('202606120300-墨西哥-南非', '-2.00'), ('202607200300-西班牙-阿根廷', '15.58')])},
+        {'gambler': '老娘', 'points': OrderedDict([('202606120300-墨西哥-南非', '1.33'), ('202607200300-西班牙-阿根廷', '43.08')])},
+        {'gambler': '老大', 'points': OrderedDict([('202606120300-墨西哥-南非', '-2.00'), ('202607200300-西班牙-阿根廷', '-151.92')])},
+    ]
+
+    assert results == expected
